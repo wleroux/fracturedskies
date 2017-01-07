@@ -1,9 +1,38 @@
+import org.gradle.internal.os.OperatingSystem;
+
 apply plugin: 'idea';
 apply plugin: 'java';
-apply plugin: 'application';
 
-mainClassName = "fs.client.Main";
+apply plugin: 'application';
+mainClassName = "fs.client.RenderSystem";
+
+switch ( OperatingSystem.current() ) {
+	case OperatingSystem.WINDOWS:
+		project.ext.lwjglNatives = "natives-windows";
+		break;
+	case OperatingSystem.LINUX:
+		project.ext.lwjglNatives = "natives-linux";
+	break;
+	case OperatingSystem.MAC_OS:
+		project.ext.lwjglNatives = "natives-macos";
+		break;
+}
 
 repositories {
-    jcenter();
+	jcenter();
+}
+
+dependencies {
+	compile "org.lwjgl:lwjgl:3.1.1";
+	compile "org.lwjgl:lwjgl-glfw:3.1.1";
+	compile "org.lwjgl:lwjgl-jemalloc:3.1.1";
+	compile "org.lwjgl:lwjgl-openal:3.1.1";
+	compile "org.lwjgl:lwjgl-opengl:3.1.1";
+	compile "org.lwjgl:lwjgl-stb:3.1.1";
+	runtime "org.lwjgl:lwjgl:3.1.1:${lwjglNatives}";
+	runtime "org.lwjgl:lwjgl-glfw:3.1.1:${lwjglNatives}";
+	runtime "org.lwjgl:lwjgl-jemalloc:3.1.1:${lwjglNatives}";
+	runtime "org.lwjgl:lwjgl-openal:3.1.1:${lwjglNatives}";
+	runtime "org.lwjgl:lwjgl-opengl:3.1.1:${lwjglNatives}";
+	runtime "org.lwjgl:lwjgl-stb:3.1.1:${lwjglNatives}";
 }
