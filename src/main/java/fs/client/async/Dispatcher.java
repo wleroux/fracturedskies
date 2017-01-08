@@ -42,12 +42,22 @@ public final class Dispatcher {
             CompletableFuture<Void> systemFuture = new CompletableFuture<>();
             systemFutures.add(systemFuture);
             executor.submit(() -> {
-                system.accept(event, systemFuture);
+                try {
+                    system.accept(event, systemFuture);
+                } catch (Throwable ex) {
+                    systemFuture.completeExceptionally(ex);
+                }
             });
         }
 
         allOf(systemFutures.toArray(new CompletableFuture[0]))
-                .thenRun(() -> future.complete(null));
+                .whenComplete((result, failure) -> {
+                    if (failure != null) {
+                        future.completeExceptionally(failure);
+                    } else {
+                        future.complete(null);
+                    }
+                });
     }
 
     public void register(GameSystem system) {
