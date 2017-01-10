@@ -5,6 +5,7 @@ import fs.client.async.GameSystem;
 import fs.client.event.*;
 import fs.client.gl.Mesh;
 import fs.client.gl.Program;
+import fs.client.gl.TextureArray;
 import fs.math.Matrix4;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
@@ -16,12 +17,14 @@ import java.util.concurrent.CompletableFuture;
 import static fs.math.Matrix4.mat4;
 import static fs.math.Matrix4.perspective;
 import static fs.math.Vector3.vec3;
+import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class RenderSystem implements GameSystem {
@@ -29,11 +32,12 @@ public class RenderSystem implements GameSystem {
 	private final Dispatcher dispatcher;
     private Program program;
     private Mesh mesh;
-    private Matrix4 model;
+	private Matrix4 model;
     private Matrix4 view;
     private Matrix4 projection;
+	private TextureArray textureArray;
 
-    public RenderSystem(Dispatcher dispatcher) {
+	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 
@@ -83,11 +87,13 @@ public class RenderSystem implements GameSystem {
 		glfwWindowHint(GLFW_GREEN_BITS, vidmode.greenBits());
 		glfwWindowHint(GLFW_BLUE_BITS, vidmode.blueBits());
 		glfwWindowHint(GLFW_REFRESH_RATE, vidmode.refreshRate());
-        window = glfwCreateWindow(vidmode.width() / 2, vidmode.height() / 2, "Fractured Skies", NULL, NULL);
+		int width = vidmode.width() / 2;
+		int height = vidmode.height() / 2;
+        window = glfwCreateWindow(width, height, "Fractured Skies", NULL, NULL);
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
 
-		glfwSetWindowPos(window, vidmode.width() / 4, vidmode.height() / 4);
+		glfwSetWindowPos(window, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
 			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
 				glfwSetWindowShouldClose(window, true);
@@ -108,40 +114,40 @@ public class RenderSystem implements GameSystem {
 
         mesh = new Mesh(new float[] {
                 // front
-                -0.5f,  0.5f, -0.5f,  1f, 0f, 0f,
-                 0.5f,  0.5f, -0.5f,  1f, 0f, 0f,
-                 0.5f, -0.5f, -0.5f,  1f, 0f, 0f,
-                -0.5f, -0.5f, -0.5f,  1f, 0f, 0f,
+                -0.5f,  0.5f, -0.5f,  0f, 0f, 0f,   0f, -1f,  0f,
+                 0.5f,  0.5f, -0.5f,  0f, 1f, 0f,   0f, -1f,  0f,
+                 0.5f, -0.5f, -0.5f,  1f, 1f, 0f,   0f, -1f,  0f,
+                -0.5f, -0.5f, -0.5f,  1f, 0f, 0f,   0f, -1f,  0f,
 
                 // top
-                -0.5f, 0.5f,  0.5f,  0f, 1f, 0f,
-                 0.5f, 0.5f,  0.5f,  0f, 1f, 0f,
-                 0.5f, 0.5f, -0.5f,  0f, 1f, 0f,
-                -0.5f, 0.5f, -0.5f,  0f, 1f, 0f,
+                -0.5f, 0.5f,  0.5f,   0f, 0f, 1f,   0f,  1f,  0f,
+                 0.5f, 0.5f,  0.5f,   0f, 1f, 1f,   0f,  1f,  0f,
+                 0.5f, 0.5f, -0.5f,   1f, 1f, 1f,   0f,  1f,  0f,
+                -0.5f, 0.5f, -0.5f,   1f, 0f, 1f,   0f,  1f,  0f,
 
                 // left
-                -0.5f,  0.5f,  0.5f,  1f, 1f, 0f,
-                -0.5f,  0.5f, -0.5f,  1f, 1f, 0f,
-                -0.5f, -0.5f, -0.5f,  1f, 1f, 0f,
-                -0.5f, -0.5f,  0.5f,  1f, 1f, 0f,
+                -0.5f,  0.5f,  0.5f,  0f, 0f, 0f,  -1f,  0f,  0f,
+                -0.5f,  0.5f, -0.5f,  0f, 1f, 0f,  -1f,  0f,  0f,
+                -0.5f, -0.5f, -0.5f,  1f, 1f, 0f,  -1f,  0f,  0f,
+                -0.5f, -0.5f,  0.5f,  1f, 0f, 0f,  -1f,  0f,  0f,
 
                 // right
-                 0.5f,  0.5f, -0.5f,  1f, 0f, 1f,
-                 0.5f,  0.5f,  0.5f,  1f, 0f, 1f,
-                 0.5f, -0.5f,  0.5f,  1f, 0f, 1f,
-                 0.5f, -0.5f, -0.5f,  1f, 0f, 1f,
+                 0.5f,  0.5f, -0.5f,  0f, 0f, 0f,   1f,  0f,  0f,
+                 0.5f,  0.5f,  0.5f,  0f, 1f, 0f,   1f,  0f,  0f,
+                 0.5f, -0.5f,  0.5f,  1f, 1f, 0f,   1f,  0f,  0f,
+                 0.5f, -0.5f, -0.5f,  1f, 0f, 0f,   1f,  0f,  0f,
 
-                // bottom
-                -0.5f, -0.5f, -0.5f,  0f, 0f, 1f,
-                 0.5f, -0.5f, -0.5f,  0f, 0f, 1f,
-                 0.5f, -0.5f,  0.5f,  0f, 0f, 1f,
-                -0.5f, -0.5f,  0.5f,  0f, 0f, 1f,
+                 // bottom
+                -0.5f, -0.5f, -0.5f,   0f, 0f, 0f,  0f, -1f,  0f,
+                 0.5f, -0.5f, -0.5f,   0f, 1f, 0f,  0f, -1f,  0f,
+                 0.5f, -0.5f,  0.5f,   1f, 1f, 0f,  0f, -1f,  0f,
+                -0.5f, -0.5f,  0.5f,   1f, 0f, 0f,  0f, -1f,  0f,
 
                 // back
-                 0.5f,  0.5f,  0.5f,  1f, 1f, 1f,
-                -0.5f,  0.5f,  0.5f,  1f, 1f, 1f,
-                -0.5f, -0.5f,  0.5f,  1f, 1f, 1f,
-                 0.5f, -0.5f,  0.5f,  1f, 1f, 1f
+                 0.5f,  0.5f,  0.5f,   0f, 0f, 0f,  0f,  0f,  1f,
+                -0.5f,  0.5f,  0.5f,   0f, 1f, 0f,  0f,  0f,  1f,
+                -0.5f, -0.5f,  0.5f,   1f, 1f, 0f,  0f,  0f,  1f,
+                 0.5f, -0.5f,  0.5f,   1f, 0f, 0f,  0f,  0f,  1f
         }, new int[] {
                 0, 1, 2,
                 2, 3, 0,
@@ -161,10 +167,16 @@ public class RenderSystem implements GameSystem {
                 20, 21, 22,
                 22, 23, 20
         });
+		textureArray = new TextureArray(
+				loadAsByteBuffer("fs/client/gl/tileset.png", classLoader),
+				16,
+				16,
+				2
+		);
 
-        model = mat4(vec3(0f, 0f, 0f));
-        view = mat4(vec3(2.0f, -1f, -5f)).invert();
-        projection = perspective((float) Math.PI / 4, 800, 640, 0.03f, 1000f);
+		model = mat4(vec3(0f, 0f, 0f));
+        view = mat4(vec3(-1.0f, 1f, -5f)).invert();
+        projection = perspective((float) Math.PI / 4, width, height, 0.03f, 1000f);
     }
 
     private void render() {
@@ -174,7 +186,7 @@ public class RenderSystem implements GameSystem {
         glCullFace(GL_FRONT);
 
 		// Draw square
-		drawSquare();
+		drawSquare(mesh, program, textureArray, model, view, projection);
 
 		glfwSwapBuffers(window); // swap the color buffers
 		glfwPollEvents();
@@ -184,7 +196,7 @@ public class RenderSystem implements GameSystem {
     private final FloatBuffer viewBuffer = BufferUtils.createFloatBuffer(16);
     private final FloatBuffer projectionBuffer = BufferUtils.createFloatBuffer(16);
 
-    private void drawSquare() {
+    private void drawSquare(Mesh mesh, Program program, TextureArray textureArray, Matrix4 model, Matrix4 view, Matrix4 projection) {
         glUseProgram(program.id());
 
         model.store(modelBuffer);
@@ -198,6 +210,9 @@ public class RenderSystem implements GameSystem {
         projection.store(projectionBuffer);
         projectionBuffer.flip();
         glUniformMatrix4fv(2, false, projectionBuffer);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray.id());
 
         glBindVertexArray(mesh.vao());
         glDrawElements(GL_TRIANGLES, mesh.indexCount(), GL_UNSIGNED_INT, 0);

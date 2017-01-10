@@ -23,23 +23,14 @@ public class Main implements Runnable, GameSystem {
 
     @Override
     public void run() {
-        CompletableFuture<Void> initializedFuture = new CompletableFuture<>();
-        dispatcher.dispatch(new Initialized(), initializedFuture);
-        initializedFuture.join();
+        dispatcher.dispatch(new Initialized()).join();
 
         while (!isTerminated) {
-            CompletableFuture<Void> updateRequestedFuture = new CompletableFuture<>();
-            dispatcher.dispatch(new UpdateRequested(), updateRequestedFuture);
-            updateRequestedFuture.join();
-
-            CompletableFuture<Void> renderRequestedFuture = new CompletableFuture<>();
-            dispatcher.dispatch(new RenderRequested(), renderRequestedFuture);
-            renderRequestedFuture.join();
+            dispatcher.dispatch(new UpdateRequested()).join();
+            dispatcher.dispatch(new RenderRequested()).join();
         }
 
-        CompletableFuture<Void> terminatedRequestedFuture = new CompletableFuture<>();
-        dispatcher.dispatch(new Terminated(), terminatedRequestedFuture);
-        terminatedRequestedFuture.join();
+        dispatcher.dispatch(new Terminated()).join();
     }
 
     public boolean canHandle(Object event) {

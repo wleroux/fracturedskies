@@ -1,9 +1,20 @@
 #version 450 core
 
-in vec3 Color;
 out vec4 color;
+
+in vec3 FragPos;
+in vec3 TexCoord;
+in vec3 Normal;
+
+uniform sampler2DArray albedo;
+
 
 void main()
 {
-    color = vec4(Color, 1.0f);
+    float ambientLight = 0.3;
+
+    vec3 lightDir = normalize(vec3(1, 0.5, -0.25));
+    float diffuse = 0.7 * max(dot(Normal, lightDir), 0.0);
+
+    color = (ambientLight + diffuse) * texture(albedo, TexCoord);
 }

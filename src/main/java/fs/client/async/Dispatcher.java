@@ -21,6 +21,12 @@ public final class Dispatcher {
     private final Set<GameSystem> systems = new HashSet<>();
     private final Map<GameSystem, ExecutorService> executors = new HashMap<>();
 
+    public CompletableFuture<Void> dispatch(final Object event) {
+        CompletableFuture<Void> future = new CompletableFuture<Void>();
+        dispatch(event, future);
+        return future;
+    }
+
     /**
      * Dispatches an event to all game systems. The provided future will be completed when all game systems have
      * processed the event.

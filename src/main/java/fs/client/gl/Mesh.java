@@ -1,5 +1,7 @@
 package fs.client.gl;
 
+import org.omg.CORBA.FloatHolder;
+
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -24,6 +26,10 @@ public class Mesh {
     private final int vao;
     private final int indexCount;
 
+    private static final int POSITION_LOCATION = 0;
+    private static final int TEXCOORD_LOCATION = 1;
+    private static final int NORMAL_LOCATION = 2;
+
     public Mesh(float[] vertices, int[] indices) {
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -31,11 +37,14 @@ public class Mesh {
         int vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0 * Float.BYTES);
-        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(POSITION_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 0 * Float.BYTES);
+        glEnableVertexAttribArray(POSITION_LOCATION);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
-        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(TEXCOORD_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 3 * Float.BYTES);
+        glEnableVertexAttribArray(TEXCOORD_LOCATION);
+
+        glVertexAttribPointer(NORMAL_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 6 * Float.BYTES);
+        glEnableVertexAttribArray(NORMAL_LOCATION);
 
         int ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
