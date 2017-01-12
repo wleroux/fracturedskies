@@ -7,6 +7,7 @@ import fs.client.gl.Mesh;
 import fs.client.gl.Program;
 import fs.client.gl.TextureArray;
 import fs.math.Matrix4;
+import fs.math.Quaternion4;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -16,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static fs.math.Matrix4.mat4;
 import static fs.math.Matrix4.perspective;
+import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
 import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
@@ -36,6 +38,8 @@ public class RenderSystem implements GameSystem {
     private Matrix4 view;
     private Matrix4 projection;
 	private TextureArray textureArray;
+
+	private int tickCount = 0;
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -175,7 +179,6 @@ public class RenderSystem implements GameSystem {
 		);
 
 		model = mat4(vec3(0f, 0f, 0f));
-        view = mat4(vec3(-1.0f, 1f, -5f)).invert();
         projection = perspective((float) Math.PI / 4, width, height, 0.03f, 1000f);
     }
 
@@ -186,6 +189,8 @@ public class RenderSystem implements GameSystem {
         glCullFace(GL_FRONT);
 
 		// Draw square
+		Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 120f));
+		view = mat4(vec3(0.0f, 1.5f, -10f).rotate(rotation), rotation).invert();
 		drawSquare(mesh, program, textureArray, model, view, projection);
 
 		glfwSwapBuffers(window); // swap the color buffers
@@ -230,6 +235,8 @@ public class RenderSystem implements GameSystem {
 	}
 
 	private void update(CompletableFuture<Void> future) {
+		tickCount ++;
+
 		if (glfwWindowShouldClose(window)) {
 			dispatcher.dispatch(new TerminationRequested(), future);
 		} else {

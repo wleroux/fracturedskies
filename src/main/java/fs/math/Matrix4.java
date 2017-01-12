@@ -35,6 +35,16 @@ public final class Matrix4 {
         this.m30 = m30; this.m31 = m31; this.m32 = m32; this.m33 = m33;
     }
 
+    public static Matrix4 mat4(Matrix4 m) {
+        return new Matrix4(
+                m.m00, m.m01, m.m02, m.m03,
+                m.m10, m.m11, m.m12, m.m13,
+                m.m20, m.m21, m.m22, m.m23,
+                m.m30, m.m31, m.m32, m.m33
+        );
+    }
+
+
     public static Matrix4 mat4(
             float m00, float m01, float m02, float m03,
             float m10, float m11, float m12, float m13,
@@ -57,6 +67,49 @@ public final class Matrix4 {
                 0, 0, 0, 1
         );
     }
+
+    public static Matrix4 mat4(Vector3 position, Quaternion4 rotation) {
+        float xx      = rotation.x() * rotation.x();
+        float xy      = rotation.x() * rotation.y();
+        float xz      = rotation.x() * rotation.z();
+        float xw      = rotation.x() * rotation.w();
+
+        float yy      = rotation.y() * rotation.y();
+        float yz      = rotation.y() * rotation.z();
+        float yw      = rotation.y() * rotation.w();
+
+        float zz      = rotation.z() * rotation.z();
+        float zw      = rotation.z() * rotation.w();
+
+        return mat4(
+                1 - 2 * ( yy + zz ),     2 * ( xy - zw ),     2 * ( xz + yw ), position.x(),
+                    2 * ( xy + zw ), 1 - 2 * ( xx + zz ),     2 * ( yz - xw ), position.y(),
+                    2 * ( xz - yw ),     2 * ( yz + xw ), 1 - 2 * ( xx + yy ), position.z(),
+                                  0,                   0,                   0, 1
+        );
+    }
+
+    public static Matrix4 mat4(Quaternion4 rotation) {
+        float xx      = rotation.x() * rotation.x();
+        float xy      = rotation.x() * rotation.y();
+        float xz      = rotation.x() * rotation.z();
+        float xw      = rotation.x() * rotation.w();
+
+        float yy      = rotation.y() * rotation.y();
+        float yz      = rotation.y() * rotation.z();
+        float yw      = rotation.y() * rotation.w();
+
+        float zz      = rotation.z() * rotation.z();
+        float zw      = rotation.z() * rotation.w();
+
+        return mat4(
+                1 - 2 * ( yy + zz ),     2 * ( xy - zw ),     2 * ( xz + yw ), 0,
+                    2 * ( xy + zw ), 1 - 2 * ( xx + zz ),     2 * ( yz - xw ), 0,
+                    2 * ( xz - yw ),     2 * ( yz + xw ), 1 - 2 * ( xx + yy ), 0,
+                                  0,                   0,                   0, 1
+                );
+    }
+
 
     public static Matrix4 perspective(float fov, int width, int height, float near, float far) {
         float angle = (float) Math.tan(fov / 2);
@@ -232,7 +285,7 @@ public final class Matrix4 {
 
     public String toString() {
         return format(
-                "[%d %d %d %d | %d %d %d %d | %d %d %d %d | %d %d %d %d]",
+                "[%f %f %f %f | %f %f %f %f | %f %f %f %f | %f %f %f %f]",
                 m00, m01, m02, m03,
                 m10, m11, m12, m13,
                 m20, m21, m22, m23,
@@ -313,5 +366,32 @@ public final class Matrix4 {
                 m20*m.m00 + m21*m.m10 + m22*m.m20 + m23*m.m30, m20*m.m01 + m21*m.m11 + m22*m.m21 + m23*m.m31, m20*m.m02 + m21*m.m12 + m22*m.m22 + m23*m.m32, m20*m.m03 + m21*m.m13 + m22*m.m23 + m23*m.m33,
                 m30*m.m00 + m31*m.m10 + m32*m.m20 + m33*m.m30, m30*m.m01 + m31*m.m11 + m32*m.m21 + m33*m.m31, m30*m.m02 + m31*m.m12 + m32*m.m22 + m33*m.m32, m30*m.m03 + m31*m.m13 + m32*m.m23 + m33*m.m33
         );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Matrix4)) {
+            return false;
+        }
+
+        Matrix4 m = (Matrix4) o;
+
+        return
+                Math.abs(m00 - m.m00) <= 0.00001f &&
+                Math.abs(m01 - m.m01) <= 0.00001f &&
+                Math.abs(m02 - m.m02) <= 0.00001f &&
+                Math.abs(m03 - m.m03) <= 0.00001f &&
+                Math.abs(m10 - m.m10) <= 0.00001f &&
+                Math.abs(m11 - m.m11) <= 0.00001f &&
+                Math.abs(m12 - m.m12) <= 0.00001f &&
+                Math.abs(m13 - m.m13) <= 0.00001f &&
+                Math.abs(m20 - m.m20) <= 0.00001f &&
+                Math.abs(m21 - m.m21) <= 0.00001f &&
+                Math.abs(m22 - m.m22) <= 0.00001f &&
+                Math.abs(m23 - m.m23) <= 0.00001f &&
+                Math.abs(m30 - m.m30) <= 0.00001f &&
+                Math.abs(m31 - m.m31) <= 0.00001f &&
+                Math.abs(m32 - m.m32) <= 0.00001f &&
+                Math.abs(m33 - m.m33) <= 0.00001f;
     }
 }
