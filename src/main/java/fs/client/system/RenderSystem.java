@@ -6,6 +6,8 @@ import fs.client.event.*;
 import fs.client.gl.Mesh;
 import fs.client.gl.Program;
 import fs.client.gl.TextureArray;
+import fs.client.world.World;
+import fs.client.world.WorldMeshGenerator;
 import fs.math.Matrix4;
 import fs.math.Quaternion4;
 import org.lwjgl.BufferUtils;
@@ -40,6 +42,7 @@ public class RenderSystem implements GameSystem {
 	private TextureArray textureArray;
 
 	private int tickCount = 0;
+	private World world;
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -116,61 +119,16 @@ public class RenderSystem implements GameSystem {
                 loadAsString("fs/client/gl/default.fs", classLoader)
         );
 
-        mesh = new Mesh(new float[] {
-                // front
-                -0.5f,  0.5f, -0.5f,  0f, 0f, 0f,   0f, -1f,  0f,
-                 0.5f,  0.5f, -0.5f,  0f, 1f, 0f,   0f, -1f,  0f,
-                 0.5f, -0.5f, -0.5f,  1f, 1f, 0f,   0f, -1f,  0f,
-                -0.5f, -0.5f, -0.5f,  1f, 0f, 0f,   0f, -1f,  0f,
+		world = new World(200, 200, 200);
+		for (int iy = 0; iy < 200; iy ++) {
+			for (int ix = 0; ix < 200; ix ++) {
+				for (int iz = 0; iz < 200; iz ++) {
+					world.set(ix, iy, iz, 1);
+				}
+			}
+		}
 
-                // top
-                -0.5f, 0.5f,  0.5f,   0f, 0f, 1f,   0f,  1f,  0f,
-                 0.5f, 0.5f,  0.5f,   0f, 1f, 1f,   0f,  1f,  0f,
-                 0.5f, 0.5f, -0.5f,   1f, 1f, 1f,   0f,  1f,  0f,
-                -0.5f, 0.5f, -0.5f,   1f, 0f, 1f,   0f,  1f,  0f,
-
-                // left
-                -0.5f,  0.5f,  0.5f,  0f, 0f, 0f,  -1f,  0f,  0f,
-                -0.5f,  0.5f, -0.5f,  0f, 1f, 0f,  -1f,  0f,  0f,
-                -0.5f, -0.5f, -0.5f,  1f, 1f, 0f,  -1f,  0f,  0f,
-                -0.5f, -0.5f,  0.5f,  1f, 0f, 0f,  -1f,  0f,  0f,
-
-                // right
-                 0.5f,  0.5f, -0.5f,  0f, 0f, 0f,   1f,  0f,  0f,
-                 0.5f,  0.5f,  0.5f,  0f, 1f, 0f,   1f,  0f,  0f,
-                 0.5f, -0.5f,  0.5f,  1f, 1f, 0f,   1f,  0f,  0f,
-                 0.5f, -0.5f, -0.5f,  1f, 0f, 0f,   1f,  0f,  0f,
-
-                 // bottom
-                -0.5f, -0.5f, -0.5f,   0f, 0f, 0f,  0f, -1f,  0f,
-                 0.5f, -0.5f, -0.5f,   0f, 1f, 0f,  0f, -1f,  0f,
-                 0.5f, -0.5f,  0.5f,   1f, 1f, 0f,  0f, -1f,  0f,
-                -0.5f, -0.5f,  0.5f,   1f, 0f, 0f,  0f, -1f,  0f,
-
-                // back
-                 0.5f,  0.5f,  0.5f,   0f, 0f, 0f,  0f,  0f,  1f,
-                -0.5f,  0.5f,  0.5f,   0f, 1f, 0f,  0f,  0f,  1f,
-                -0.5f, -0.5f,  0.5f,   1f, 1f, 0f,  0f,  0f,  1f,
-                 0.5f, -0.5f,  0.5f,   1f, 0f, 0f,  0f,  0f,  1f
-        }, new int[] {
-                0, 1, 2,
-                2, 3, 0,
-
-                4, 5, 6,
-                6, 7, 4,
-
-                8, 9, 10,
-                10, 11, 8,
-
-                12, 13, 14,
-                14, 15, 12,
-
-                16, 17, 18,
-                18, 19, 16,
-
-                20, 21, 22,
-                22, 23, 20
-        });
+        mesh = WorldMeshGenerator.generateMesh(world);
 		textureArray = new TextureArray(
 				loadAsByteBuffer("fs/client/gl/tileset.png", classLoader),
 				16,
@@ -190,7 +148,7 @@ public class RenderSystem implements GameSystem {
 
 		// Draw square
 		Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 120f));
-		view = mat4(vec3(0.0f, 1.5f, -10f).rotate(rotation), rotation).invert();
+		view = mat4(vec3(-100.0f, 220f, -200f).rotate(rotation), rotation).invert();
 		drawSquare(mesh, program, textureArray, model, view, projection);
 
 		glfwSwapBuffers(window); // swap the color buffers
