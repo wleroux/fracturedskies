@@ -7,6 +7,7 @@ import fs.client.gl.Mesh;
 import fs.client.gl.Program;
 import fs.client.gl.TextureArray;
 import fs.client.world.World;
+import fs.client.world.WorldGenerator;
 import fs.client.world.WorldMeshGenerator;
 import fs.math.Matrix4;
 import fs.math.Quaternion4;
@@ -15,6 +16,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
 import java.nio.FloatBuffer;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 import static fs.math.Matrix4.mat4;
@@ -43,6 +45,12 @@ public class RenderSystem implements GameSystem {
 
 	private int tickCount = 0;
 	private World world;
+
+	private static final int SEED = new Random().nextInt();
+	private static final int WORLD_WIDTH = 150;
+	private static final int WORLD_HEIGHT = WORLD_WIDTH;
+	private static final int WORLD_DEPTH = WORLD_WIDTH;
+	private static final WorldGenerator worldGenerator = new WorldGenerator(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -119,15 +127,7 @@ public class RenderSystem implements GameSystem {
                 loadAsString("fs/client/gl/default.fs", classLoader)
         );
 
-		world = new World(200, 200, 200);
-		for (int iy = 0; iy < 200; iy ++) {
-			for (int ix = 0; ix < 200; ix ++) {
-				for (int iz = 0; iz < 200; iz ++) {
-					world.set(ix, iy, iz, 1);
-				}
-			}
-		}
-
+		world = worldGenerator.generate(SEED);
         mesh = WorldMeshGenerator.generateMesh(world);
 		textureArray = new TextureArray(
 				loadAsByteBuffer("fs/client/gl/tileset.png", classLoader),
@@ -136,7 +136,7 @@ public class RenderSystem implements GameSystem {
 				2
 		);
 
-		model = mat4(vec3(0f, 0f, 0f));
+		model = mat4(vec3(-(WORLD_WIDTH / 2), 0f, -(WORLD_DEPTH / 2)));
         projection = perspective((float) Math.PI / 4, width, height, 0.03f, 1000f);
     }
 
@@ -147,8 +147,8 @@ public class RenderSystem implements GameSystem {
         glCullFace(GL_FRONT);
 
 		// Draw square
-		Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 120f));
-		view = mat4(vec3(-100.0f, 220f, -200f).rotate(rotation), rotation).invert();
+		Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 360f));
+		view = mat4(vec3(0.0f, WORLD_HEIGHT * 1.1f, -3f*WORLD_DEPTH).rotate(rotation), rotation).invert();
 		drawSquare(mesh, program, textureArray, model, view, projection);
 
 		glfwSwapBuffers(window); // swap the color buffers

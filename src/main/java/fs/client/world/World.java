@@ -6,7 +6,7 @@ public class World {
     private final int height;
     private final int depth;
 
-    int[] blocks;
+    private final int[] blocks;
 
     public World(int width, int height, int depth) {
         this.width = width;
