@@ -3,7 +3,9 @@ package fs.client;
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
 import fs.client.event.*;
-import fs.client.system.RenderSystem;
+import fs.client.system.render.RenderSystem;
+import fs.client.system.water.WaterSystem;
+import fs.client.system.world.WorldGenerationSystem;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -18,7 +20,9 @@ public class Main implements Runnable, GameSystem {
     public Main() {
         this.dispatcher = new Dispatcher();
         this.dispatcher.register(this);
+        this.dispatcher.register(new WaterSystem(dispatcher));
         this.dispatcher.register(new RenderSystem(dispatcher));
+        this.dispatcher.register(new WorldGenerationSystem(dispatcher));
     }
 
     @Override

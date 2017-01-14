@@ -1,4 +1,4 @@
-package fs.client.system;
+package fs.client.system.render;
 
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
@@ -6,16 +6,12 @@ import fs.client.event.*;
 import fs.client.gl.Mesh;
 import fs.client.gl.Program;
 import fs.client.gl.TextureArray;
-import fs.client.world.World;
-import fs.client.world.WorldGenerator;
-import fs.client.world.WorldMeshGenerator;
+import fs.client.world.*;
 import fs.math.Matrix4;
 import fs.math.Quaternion4;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
-import java.nio.FloatBuffer;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,16 +24,14 @@ import static fs.util.ResourceLoader.loadAsString;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class RenderSystem implements GameSystem {
 
 	private final Dispatcher dispatcher;
     private Program program;
-    private Mesh mesh;
+	private Mesh blockMesh;
+	private Mesh waterMesh;
 	private Matrix4 model;
     private Matrix4 view;
     private Matrix4 projection;
@@ -45,12 +39,6 @@ public class RenderSystem implements GameSystem {
 
 	private int tickCount = 0;
 	private World world;
-
-	private static final int SEED = new Random().nextInt();
-	private static final int WORLD_WIDTH = 150;
-	private static final int WORLD_HEIGHT = WORLD_WIDTH;
-	private static final int WORLD_DEPTH = WORLD_WIDTH;
-	private static final WorldGenerator worldGenerator = new WorldGenerator(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -61,13 +49,23 @@ public class RenderSystem implements GameSystem {
 		return event instanceof Initialized ||
 				event instanceof  UpdateRequested ||
 				event instanceof  RenderRequested ||
-				event instanceof  Terminated;
+				event instanceof  Terminated ||
+				event instanceof WorldGenerated ||
+				event instanceof WaterLevelsUpdated;
 	}
 
 	@Override
 	public void accept(Object o, CompletableFuture<Void> future) {
 		if (o instanceof Initialized) {
 			init();
+			future.complete(null);
+		} else if (o instanceof WorldGenerated) {
+			world = new World(((WorldGenerated) o).world());
+			model = mat4(vec3(-(world.width() / 2), 0f, -(world.height() / 2)));
+			future.complete(null);
+		} else if (o instanceof WaterLevelsUpdated) {
+			world.waterLevel(((WaterLevelsUpdated) o).waterLevel());
+			waterMesh = null;
 			future.complete(null);
 		} else if (o instanceof UpdateRequested) {
 			update(future);
@@ -127,60 +125,45 @@ public class RenderSystem implements GameSystem {
                 loadAsString("fs/client/gl/default.fs", classLoader)
         );
 
-		world = worldGenerator.generate(SEED);
-        mesh = WorldMeshGenerator.generateMesh(world);
 		textureArray = new TextureArray(
 				loadAsByteBuffer("fs/client/gl/tileset.png", classLoader),
 				16,
 				16,
-				2
+				3
 		);
 
-		model = mat4(vec3(-(WORLD_WIDTH / 2), 0f, -(WORLD_DEPTH / 2)));
         projection = perspective((float) Math.PI / 4, width, height, 0.03f, 1000f);
     }
 
     private void render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 
-		// Draw square
-		Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 360f));
-		view = mat4(vec3(0.0f, WORLD_HEIGHT * 1.1f, -3f*WORLD_DEPTH).rotate(rotation), rotation).invert();
-		drawSquare(mesh, program, textureArray, model, view, projection);
+		// Draw world
+		if (world != null) {
+			if (blockMesh == null) {
+				blockMesh = WorldMeshGenerator.generateMesh(world);
+			}
+			if (waterMesh == null) {
+				waterMesh = WaterMeshGenerator.generateMesh(world);
+			}
+
+
+			Quaternion4 rotation = quat4(vec3(0, 1, 0), (float) Math.PI * ((float) tickCount / 360f));
+			view = mat4(vec3(0.0f, 5f, -3f * world.depth()).rotate(rotation), rotation).invert();
+
+			MeshRenderer.render(blockMesh, program, textureArray, model, view, projection);
+			MeshRenderer.render(waterMesh, program, textureArray, model, view, projection);
+		}
 
 		glfwSwapBuffers(window); // swap the color buffers
 		glfwPollEvents();
 	}
 
-    private final FloatBuffer modelBuffer = BufferUtils.createFloatBuffer(16);
-    private final FloatBuffer viewBuffer = BufferUtils.createFloatBuffer(16);
-    private final FloatBuffer projectionBuffer = BufferUtils.createFloatBuffer(16);
-
-    private void drawSquare(Mesh mesh, Program program, TextureArray textureArray, Matrix4 model, Matrix4 view, Matrix4 projection) {
-        glUseProgram(program.id());
-
-        model.store(modelBuffer);
-        modelBuffer.flip();
-        glUniformMatrix4fv(0, false, modelBuffer);
-
-        view.store(viewBuffer);
-        viewBuffer.flip();
-        glUniformMatrix4fv(1, false, viewBuffer);
-
-        projection.store(projectionBuffer);
-        projectionBuffer.flip();
-        glUniformMatrix4fv(2, false, projectionBuffer);
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray.id());
-
-        glBindVertexArray(mesh.vao());
-        glDrawElements(GL_TRIANGLES, mesh.indexCount(), GL_UNSIGNED_INT, 0);
-        glUseProgram(0);
-    }
 
     private void terminate() {
 		// Free the window callbacks and destroy the window

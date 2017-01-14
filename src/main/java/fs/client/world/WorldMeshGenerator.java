@@ -21,7 +21,10 @@ public class WorldMeshGenerator {
         for (int iy = 0; iy < world.height(); iy ++) {
             for (int ix = 0; ix < world.width(); ix ++) {
                 for (int iz = 0; iz < world.depth(); iz ++) {
-                    if (world.get(ix, iy, iz) == 0) {
+                    int index = world.converter().index(ix, iy, iz);
+
+                    Tile tile = world.getBlock(index);
+                    if (tile == null) {
                         continue;
                     }
 
@@ -31,12 +34,13 @@ public class WorldMeshGenerator {
 
                     // front
                     if (shouldRenderFront(world, ix, iy, iz)) {
+                        int tileIndex = tile.front();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                                xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, 0f,   0f, -1f,  0f,
-                                xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, 0f,   0f, -1f,  0f,
-                                xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, 0f,   0f, -1f,  0f,
-                                xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, 0f,   0f, -1f,  0f,
+                                xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, tileIndex,   0f, -1f,  0f,
+                                xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, tileIndex,   0f, -1f,  0f,
+                                xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, tileIndex,   0f, -1f,  0f,
+                                xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, tileIndex,   0f, -1f,  0f,
                                 // @formatter:on
                         });
 
@@ -50,12 +54,13 @@ public class WorldMeshGenerator {
 
                     // top
                     if (shouldRenderTop(world, ix, iy, iz)) {
+                        int tileIndex = tile.top();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset + -0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 0f, 1f,   0f,  1f,  0f,
-                            xOffset +  0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 1f, 1f,   0f,  1f,  0f,
-                            xOffset +  0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 1f, 1f,   0f,  1f,  0f,
-                            xOffset + -0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 0f, 1f,   0f,  1f,  0f,
+                            xOffset + -0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 0f, tileIndex,   0f,  1f,  0f,
+                            xOffset +  0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 1f, tileIndex,   0f,  1f,  0f,
+                            xOffset +  0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 1f, tileIndex,   0f,  1f,  0f,
+                            xOffset + -0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 0f, tileIndex,   0f,  1f,  0f,
                             // @formatter:on
                         });
 
@@ -68,12 +73,13 @@ public class WorldMeshGenerator {
 
                     // left
                     if (shouldRenderLeft(world, ix, iy, iz)) {
+                        int tileIndex = tile.left();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 0f, 0f,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, 0f,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, 0f,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 0f, 0f,  -1f,  0f,  0f,
+                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 0f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 0f, tileIndex,  -1f,  0f,  0f,
                             // @formatter:on
                         });
 
@@ -86,12 +92,13 @@ public class WorldMeshGenerator {
 
                     // right
                     if (shouldRenderRight(world, ix, iy, iz)) {
+                        int tileIndex = tile.right();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, 0f,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 1f, 0f,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 1f, 0f,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, 0f,   1f,  0f,  0f,
+                            xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, tileIndex,   1f,  0f,  0f,
+                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 1f, tileIndex,   1f,  0f,  0f,
+                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 1f, tileIndex,   1f,  0f,  0f,
+                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, tileIndex,   1f,  0f,  0f,
                             // @formatter:on
                         });
 
@@ -104,12 +111,13 @@ public class WorldMeshGenerator {
 
                     // bottom
                     if (shouldRenderBottom(world, ix, iy, iz)) {
+                        int tileIndex = tile.bottom();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 0f, 0f,  0f, -1f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 1f, 0f,  0f, -1f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, 0f,  0f, -1f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, 0f,  0f, -1f,  0f,
+                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 0f, tileIndex,  0f, -1f,  0f,
+                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 1f, tileIndex,  0f, -1f,  0f,
+                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, tileIndex,  0f, -1f,  0f,
+                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, tileIndex,  0f, -1f,  0f,
                             // @formatter:on
                         });
 
@@ -122,12 +130,13 @@ public class WorldMeshGenerator {
 
                     // back
                     if (shouldRenderBack(world, ix, iy, iz)) {
+                        int tileIndex = tile.back();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 0f, 0f,  0f,  0f,  1f,
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 1f, 0f,  0f,  0f,  1f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, 0f,  0f,  0f,  1f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, 0f,  0f,  0f,  1f
+                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 0f, tileIndex,  0f,  0f,  1f,
+                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 1f, tileIndex,  0f,  0f,  1f,
+                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, tileIndex,  0f,  0f,  1f,
+                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, tileIndex,  0f,  0f,  1f
                                 // @formatter:on
                         });
 
@@ -166,33 +175,33 @@ public class WorldMeshGenerator {
 
     private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {
         if (iz + 1 == world.depth()) return true;
-        return world.get(ix, iy, iz + 1) == 0;
+        return world.getBlock(world.converter().index(ix, iy, iz + 1)) == null;
     }
 
     private static boolean shouldRenderBottom(World world, int ix, int iy, int iz) {
         if (iy == 0) return true;
-        return world.get(ix, iy - 1, iz) == 0;
+        return world.getBlock(world.converter().index(ix, iy - 1, iz)) == null;
     }
 
     private static boolean shouldRenderRight(World world, int ix, int iy, int iz) {
         if (ix + 1 == world.width()) return true;
-        return world.get(ix + 1, iy, iz) == 0;
+        return world.getBlock(world.converter().index(ix + 1, iy, iz)) == null;
     }
 
     private static boolean shouldRenderLeft(World world, int ix, int iy, int iz) {
         if (ix == 0) return true;
-        return world.get(ix - 1, iy, iz) == 0;
+        return world.getBlock(world.converter().index(ix - 1, iy, iz)) == null;
     }
 
     private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
         if (iy + 1 == world.height()) return true;
-        return world.get(ix, iy + 1, iz) == 0;
+        return world.getBlock(world.converter().index(ix, iy + 1, iz)) == null;
     }
 
 
     private static boolean shouldRenderFront(World world, int ix, int iy, int iz) {
         if (iz == 0) return true;
-        return world.get(ix, iy, iz - 1) == 0;
+        return world.getBlock(world.converter().index(ix, iy, iz - 1)) == null;
     }
 
 }

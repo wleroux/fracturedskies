@@ -16,5 +16,5 @@ void main()
     vec3 lightDir = normalize(vec3(1, 0.5, -0.25));
     float diffuse = 0.7 * max(dot(Normal, lightDir), 0.0);
 
-    color = (ambientLight + diffuse) * texture(albedo, TexCoord);
+    color = vec4((ambientLight + diffuse) * texture(albedo, TexCoord).rgb, texture(albedo, TexCoord).a);
 }
