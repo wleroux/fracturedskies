@@ -1,50 +1,39 @@
 package fs.client.gl;
 
-import org.omg.CORBA.FloatHolder;
-
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL21.*;
-import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL31.*;
-import static org.lwjgl.opengl.GL32.*;
-import static org.lwjgl.opengl.GL33.*;
-import static org.lwjgl.opengl.GL40.*;
-import static org.lwjgl.opengl.GL41.*;
-import static org.lwjgl.opengl.GL42.*;
-import static org.lwjgl.opengl.GL43.*;
-import static org.lwjgl.opengl.GL44.*;
-import static org.lwjgl.opengl.GL45.*;
+import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class Mesh {
 
     private final int vao;
     private final int indexCount;
 
-    private static final int POSITION_LOCATION = 0;
-    private static final int TEXCOORD_LOCATION = 1;
-    private static final int NORMAL_LOCATION = 2;
+    public static final int POSITION_LOCATION = 0;
+    public static final int TEXCOORD_LOCATION = 1;
+    public static final int NORMAL_LOCATION = 2;
 
-    public Mesh(float[] vertices, int[] indices) {
+    public Mesh(float[] vertices, int[] indices, Attribute... attributes) {
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
 
-        int vbo = glGenBuffers();
+       int vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(POSITION_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 0 * Float.BYTES);
-        glEnableVertexAttribArray(POSITION_LOCATION);
 
-        glVertexAttribPointer(TEXCOORD_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 3 * Float.BYTES);
-        glEnableVertexAttribArray(TEXCOORD_LOCATION);
+        int stride = 0;
+        for (Attribute attribute: attributes) {
+            stride += attribute.elements() * attribute.elementSize();
+        }
 
-        glVertexAttribPointer(NORMAL_LOCATION, 3, GL_FLOAT, false, 9 * Float.BYTES, 6 * Float.BYTES);
-        glEnableVertexAttribArray(NORMAL_LOCATION);
+        int offset = 0;
+        for (Attribute attribute: attributes) {
+            glVertexAttribPointer(attribute.location(), attribute.elements(), attribute.elementType(), false, stride, offset);
+            glEnableVertexAttribArray(attribute.location());
+            offset += attribute.elements() * attribute.elementSize();
+        }
 
         int ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -60,5 +49,40 @@ public class Mesh {
 
     public int indexCount() {
         return indexCount;
+    }
+
+    public static class Attribute {
+
+        private final int location;
+        private final int elementType;
+        private final int elements;
+        private final int elementSize;
+
+        public Attribute(int location, int elementType, int elements, int elementSize) {
+            this.location = location;
+            this.elementType = elementType;
+            this.elements = elements;
+            this.elementSize = elementSize;
+        }
+
+        public int location() {
+            return location;
+        }
+
+        public int elementType() {
+            return elementType;
+        }
+
+        public int elements() {
+            return elements;
+        }
+
+        public int elementSize() {
+            return elementSize;
+        }
+
+        public static Attribute attribute(int location, int elementType, int elements, int elementSize) {
+            return new Attribute(location, elementType, elements, elementSize);
+        }
     }
 }

@@ -394,4 +394,18 @@ public final class Matrix4 {
                 Math.abs(m32 - m.m32) <= 0.00001f &&
                 Math.abs(m33 - m.m33) <= 0.00001f;
     }
+
+    public static Matrix4 orthogonal(float left, float right, float bottom, float top, float near, float far) {
+        float width = (right - left);
+        float height = (top - bottom);
+        float depth = (far - near);
+        //@formatter:off
+        return mat4(
+                2 / width,          0,          0,  -(left + right) / width,
+                        0, 2 / height,          0, -(top + bottom) / height,
+                        0,          0, -2 / depth,    -(far + near) / depth,
+                        0,          0,          0,                        1
+        );
+        //@formatter:on
+    }
 }

@@ -2,11 +2,10 @@
 
 out vec4 color;
 
-in vec3 FragPos;
 in vec3 TexCoord;
 in vec3 Normal;
 
-uniform sampler2DArray albedo;
+layout (location = 3) uniform sampler2DArray albedo;
 
 
 void main()

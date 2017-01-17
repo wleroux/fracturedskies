@@ -5,10 +5,15 @@ import fs.client.gl.Mesh;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import static fs.client.gl.Mesh.Attribute.attribute;
+import static fs.client.gl.Mesh.NORMAL_LOCATION;
+import static fs.client.gl.Mesh.POSITION_LOCATION;
+import static fs.client.gl.Mesh.TEXCOORD_LOCATION;
 import static fs.client.world.World.MAX_WATER_LEVEL;
 import static fs.math.Interpolators.map;
 import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
 
 public class WaterMeshGenerator {
     public static Mesh generateMesh(World world) {
@@ -195,7 +200,11 @@ public class WaterMeshGenerator {
         int[] indices = new int[indicesBuffer.remaining()];
         indicesBuffer.get(indices);
 
-        return new Mesh(vertices, indices);
+        return new Mesh(vertices, indices,
+                attribute(POSITION_LOCATION, GL_FLOAT, 3, Float.BYTES),
+                attribute(TEXCOORD_LOCATION, GL_FLOAT, 3, Float.BYTES),
+                attribute(NORMAL_LOCATION, GL_FLOAT, 3, Float.BYTES)
+        );
     }
 
     private static float waterHeight(int waterLevel) {

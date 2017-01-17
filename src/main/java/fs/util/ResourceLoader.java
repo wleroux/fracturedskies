@@ -28,6 +28,10 @@ public class ResourceLoader {
     public static ByteBuffer loadAsByteBuffer(String name, ClassLoader classLoader) {
         try {
             try (InputStream is = classLoader.getResourceAsStream(name)) {
+                if (is == null) {
+                    throw new RuntimeException("Could not find resource: " + name);
+                }
+
                 try (ReadableByteChannel channel = Channels.newChannel(is)) {
                     ByteBuffer buffer = BufferUtils.createByteBuffer(8);
 

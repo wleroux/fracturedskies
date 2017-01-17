@@ -6,25 +6,31 @@ import fs.client.event.*;
 import fs.client.gl.Mesh;
 import fs.client.gl.Program;
 import fs.client.gl.TextureArray;
-import fs.client.world.*;
+import fs.client.ui.label.Label;
+import fs.client.ui.label.LabelMeshGenerator;
+import fs.client.ui.label.LabelRenderer;
+import fs.client.world.WaterMeshGenerator;
+import fs.client.world.World;
+import fs.client.world.WorldMeshGenerator;
 import fs.math.Matrix4;
 import fs.math.Quaternion4;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
+import static fs.math.Color4.color;
 import static fs.math.Matrix4.mat4;
 import static fs.math.Matrix4.perspective;
 import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
 import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class RenderSystem implements GameSystem {
 
@@ -39,6 +45,12 @@ public class RenderSystem implements GameSystem {
 
 	private int tickCount = 0;
 	private World world;
+	private Matrix4 labelModel;
+	private Matrix4 labelView;
+	private Matrix4 labelProjection;
+	private Label label;
+	private Program labelProgram;
+	private TextureArray labelTexture;
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -133,6 +145,22 @@ public class RenderSystem implements GameSystem {
 		);
 
         projection = perspective((float) Math.PI / 4, width, height, 0.03f, 1000f);
+
+        String missing = "~";
+        label = new Label("Hello World!", color(0.4f, 0.4f, 0.9f, 1f));
+        labelProgram = new Program(
+				loadAsString("fs/client/ui/label/label.vs", classLoader),
+				loadAsString("fs/client/ui/label/label.fs", classLoader)
+		);
+        labelModel = mat4(vec3(width / 2, height / 2, -1));
+        labelView = mat4(vec3(0, 0, 0)).invert();
+        labelProjection = Matrix4.orthogonal(0, width, 0, height, 0.03f, 1000f);
+		labelTexture = new TextureArray(
+				loadAsByteBuffer("fs/client/ui/label/font.png", classLoader),
+				8,
+				9,
+				128
+		);
     }
 
     private void render() {
@@ -140,8 +168,8 @@ public class RenderSystem implements GameSystem {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+//        glEnable(GL_CULL_FACE);
+//        glCullFace(GL_FRONT);
 
 		// Draw world
 		if (world != null) {
@@ -158,6 +186,11 @@ public class RenderSystem implements GameSystem {
 
 			MeshRenderer.render(blockMesh, program, textureArray, model, view, projection);
 			MeshRenderer.render(waterMesh, program, textureArray, model, view, projection);
+		}
+
+		if (label != null) {
+			Mesh labelMesh = LabelMeshGenerator.generate(label.text());
+			LabelRenderer.render(labelMesh, label.color(), labelProgram, labelTexture, labelModel, labelView, labelProjection );
 		}
 
 		glfwSwapBuffers(window); // swap the color buffers
