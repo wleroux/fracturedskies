@@ -44,7 +44,7 @@ public class WaterSystem implements GameSystem {
                         world.width() / 2,
                         world.height() - 1,
                         world.depth() / 2
-                ), MAX_WATER_LEVEL);
+                ), 1);
 
                 if (flow()) {
                     dispatcher.dispatch(new WaterLevelsUpdated(world.waterLevel())).join();

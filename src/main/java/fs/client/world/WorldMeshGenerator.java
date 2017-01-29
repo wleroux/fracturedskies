@@ -1,17 +1,13 @@
 package fs.client.world;
 
-import fs.client.gl.Mesh;
+import fs.client.ui.primitive.mesh.Mesh;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-import static fs.client.gl.Mesh.Attribute.attribute;
-import static fs.client.gl.Mesh.NORMAL_LOCATION;
-import static fs.client.gl.Mesh.POSITION_LOCATION;
-import static fs.client.gl.Mesh.TEXCOORD_LOCATION;
+import static fs.client.ui.primitive.OpenGLComponent.*;
 import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
 
 public class WorldMeshGenerator {
     public static Mesh generateMesh(World world) {
@@ -175,11 +171,7 @@ public class WorldMeshGenerator {
         int[] indices = new int[indicesBuffer.remaining()];
         indicesBuffer.get(indices);
 
-        return new Mesh(vertices, indices,
-                attribute(POSITION_LOCATION, GL_FLOAT, 3, Float.BYTES),
-                attribute(TEXCOORD_LOCATION, GL_FLOAT, 3, Float.BYTES),
-                attribute(NORMAL_LOCATION, GL_FLOAT, 3, Float.BYTES)
-        );
+        return new Mesh(vertices, indices, POSITION, TEXCOORD, NORMAL);
     }
 
     private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {

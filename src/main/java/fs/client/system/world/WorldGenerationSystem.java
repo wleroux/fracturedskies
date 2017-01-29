@@ -14,7 +14,7 @@ public class WorldGenerationSystem implements GameSystem {
 
 
     private static final int SEED = new Random().nextInt();
-    private static final int WORLD_WIDTH = 30;
+    private static final int WORLD_WIDTH = 4;
     private static final int WORLD_HEIGHT = WORLD_WIDTH;
     private static final int WORLD_DEPTH = WORLD_WIDTH;
     private final Dispatcher dispatcher;

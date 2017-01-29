@@ -1,4 +1,4 @@
-package fs.client.gl;
+package fs.client.ui.primitive.mesh;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
@@ -11,9 +11,6 @@ public class Mesh {
     private final int vao;
     private final int indexCount;
 
-    public static final int POSITION_LOCATION = 0;
-    public static final int TEXCOORD_LOCATION = 1;
-    public static final int NORMAL_LOCATION = 2;
 
     public Mesh(float[] vertices, int[] indices, Attribute... attributes) {
         vao = glGenVertexArrays();
