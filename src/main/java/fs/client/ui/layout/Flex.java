@@ -12,24 +12,34 @@ public class Flex extends Component {
 
     private final List<Component> components = new ArrayList<>();
 
-    public void justifyContent(Justify justify) {
-        justifyContent = justify;
+    public Flex justifyContent(JustifyContent justifyContent) {
+        this.justifyContent = justifyContent;
+
+        return this;
     }
 
-    public void alignItems(ItemAlign align) {
+    public Flex alignItems(ItemAlign align) {
         alignItems = align;
+
+        return this;
     }
 
-    public void direction(Direction direction) {
+    public Flex direction(Direction direction) {
         this.direction = direction;
+
+        return this;
     }
 
-    public void wrap(Wrap wrap) {
+    public Flex wrap(Wrap wrap) {
         this.wrap = wrap;
+
+        return this;
     }
 
-    public void alignContent(ContentAlign align) {
+    public Flex alignContent(ContentAlign align) {
         alignContent = align;
+
+        return this;
     }
 
     public enum Direction {
@@ -147,7 +157,7 @@ public class Flex extends Component {
         NO_WRAP
     }
 
-    public enum Justify {
+    public enum JustifyContent {
         LEFT,
         CENTER,
         RIGHT,
@@ -172,7 +182,7 @@ public class Flex extends Component {
     }
 
     private Direction direction = Direction.ROW;
-    private Justify justifyContent = Justify.LEFT;
+    private JustifyContent justifyContent = JustifyContent.LEFT;
     private ItemAlign alignItems = ItemAlign.START;
     private ContentAlign alignContent = ContentAlign.START;
 
@@ -262,19 +272,19 @@ public class Flex extends Component {
 
             int initialMainOffset = 0;
             int betweenMainOffset = 0;
-            if (justifyContent == Justify.LEFT) {
+            if (justifyContent == JustifyContent.LEFT) {
                 initialMainOffset = 0;
                 betweenMainOffset = 0;
-            } else if (justifyContent == Justify.RIGHT) {
+            } else if (justifyContent == JustifyContent.RIGHT) {
                 initialMainOffset = extraMainSpace;
                 betweenMainOffset = 0;
-            } else  if (justifyContent == Justify.CENTER) {
+            } else  if (justifyContent == JustifyContent.CENTER) {
                 initialMainOffset = extraMainSpace / 2;
                 betweenMainOffset = 0;
-            } else  if (justifyContent == Justify.SPACE_BETWEEN) {
+            } else  if (justifyContent == JustifyContent.SPACE_BETWEEN) {
                 initialMainOffset = 0;
                 betweenMainOffset = componentRow.size() <= 1 ? 0 : extraMainSpace / (componentRow.size() - 1);
-            } else if (justifyContent == Justify.SPACE_AROUND) {
+            } else if (justifyContent == JustifyContent.SPACE_AROUND) {
                 betweenMainOffset = extraMainSpace / componentRow.size();
                 initialMainOffset = betweenMainOffset / 2;
             }
@@ -351,11 +361,9 @@ public class Flex extends Component {
         }
     }
 
-    public void add(Component component) {
+    public Flex add(Component component) {
         components.add(component);
-    }
 
-    public void add(int index, Component component) {
-        components.add(index, component);
+        return this;
     }
 }

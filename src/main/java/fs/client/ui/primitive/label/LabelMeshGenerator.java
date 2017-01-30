@@ -31,10 +31,10 @@ public class LabelMeshGenerator {
         int vertexCount = 0;
         for (int charIndex = 0; charIndex < characters.length; charIndex ++) {
             verticesBuffer.put(new float[] {
-                    (charIndex + 0) * CHAR_WIDTH, CHAR_HEIGHT, 0,  0, 0, characters[charIndex],
-                    (charIndex + 1) * CHAR_WIDTH, CHAR_HEIGHT, 0,  1, 0, characters[charIndex],
-                    (charIndex + 1) * CHAR_WIDTH,           0, 0,  1, 1, characters[charIndex],
-                    (charIndex + 0) * CHAR_WIDTH,           0, 0,  0, 1, characters[charIndex]
+                    (charIndex + 0) * CHAR_WIDTH,           0, 0,  0, 0, characters[charIndex],
+                    (charIndex + 1) * CHAR_WIDTH,           0, 0,  1, 0, characters[charIndex],
+                    (charIndex + 1) * CHAR_WIDTH, CHAR_HEIGHT, 0,  1, 1, characters[charIndex],
+                    (charIndex + 0) * CHAR_WIDTH, CHAR_HEIGHT, 0,  0, 1, characters[charIndex]
             });
             indicesBuffer.put(new int[] {
                     vertexCount + 0, vertexCount + 1, vertexCount + 2,

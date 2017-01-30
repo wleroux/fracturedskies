@@ -6,7 +6,7 @@ import fs.client.event.*;
 import fs.client.ui.game.WorldRenderer;
 import fs.client.ui.layout.Card;
 import fs.client.ui.layout.Flex;
-import fs.client.ui.primitive.label.Label;
+import fs.client.ui.primitive.button.Button;
 import fs.client.world.World;
 import fs.math.Matrix4;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -16,9 +16,8 @@ import org.lwjgl.opengl.GL;
 import java.util.concurrent.CompletableFuture;
 
 import static fs.client.ui.layout.Flex.Direction.ROW;
-import static fs.client.ui.layout.Flex.Justify.CENTER;
+import static fs.client.ui.layout.Flex.JustifyContent.CENTER;
 import static fs.client.ui.layout.Flex.Wrap.NO_WRAP;
-import static fs.math.Color4.color;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -118,33 +117,33 @@ public class RenderSystem implements GameSystem {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         // Initialize Renderer
+        worldRenderer = new WorldRenderer(screenWidth, screenHeight);
+        card.add(worldRenderer);
+        if (world != null) {
+            worldRenderer.setWorld(world);
+        }
+
         Flex flex = new Flex();
         flex.direction(ROW);
         flex.justifyContent(CENTER);
         flex.alignItems(Flex.ItemAlign.CENTER);
-        flex.alignContent(Flex.ContentAlign.STRETCH);
+        flex.alignContent(Flex.ContentAlign.CENTER);
         flex.wrap(NO_WRAP);
 
-		Matrix4 labelProjection = Matrix4.orthogonal(0, screenWidth, 0, screenHeight, 0.03f, 1000f);
+		Matrix4 guiProjection = Matrix4.orthogonal(0, screenWidth, screenHeight, 0, 0.03f, 1000f);
 		for (int i = 1; i <= 1; i ++) {
-            Label label = new Label("Hello, World!", color(0.4f, 0.4f, 0.9f, 1f), labelProjection);
-            flex.add(label);
+            Button button = new Button(guiProjection)
+                    .text("Hello, World!");
+            flex.add(button);
         }
 
 		card.add(flex);
-
-		worldRenderer = new WorldRenderer(screenWidth, screenHeight);
-		card.add(worldRenderer);
-		if (world != null) {
-		    worldRenderer.setWorld(world);
-        }
     }
 
     private void render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 

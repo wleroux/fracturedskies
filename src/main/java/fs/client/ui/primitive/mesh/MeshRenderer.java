@@ -3,6 +3,8 @@ package fs.client.ui.primitive.mesh;
 import fs.client.ui.primitive.OpenGLComponent;
 import fs.math.Matrix4;
 
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 
@@ -36,6 +38,7 @@ public class MeshRenderer extends OpenGLComponent {
 
     public void render(int xOffset, int yOffset, int width, int height) {
         glUseProgram(program.id());
+        glEnable(GL_DEPTH_TEST);
         uniform(MODEL_LOCATION, model);
         uniform(VIEW_LOCATION, view);
         uniform(PROJECTION_LOCATION, projection);
