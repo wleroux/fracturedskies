@@ -1,17 +1,18 @@
 package fs.client.ui.layout;
 
 import fs.client.ui.Component;
+import fs.client.ui.event.Event;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Card extends Component {
-    private final List<Component> components = new ArrayList<>();
+    private final List<Component> children = new ArrayList<>();
 
     @Override
     public int preferredWidth() {
         int preferredWidth = 0;
-        for (Component component: components) {
+        for (Component component: children) {
             if (component.preferredWidth() > preferredWidth) {
                 preferredWidth = component.preferredWidth();
             }
@@ -22,7 +23,7 @@ public class Card extends Component {
     @Override
     public int preferredHeight() {
         int preferredHeight = 0;
-        for (Component component: components) {
+        for (Component component: children) {
             if (component.preferredHeight() > preferredHeight) {
                 preferredHeight = component.preferredHeight();
             }
@@ -31,17 +32,49 @@ public class Card extends Component {
     }
 
     @Override
-    public void render(int xOffset, int yOffset, int width, int height) {
-        for (Component component: components) {
-            component.render(xOffset, yOffset, width, height);
+    public Card bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
+    @Override
+    public void render() {
+        for (Component component: children) {
+            component
+                    .bounds(x, y, width, height)
+                    .render();
         }
     }
 
-    public void add(Component component) {
-        components.add(component);
+
+    @Override
+    public Component findComponentAt(int x, int y) {
+        // Reverse order of children as later child render over previous child
+        for (int i = children.size() - 1; i >= 0; i --) {
+            Component childComponent = children.get(i).findComponentAt(x, y);
+            if (childComponent != null) {
+                return childComponent;
+            }
+        }
+
+        return null;
     }
 
-    public void add(int index, Component component) {
-        components.add(index, component);
+    @Override
+    public List<Component> children() {
+        return children;
+    }
+
+    @Override
+    public void handle(Event event) {
+    }
+
+    public void add(Component child) {
+        child.parent(this);
+        children.add(child);
     }
 }

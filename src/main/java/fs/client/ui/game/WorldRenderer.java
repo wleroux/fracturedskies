@@ -34,6 +34,10 @@ public class WorldRenderer extends Component {
     private World world;
     private int screenWidth;
     private int screenHeight;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
 
     public WorldRenderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -91,16 +95,40 @@ public class WorldRenderer extends Component {
     }
 
     @Override
-    public void render(int xOffset, int yOffset, int width, int height) {
+    public WorldRenderer bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
+    @Override
+    public void render() {
         if (world != null) {
             if (blockRenderer == null)
                 blockRenderer = new MeshRenderer(blockMesh, program, textureArray, model, view, projection);
-            blockRenderer.render(xOffset, yOffset, width, height);
+            blockRenderer
+                    .bounds(x, y, width, height)
+                    .render();
 
             if (waterRenderer == null)
                 waterRenderer = new MeshRenderer(waterMesh, program, textureArray, model, view, projection);
-            waterRenderer.render(xOffset, yOffset, width, height);
+            waterRenderer
+                    .bounds(x, y, width, height)
+                    .render();
         }
+    }
+
+    @Override
+    public Component findComponentAt(int x, int y) {
+        if (this.x <= x && x <= this.x + this.width) {
+            if (this.y <= y && y <= this.y + this.height) {
+                return this;
+            }
+        }
+        return null;
     }
 
     public void update() {

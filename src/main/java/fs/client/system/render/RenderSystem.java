@@ -3,6 +3,8 @@ package fs.client.system.render;
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
 import fs.client.event.*;
+import fs.client.ui.Component;
+import fs.client.ui.event.*;
 import fs.client.ui.game.WorldRenderer;
 import fs.client.ui.layout.Card;
 import fs.client.ui.layout.Flex;
@@ -32,8 +34,11 @@ public class RenderSystem implements GameSystem {
 	private World world;
     private int screenWidth;
     private int screenHeight;
+	private int mouseX;
+	private int mouseY;
+	private Component mouseover = null;
 
-    public RenderSystem(Dispatcher dispatcher) {
+	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 
@@ -110,6 +115,30 @@ public class RenderSystem implements GameSystem {
 				glfwSetWindowShouldClose(window, true);
 		});
 
+		glfwSetCursorPosCallback(window, (long window, double xpos, double ypos) -> {
+			mouseX = (int) xpos;
+			mouseY = (int) ypos;
+
+			Component component = card.findComponentAt(mouseX, mouseY);
+			if (mouseover != component) {
+				if (mouseover != null)
+					Event.dispatch(new MouseOut(mouseover));
+				if (component != null)
+					Event.dispatch(new MouseOver(component));
+				mouseover = component;
+			}
+
+			if (component != null) {
+				Event.dispatch(new MouseMove(component, (int) xpos, (int) ypos));
+			}
+		});
+		glfwSetMouseButtonCallback(window, (long window, int button, int action, int mods) -> {
+			if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+				Component component = card.findComponentAt(mouseX, mouseY);
+				Event.dispatch(new MouseDown(component, button, mouseX, mouseY));
+			}
+		});
+
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 		glfwShowWindow(window);
@@ -131,11 +160,8 @@ public class RenderSystem implements GameSystem {
         flex.wrap(NO_WRAP);
 
 		Matrix4 guiProjection = Matrix4.orthogonal(0, screenWidth, screenHeight, 0, 0.03f, 1000f);
-		for (int i = 1; i <= 1; i ++) {
-            Button button = new Button(guiProjection)
-                    .text("Hello, World!");
-            flex.add(button);
-        }
+		flex.add(new Button(guiProjection)
+				.text("Hello, World!"));
 
 		card.add(flex);
     }
@@ -147,7 +173,9 @@ public class RenderSystem implements GameSystem {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 
-		card.render(0, 0, screenWidth, screenHeight);
+        card
+			.bounds(0, 0, screenWidth, screenHeight)
+			.render();
 
 		glfwSwapBuffers(window); // swap the color buffers
 		glfwPollEvents();

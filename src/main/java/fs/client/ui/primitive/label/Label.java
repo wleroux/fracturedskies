@@ -45,6 +45,9 @@ public class Label extends OpenGLComponent {
         this.projection = projection;
     }
 
+    public String text() {
+        return text;
+    }
     public Label text(String text) {
         this.text = text;
         return this;
@@ -65,6 +68,16 @@ public class Label extends OpenGLComponent {
     }
 
     @Override
+    public Label bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
+    @Override
     public int preferredWidth() {
         return LabelMeshGenerator.width(text) + leftPadding + rightPadding;
     }
@@ -74,12 +87,12 @@ public class Label extends OpenGLComponent {
         return LabelMeshGenerator.height(text) + topPadding + bottomPadding;
     }
 
-    public void render(int xOffset, int yOffset, int width, int height) {
+    public void render() {
         if (!text.isEmpty()) {
             String displayText = LabelMeshGenerator.displayText(text, width, height);
             mesh = LabelMeshGenerator.generate(displayText);
 
-            Matrix4 model = Matrix4.mat4(vec3(xOffset + leftPadding, yOffset + topPadding, -1));
+            Matrix4 model = Matrix4.mat4(vec3(x + leftPadding, y + topPadding, -1));
 
             glUseProgram(program.id());
             uniform(COLOR_LOCATION, color);
@@ -91,4 +104,5 @@ public class Label extends OpenGLComponent {
             glUseProgram(0);
         }
     }
+
 }

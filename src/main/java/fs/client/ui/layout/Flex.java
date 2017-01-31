@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Flex extends Component {
 
-    private final List<Component> components = new ArrayList<>();
+    private final List<Component> children = new ArrayList<>();
 
     public Flex justifyContent(JustifyContent justifyContent) {
         this.justifyContent = justifyContent;
@@ -153,8 +153,41 @@ public class Flex extends Component {
     }
 
     public enum Wrap {
-        WRAP,
-        NO_WRAP
+        WRAP {
+            public List<List<Component>> split(List<Component> components, Direction direction, int width, int height) {
+                int mainAxisSize = direction.main(width, height);
+                List<List<Component>> componentRows = new ArrayList<>();
+                int currentComponentIndex = 0;
+                while (currentComponentIndex < components.size()) {
+                    List<Component> componentRow = new ArrayList<>();
+
+                    int cumulativeMainAxisSize = 0;
+                    while (currentComponentIndex < components.size()) {
+                        Component component = components.get(currentComponentIndex);
+                        int componentMainSize = direction.main(component.preferredWidth(), component.preferredHeight());
+                        if (cumulativeMainAxisSize + componentMainSize > mainAxisSize) {
+                            break;
+                        } else {
+                            cumulativeMainAxisSize += componentMainSize;
+                            componentRow.add(component);
+                            currentComponentIndex++;
+                        }
+                    }
+                    componentRows.add(componentRow);
+                }
+
+                return componentRows;
+            }
+        },
+        NO_WRAP {
+            public List<List<Component>> split(List<Component> components, Direction direction, int width, int height) {
+                List<List<Component>> componentRows = new ArrayList<>();
+                componentRows.add(components);
+                return componentRows;
+            }
+        };
+
+        public abstract List<List<Component>> split(List<Component> components, Direction direction, int width, int height);
     }
 
     public enum JustifyContent {
@@ -192,7 +225,7 @@ public class Flex extends Component {
     @Override
     public int preferredWidth() {
         int preferredWidth = 0;
-        for (Component component: components) {
+        for (Component component: children) {
             preferredWidth += component.preferredWidth();
         }
         return preferredWidth;
@@ -201,16 +234,25 @@ public class Flex extends Component {
     @Override
     public int preferredHeight() {
         int preferredHeight = 0;
-        for (Component component: components) {
+        for (Component component: children) {
             preferredHeight += component.preferredHeight();
         }
         return preferredHeight;
     }
 
+    public Flex bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
     @Override
-    public void render(int xOffset, int yOffset, int width, int height) {
+    public void render() {
         int mainAxisSize = direction.main(width, height);
-        List<List<Component>> componentRows = splitIntoRows(width, height);
+        List<List<Component>> componentRows = wrap.split(children, direction, width, height);
 
         int usedCrossSpace = 0;
         for (List<Component> componentRow: componentRows) {
@@ -313,12 +355,12 @@ public class Flex extends Component {
                     initialCrossOffset = 0;
                 }
 
-                component.render(
-                        xOffset + direction.x(componentMainOffset, componentCrossOffset + initialCrossOffset),
-                        yOffset + direction.y(componentMainOffset, componentCrossOffset + initialCrossOffset),
+                component.bounds(
+                        x + direction.x(componentMainOffset, componentCrossOffset + initialCrossOffset),
+                        y + direction.y(componentMainOffset, componentCrossOffset + initialCrossOffset),
                         direction.x(componentMainSpace, cross),
                         direction.y(componentMainSpace, cross)
-                );
+                ).render();
 
                 componentMainOffset += componentMainSpace + betweenMainOffset;
                 if (maxCrossSpace < cross) {
@@ -330,39 +372,31 @@ public class Flex extends Component {
         }
     }
 
-    private List<List<Component>> splitIntoRows(int width, int height) {
-        if (wrap == Wrap.NO_WRAP) {
-            List<List<Component>> componentRows = new ArrayList<>();
-            componentRows.add(components);
-            return componentRows;
-        } else {
-            int mainAxisSize = direction.main(width, height);
-            List<List<Component>> componentRows = new ArrayList<>();
-            int currentComponentIndex = 0;
-            while (currentComponentIndex < components.size()) {
-                List<Component> componentRow = new ArrayList<>();
-
-                int cumulativeMainAxisSize = 0;
-                while (currentComponentIndex < components.size()) {
-                    Component component = components.get(currentComponentIndex);
-                    int componentMainSize = direction.main(component.preferredWidth(), component.preferredHeight());
-                    if (cumulativeMainAxisSize + componentMainSize > mainAxisSize) {
-                        break;
-                    } else {
-                        cumulativeMainAxisSize += componentMainSize;
-                        componentRow.add(component);
-                        currentComponentIndex++;
+    @Override
+    public Component findComponentAt(int x, int y) {
+        if (this.x <= x && x <= this.x + this.width) {
+            if (this.y <= y && y <= this.y + this.height) {
+                for (Component child: children()) {
+                    Component childComponent = child.findComponentAt(x, y);
+                    if (childComponent != null) {
+                        return childComponent;
                     }
                 }
-                componentRows.add(componentRow);
             }
-
-            return componentRows;
         }
+
+        return null;
     }
 
-    public Flex add(Component component) {
-        components.add(component);
+    @Override
+    public List<Component> children() {
+        return children;
+    }
+
+
+    public Flex add(Component child) {
+        child.parent(this);
+        children.add(child);
 
         return this;
     }

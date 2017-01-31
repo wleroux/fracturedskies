@@ -23,9 +23,12 @@ import static org.lwjgl.opengl.GL20.glUseProgram;
 public class ButtonBase extends OpenGLComponent {
 
     private final Program program;
-    private final TextureArray textureArray;
+    private final TextureArray defaultTextureArray;
+    private final TextureArray hoverTextureArray;
     private final Matrix4 projection;
     private Color4 color = Color4.color(1f, 1f, 1f, 1f);
+    private boolean hover = false;
+
 
     public ButtonBase(Matrix4 projection) {
         ClassLoader classLoader = this.getClass().getClassLoader();
@@ -33,8 +36,14 @@ public class ButtonBase extends OpenGLComponent {
                 loadAsString("fs/client/ui/primitive/button/button.vs", classLoader),
                 loadAsString("fs/client/ui/primitive/button/button.fs", classLoader)
         );
-        this.textureArray = new TextureArray(
-                loadAsByteBuffer("fs/client/ui/primitive/button/button.png", classLoader),
+        this.defaultTextureArray = new TextureArray(
+                loadAsByteBuffer("fs/client/ui/primitive/button/button_default.png", classLoader),
+                4,
+                4,
+                9
+        );
+        this.hoverTextureArray = new TextureArray(
+                loadAsByteBuffer("fs/client/ui/primitive/button/button_hover.png", classLoader),
                 4,
                 4,
                 9
@@ -49,6 +58,12 @@ public class ButtonBase extends OpenGLComponent {
         return this;
     }
 
+    public ButtonBase hover(boolean hover) {
+        this.hover = hover;
+
+        return this;
+    }
+
     @Override
     public int preferredWidth() {
         return LAYER_WIDTH*3;
@@ -59,11 +74,20 @@ public class ButtonBase extends OpenGLComponent {
         return LAYER_HEIGHT*3;
     }
 
+    public ButtonBase bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
     @Override
-    public void render(int xOffset, int yOffset, int width, int height) {
+    public void render() {
         Mesh mesh = generate(width, height);
 
-        Matrix4 model = Matrix4.mat4(vec3(xOffset, yOffset, -1));
+        Matrix4 model = Matrix4.mat4(vec3(x, y, -1));
 
         glUseProgram(program.id());
         glDisable(GL_DEPTH_TEST);
@@ -71,7 +95,7 @@ public class ButtonBase extends OpenGLComponent {
         uniform(COLOR_LOCATION, color);
         uniform(MODEL_LOCATION, model);
         uniform(PROJECTION_LOCATION, projection);
-        uniform(ALBEDO_LOCATION, GL_TEXTURE0, textureArray);
+        uniform(ALBEDO_LOCATION, GL_TEXTURE0, hover ? hoverTextureArray : defaultTextureArray);
         draw(mesh);
 
         glUseProgram(0);

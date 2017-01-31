@@ -132,7 +132,7 @@ public class WaterSystem implements GameSystem {
                 return path;
             }
 
-            // If not higher potential, find neighbours
+            // If not higher potential, findComponentAt neighbours
             for (int neighbour: world.converter().neighbours(cellIndex)) {
                 if (maxFlowOut[neighbour] > 0) {
                     if (!cameFrom.containsKey(neighbour)) {
@@ -143,7 +143,7 @@ public class WaterSystem implements GameSystem {
             }
         }
 
-        // If we cannot find any path, then any adjacent neighbours would not find any better solution either; discard
+        // If we cannot findComponentAt any path, then any adjacent neighbours would not findComponentAt any better solution either; discard
         // them so we don't waste time!
         for (Integer cellIndex: cameFrom.keySet()) {
             maxFlowOut[cellIndex] = 0;

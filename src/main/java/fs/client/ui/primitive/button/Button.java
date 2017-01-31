@@ -1,11 +1,14 @@
 package fs.client.ui.primitive.button;
 
 import fs.client.ui.Component;
+import fs.client.ui.event.*;
 import fs.client.ui.layout.Card;
 import fs.client.ui.layout.Flex;
 import fs.client.ui.primitive.label.Label;
 import fs.math.Color4;
 import fs.math.Matrix4;
+
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 public class Button extends Component {
 
@@ -16,6 +19,8 @@ public class Button extends Component {
     private int rightPadding;
     private int bottomPadding;
     private int leftPadding;
+    private EventHandler<Click> clickHandler = (event) -> {};
+
 
     public Button(Matrix4 projection) {
         label = new Label(projection)
@@ -58,6 +63,42 @@ public class Button extends Component {
     }
 
     @Override
+    public Button bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
+    @Override
+    public Component findComponentAt(int x, int y) {
+        if (this.x <= x && x <= this.x + this.width) {
+            if (this.y <= y && y <= this.y + this.height) {
+                return this;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void handle(Event event) {
+        if (event instanceof MouseOver) {
+            buttonBase.hover(true);
+        } else if (event instanceof MouseOut) {
+            buttonBase.hover(false);
+        } else if (event instanceof MouseDown) {
+            if (((MouseDown) event).button() == GLFW_MOUSE_BUTTON_LEFT) {
+                event.stopPropagation();
+                Event.dispatch(new Click(this));
+            }
+        } else if (event instanceof Click) {
+            clickHandler.handle((Click) event);
+        }
+    }
+
+    @Override
     public int preferredWidth() {
         return card.preferredWidth() + leftPadding + rightPadding;
     }
@@ -68,7 +109,19 @@ public class Button extends Component {
     }
 
     @Override
-    public void render(int xOffset, int yOffset, int width, int height) {
-        card.render(xOffset + leftPadding, yOffset + topPadding, width - leftPadding - rightPadding, height - topPadding - bottomPadding);
+    public void render() {
+        card
+                .bounds(x + leftPadding, y + topPadding, width - leftPadding - rightPadding, height - topPadding - bottomPadding)
+                .render();
+    }
+
+    public String toString() {
+        return "Button[" + label.text() + "]";
+    }
+
+    public Button onclick(EventHandler<Click> clickHandler) {
+        this.clickHandler = clickHandler;
+
+        return this;
     }
 }

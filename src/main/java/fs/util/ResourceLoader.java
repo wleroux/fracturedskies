@@ -14,7 +14,7 @@ public class ResourceLoader {
         try {
             try (InputStream is = classLoader.getResourceAsStream(name)) {
                 if (is == null) {
-                    throw new RuntimeException("Could not find resource: " + name);
+                    throw new RuntimeException("Could not findComponentAt resource: " + name);
                 }
 
                 Scanner scanner = new Scanner(is).useDelimiter("\\Z");
@@ -29,7 +29,7 @@ public class ResourceLoader {
         try {
             try (InputStream is = classLoader.getResourceAsStream(name)) {
                 if (is == null) {
-                    throw new RuntimeException("Could not find resource: " + name);
+                    throw new RuntimeException("Could not findComponentAt resource: " + name);
                 }
 
                 try (ReadableByteChannel channel = Channels.newChannel(is)) {

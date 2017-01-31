@@ -36,7 +36,17 @@ public class MeshRenderer extends OpenGLComponent {
         return 0;
     }
 
-    public void render(int xOffset, int yOffset, int width, int height) {
+    @Override
+    public MeshRenderer bounds(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    }
+
+    public void render() {
         glUseProgram(program.id());
         glEnable(GL_DEPTH_TEST);
         uniform(MODEL_LOCATION, model);
