@@ -5,27 +5,44 @@ import fs.client.ui.event.*;
 import fs.client.ui.layout.Card;
 import fs.client.ui.layout.Flex;
 import fs.client.ui.primitive.label.Label;
+import fs.client.ui.primitive.mesh.TextureArray;
 import fs.math.Color4;
 import fs.math.Matrix4;
 
+import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 public class Button extends Component {
 
     private final Card card = new Card();
     private final Label label;
-    private final ButtonBase buttonBase;
-    private int topPadding;
-    private int rightPadding;
-    private int bottomPadding;
-    private int leftPadding;
+    private final Base base;
+    private int topMargin;
+    private int rightMargin;
+    private int bottomMargin;
+    private int leftMargin;
     private EventHandler<Click> clickHandler = (event) -> {};
 
 
     public Button(Matrix4 projection) {
         label = new Label(projection)
-            .padding(5, 5, 5, 5);
-        buttonBase = new ButtonBase(projection);
+            .margin(5, 5, 5, 5);
+
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        TextureArray defaultTextureArray = new TextureArray(
+                loadAsByteBuffer("fs/client/ui/primitive/button/button_default.png", classLoader),
+                4,
+                4,
+                9
+        );
+        TextureArray hoverTextureArray = new TextureArray(
+                loadAsByteBuffer("fs/client/ui/primitive/button/button_hover.png", classLoader),
+                4,
+                4,
+                9
+        );
+
+        base = new Base(projection, defaultTextureArray, hoverTextureArray);
 
         Flex labelFlex = new Flex()
                 .justifyContent(Flex.JustifyContent.CENTER)
@@ -33,7 +50,7 @@ public class Button extends Component {
                 .alignContent(Flex.ContentAlign.STRETCH)
                 .add(label);
 
-        card.add(buttonBase);
+        card.add(base);
         card.add(labelFlex);
     }
 
@@ -48,16 +65,16 @@ public class Button extends Component {
     }
 
     public Button backgroundColor(Color4 backgroundColor) {
-        buttonBase.color(backgroundColor);
+        base.color(backgroundColor);
 
         return this;
     }
 
-    public Button padding(int top, int right, int bottom, int left) {
-        this.topPadding = top;
-        this.rightPadding = right;
-        this.bottomPadding = bottom;
-        this.leftPadding = left;
+    public Button margin(int top, int right, int bottom, int left) {
+        this.topMargin = top;
+        this.rightMargin = right;
+        this.bottomMargin = bottom;
+        this.leftMargin = left;
 
         return this;
     }
@@ -85,9 +102,9 @@ public class Button extends Component {
     @Override
     public void handle(Event event) {
         if (event instanceof MouseOver) {
-            buttonBase.hover(true);
+            base.hover(true);
         } else if (event instanceof MouseOut) {
-            buttonBase.hover(false);
+            base.hover(false);
         } else if (event instanceof MouseDown) {
             if (((MouseDown) event).button() == GLFW_MOUSE_BUTTON_LEFT) {
                 event.stopPropagation();
@@ -100,18 +117,18 @@ public class Button extends Component {
 
     @Override
     public int preferredWidth() {
-        return card.preferredWidth() + leftPadding + rightPadding;
+        return card.preferredWidth() + leftMargin + rightMargin;
     }
 
     @Override
     public int preferredHeight() {
-        return card.preferredHeight() + topPadding + bottomPadding;
+        return card.preferredHeight() + topMargin + bottomMargin;
     }
 
     @Override
     public void render() {
         card
-                .bounds(x + leftPadding, y + topPadding, width - leftPadding - rightPadding, height - topPadding - bottomPadding)
+                .bounds(x + leftMargin, y + topMargin, width - leftMargin - rightMargin, height - topMargin - bottomMargin)
                 .render();
     }
 
@@ -123,5 +140,9 @@ public class Button extends Component {
         this.clickHandler = clickHandler;
 
         return this;
+    }
+
+    public String text() {
+        return label.text();
     }
 }

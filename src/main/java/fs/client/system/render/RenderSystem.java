@@ -3,12 +3,11 @@ package fs.client.system.render;
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
 import fs.client.event.*;
-import fs.client.ui.Component;
-import fs.client.ui.event.*;
 import fs.client.ui.game.WorldRenderer;
-import fs.client.ui.layout.Card;
 import fs.client.ui.layout.Flex;
+import fs.client.ui.primitive.Root;
 import fs.client.ui.primitive.button.Button;
+import fs.client.ui.primitive.input.Input;
 import fs.client.world.World;
 import fs.math.Matrix4;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -29,14 +28,11 @@ public class RenderSystem implements GameSystem {
 
 	private final Dispatcher dispatcher;
 
-	private Card card = new Card();
+	private Root root = new Root();
 	private WorldRenderer worldRenderer;
 	private World world;
     private int screenWidth;
     private int screenHeight;
-	private int mouseX;
-	private int mouseY;
-	private Component mouseover = null;
 
 	public RenderSystem(Dispatcher dispatcher) {
 		this.dispatcher = dispatcher;
@@ -109,35 +105,12 @@ public class RenderSystem implements GameSystem {
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
 
+		glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 		glfwSetWindowPos(window, (vidmode.width() - screenWidth) / 2, (vidmode.height() - screenHeight) / 2);
-		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-				glfwSetWindowShouldClose(window, true);
-		});
-
-		glfwSetCursorPosCallback(window, (long window, double xpos, double ypos) -> {
-			mouseX = (int) xpos;
-			mouseY = (int) ypos;
-
-			Component component = card.findComponentAt(mouseX, mouseY);
-			if (mouseover != component) {
-				if (mouseover != null)
-					Event.dispatch(new MouseOut(mouseover));
-				if (component != null)
-					Event.dispatch(new MouseOver(component));
-				mouseover = component;
-			}
-
-			if (component != null) {
-				Event.dispatch(new MouseMove(component, (int) xpos, (int) ypos));
-			}
-		});
-		glfwSetMouseButtonCallback(window, (long window, int button, int action, int mods) -> {
-			if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
-				Component component = card.findComponentAt(mouseX, mouseY);
-				Event.dispatch(new MouseDown(component, button, mouseX, mouseY));
-			}
-		});
+		glfwSetKeyCallback(window, root::onKey);
+		glfwSetCharModsCallback(window, root::onCharMods);
+		glfwSetCursorPosCallback(window, root::onCursorPos);
+		glfwSetMouseButtonCallback(window, root::onMouseButton);
 
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
@@ -147,7 +120,7 @@ public class RenderSystem implements GameSystem {
 
         // Initialize Renderer
         worldRenderer = new WorldRenderer(screenWidth, screenHeight);
-        card.add(worldRenderer);
+        root.add(worldRenderer);
         if (world != null) {
             worldRenderer.setWorld(world);
         }
@@ -160,10 +133,17 @@ public class RenderSystem implements GameSystem {
         flex.wrap(NO_WRAP);
 
 		Matrix4 guiProjection = Matrix4.orthogonal(0, screenWidth, screenHeight, 0, 0.03f, 1000f);
-		flex.add(new Button(guiProjection)
-				.text("Hello, World!"));
+		Button button = new Button(guiProjection)
+				.onclick((click) ->
+					System.out.println(((Button) click.target()).text())
+				);
+		flex.add(button);
+		flex.add(new Input(guiProjection)
+				.onTextChanged((textChanged) -> button.text(textChanged.text()))
+				.text(":)")
+		);
 
-		card.add(flex);
+		root.add(flex);
     }
 
     private void render() {
@@ -173,7 +153,7 @@ public class RenderSystem implements GameSystem {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 
-        card
+		root
 			.bounds(0, 0, screenWidth, screenHeight)
 			.render();
 

@@ -19,14 +19,14 @@ public class Label extends OpenGLComponent {
     private final TextureArray textureArray;
 
     private Matrix4 projection;
-
     private String text = "";
     private Color4 color = Color4.color(0f, 0f, 0f, 1f);
-    private int leftPadding = 0;
-    private int rightPadding = 0;
-    private int topPadding = 0;
-    private int bottomPadding = 0;
+    private int leftMargin = 0;
+    private int rightMargin = 0;
+    private int topMargin = 0;
+    private int bottomMargin = 0;
 
+    // derived fields
     private Mesh mesh;
 
     public Label(Matrix4 projection) {
@@ -58,11 +58,11 @@ public class Label extends OpenGLComponent {
         return this;
     }
 
-    public Label padding(int top, int right, int bottom, int left) {
-        this.topPadding = top;
-        this.rightPadding = right;
-        this.bottomPadding = bottom;
-        this.leftPadding = left;
+    public Label margin(int top, int right, int bottom, int left) {
+        this.topMargin = top;
+        this.rightMargin = right;
+        this.bottomMargin = bottom;
+        this.leftMargin = left;
 
         return this;
     }
@@ -79,20 +79,19 @@ public class Label extends OpenGLComponent {
 
     @Override
     public int preferredWidth() {
-        return LabelMeshGenerator.width(text) + leftPadding + rightPadding;
+        return LabelMeshGenerator.width(text) + leftMargin + rightMargin;
     }
 
     @Override
     public int preferredHeight() {
-        return LabelMeshGenerator.height(text) + topPadding + bottomPadding;
+        return LabelMeshGenerator.height(text) + topMargin + bottomMargin;
     }
 
     public void render() {
-        if (!text.isEmpty()) {
-            String displayText = LabelMeshGenerator.displayText(text, width, height);
-            mesh = LabelMeshGenerator.generate(displayText);
+        if (!displayText().isEmpty()) {
+            mesh = LabelMeshGenerator.generate(displayText());
 
-            Matrix4 model = Matrix4.mat4(vec3(x + leftPadding, y + topPadding, -1));
+            Matrix4 model = Matrix4.mat4(vec3(x + leftMargin, y + topMargin, -1));
 
             glUseProgram(program.id());
             uniform(COLOR_LOCATION, color);
@@ -105,4 +104,13 @@ public class Label extends OpenGLComponent {
         }
     }
 
+    public String displayText() {
+        return LabelMeshGenerator.displayText(text, width, height);
+    }
+
+    public int cursorPositionAt(int x, int y) {
+        int relativeX = x - (this.x + this.leftMargin);
+        int characterWidth = LabelMeshGenerator.width(".");
+        return Math.max(0, Math.min((relativeX + characterWidth / 2) / characterWidth, text().length()));
+    }
 }

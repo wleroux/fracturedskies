@@ -11,7 +11,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static fs.math.Vector3.vec3;
-import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
 import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
@@ -20,7 +19,7 @@ import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 
-public class ButtonBase extends OpenGLComponent {
+public class Base extends OpenGLComponent {
 
     private final Program program;
     private final TextureArray defaultTextureArray;
@@ -30,35 +29,24 @@ public class ButtonBase extends OpenGLComponent {
     private boolean hover = false;
 
 
-    public ButtonBase(Matrix4 projection) {
+    public Base(Matrix4 projection, TextureArray defaultTextureArray, TextureArray hoverTextureArray) {
         ClassLoader classLoader = this.getClass().getClassLoader();
         this.program = new Program(
                 loadAsString("fs/client/ui/primitive/button/button.vs", classLoader),
                 loadAsString("fs/client/ui/primitive/button/button.fs", classLoader)
         );
-        this.defaultTextureArray = new TextureArray(
-                loadAsByteBuffer("fs/client/ui/primitive/button/button_default.png", classLoader),
-                4,
-                4,
-                9
-        );
-        this.hoverTextureArray = new TextureArray(
-                loadAsByteBuffer("fs/client/ui/primitive/button/button_hover.png", classLoader),
-                4,
-                4,
-                9
-        );
-
+        this.defaultTextureArray = defaultTextureArray;
+        this.hoverTextureArray = hoverTextureArray;
         this.projection = projection;
     }
 
-    public ButtonBase color(Color4 color) {
+    public Base color(Color4 color) {
         this.color.set(color);
 
         return this;
     }
 
-    public ButtonBase hover(boolean hover) {
+    public Base hover(boolean hover) {
         this.hover = hover;
 
         return this;
@@ -74,7 +62,7 @@ public class ButtonBase extends OpenGLComponent {
         return LAYER_HEIGHT*3;
     }
 
-    public ButtonBase bounds(int x, int y, int width, int height) {
+    public Base bounds(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;

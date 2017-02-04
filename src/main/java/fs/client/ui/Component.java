@@ -1,6 +1,7 @@
 package fs.client.ui;
 
 import fs.client.ui.event.Event;
+import fs.client.ui.primitive.Root;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,4 +50,17 @@ public abstract class Component {
     public void handle(Event event) {
         // no-op
     }
+
+    protected Root root() {
+        Component ancestor = this;
+        while (ancestor != null) {
+            if (ancestor instanceof Root) {
+                return (Root) ancestor;
+            } else {
+                ancestor = ancestor.parent();
+            }
+        }
+        return null;
+    }
+
 }
