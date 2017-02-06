@@ -2,23 +2,17 @@ package fs.client.system.render;
 
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
+import fs.client.async.RemoveBlockRequested;
 import fs.client.event.*;
 import fs.client.ui.game.WorldRenderer;
-import fs.client.ui.layout.Flex;
 import fs.client.ui.primitive.Root;
-import fs.client.ui.primitive.button.Button;
-import fs.client.ui.primitive.input.Input;
 import fs.client.world.World;
-import fs.math.Matrix4;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.util.concurrent.CompletableFuture;
 
-import static fs.client.ui.layout.Flex.Direction.ROW;
-import static fs.client.ui.layout.Flex.JustifyContent.CENTER;
-import static fs.client.ui.layout.Flex.Wrap.NO_WRAP;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -45,7 +39,8 @@ public class RenderSystem implements GameSystem {
 				event instanceof  RenderRequested ||
 				event instanceof  Terminated ||
 				event instanceof WorldGenerated ||
-				event instanceof WaterLevelsUpdated;
+				event instanceof WaterLevelsUpdated ||
+				event instanceof RemoveBlockRequested;
 	}
 
 	@Override
@@ -56,16 +51,19 @@ public class RenderSystem implements GameSystem {
 		} else if (o instanceof WorldGenerated) {
 			world = ((WorldGenerated) o).world();
 			if (worldRenderer != null) {
-                worldRenderer.setWorld(((WorldGenerated) o).world());
+                worldRenderer.world(((WorldGenerated) o).world());
             }
 
 			future.complete(null);
 		} else if (o instanceof WaterLevelsUpdated) {
 			world.waterLevel(((WaterLevelsUpdated) o).waterLevel());
 			if (worldRenderer != null) {
-                worldRenderer.setWorld(world);
-            }
+				worldRenderer.world(world);
+			}
 			future.complete(null);
+		} else if (o instanceof RemoveBlockRequested) {
+			world.setBlock(((RemoveBlockRequested) o).index(), null);
+			worldRenderer.world(world);
 		} else if (o instanceof UpdateRequested) {
 			update(future);
 		} else if (o instanceof RenderRequested) {
@@ -119,31 +117,11 @@ public class RenderSystem implements GameSystem {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         // Initialize Renderer
-        worldRenderer = new WorldRenderer(screenWidth, screenHeight);
+        worldRenderer = new WorldRenderer(dispatcher, screenWidth, screenHeight);
         root.add(worldRenderer);
         if (world != null) {
-            worldRenderer.setWorld(world);
+            worldRenderer.world(world);
         }
-
-        Flex flex = new Flex();
-        flex.direction(ROW);
-        flex.justifyContent(CENTER);
-        flex.alignItems(Flex.ItemAlign.CENTER);
-        flex.alignContent(Flex.ContentAlign.CENTER);
-        flex.wrap(NO_WRAP);
-
-		Matrix4 guiProjection = Matrix4.orthogonal(0, screenWidth, screenHeight, 0, 0.03f, 1000f);
-		Button button = new Button(guiProjection)
-				.onclick((click) ->
-					System.out.println(((Button) click.target()).text())
-				);
-		flex.add(button);
-		flex.add(new Input(guiProjection)
-				.onTextChanged((textChanged) -> button.text(textChanged.text()))
-				.text(":)")
-		);
-
-		root.add(flex);
     }
 
     private void render() {

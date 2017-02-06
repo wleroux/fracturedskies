@@ -35,6 +35,15 @@ public final class Matrix4 {
         this.m30 = m30; this.m31 = m31; this.m32 = m32; this.m33 = m33;
     }
 
+    public static Matrix4 mat4() {
+        return mat4(
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+                );
+    }
+
     public static Matrix4 mat4(Matrix4 m) {
         return new Matrix4(
                 m.m00, m.m01, m.m02, m.m03,
@@ -407,5 +416,14 @@ public final class Matrix4 {
                         0,          0,          0,                        1
         );
         //@formatter:on
+    }
+
+    public Matrix4 set(Matrix4 mat4) {
+        return set(
+                mat4.m00, mat4.m01, mat4.m02, mat4.m03,
+                mat4.m10, mat4.m11, mat4.m12, mat4.m13,
+                mat4.m20, mat4.m21, mat4.m22, mat4.m23,
+                mat4.m30, mat4.m31, mat4.m32, mat4.m33
+        );
     }
 }

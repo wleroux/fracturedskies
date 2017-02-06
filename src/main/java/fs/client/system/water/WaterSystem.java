@@ -2,6 +2,7 @@ package fs.client.system.water;
 
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
+import fs.client.async.RemoveBlockRequested;
 import fs.client.event.UpdateRequested;
 import fs.client.event.WaterLevelsUpdated;
 import fs.client.event.WorldGenerated;
@@ -19,7 +20,7 @@ public class WaterSystem implements GameSystem {
     private World world;
     private int[] maxFlowOut;
     private int tick = 0;
-    private static final int INTERVAL = 1;
+    private static final int INTERVAL = 15;
 
     public WaterSystem(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
@@ -28,7 +29,8 @@ public class WaterSystem implements GameSystem {
     @Override
     public boolean canHandle(Object event) {
         return event instanceof WorldGenerated ||
-                event instanceof UpdateRequested;
+                event instanceof UpdateRequested ||
+                event instanceof RemoveBlockRequested;
     }
 
     @Override
@@ -36,7 +38,6 @@ public class WaterSystem implements GameSystem {
         if (event instanceof WorldGenerated) {
             world = new World(((WorldGenerated) event).world());
             maxFlowOut = new int[world.size()];
-
         } else if (event instanceof UpdateRequested) {
             tick ++;
             if (tick % INTERVAL == 0) {
@@ -50,15 +51,15 @@ public class WaterSystem implements GameSystem {
                     dispatcher.dispatch(new WaterLevelsUpdated(world.waterLevel())).join();
                 }
             }
+        } else if (event instanceof RemoveBlockRequested) {
+            world.setBlock(((RemoveBlockRequested) event).index(), null);
         }
 
         future.complete(null);
     }
 
     private boolean flow() {
-        PriorityQueue<Integer> flowCandidates = new PriorityQueue<>((a, b) ->
-            waterPotential(a) - waterPotential(b)
-        );
+        PriorityQueue<Integer> flowCandidates = new PriorityQueue<>(Comparator.comparingInt(this::waterPotential));
 
         // Get all potential flow candidates
         for (int targetIndex = 0; targetIndex < world.size(); targetIndex ++) {

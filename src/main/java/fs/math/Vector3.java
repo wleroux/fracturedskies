@@ -83,6 +83,10 @@ public class Vector3 {
         return format("[%f %f %f]", x, y, z);
     }
 
+    public static Vector3 vec3() {
+        return vec3(0, 0, 0);
+    }
+
     public static Vector3 vec3(float x, float y, float z) {
         return new Vector3(x, y, z);
     }
@@ -102,5 +106,29 @@ public class Vector3 {
         return Math.abs(x - v.x) <= 0.00001f &&
                 Math.abs(y - v.y) <= 0.00001f &&
                 Math.abs(z - v.z) <= 0.00001f;
+    }
+
+    public Vector3 subtract(Vector3 v) {
+        return set(x - v.x, y - v.y, z - v.z);
+    }
+
+    public Vector3 set(Vector3 v) {
+        return set(v.x, v.y, v.z);
+    }
+
+    public Vector3 normalize() {
+        return multiply(1 / magnitude());
+    }
+
+    private Vector3 multiply(float c) {
+        return set(x * c, y * c, z * c);
+    }
+
+    private float magnitude() {
+        return (float) Math.sqrt(x * x + y * y + z * z);
+    }
+
+    public Vector3 add(Vector3 v) {
+        return set(x + v.x, y + v.y, z + v.z);
     }
 }
