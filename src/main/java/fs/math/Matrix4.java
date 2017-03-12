@@ -412,7 +412,7 @@ public final class Matrix4 {
         return mat4(
                 2 / width,          0,          0,  -(left + right) / width,
                         0, 2 / height,          0, -(top + bottom) / height,
-                        0,          0, -2 / depth,    -(far + near) / depth,
+                        0,          0,  2 / depth,    -(far + near) / depth,
                         0,          0,          0,                        1
         );
         //@formatter:on

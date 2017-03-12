@@ -109,6 +109,8 @@ public class RenderSystem implements GameSystem {
 		glfwSetCharModsCallback(window, root::onCharMods);
 		glfwSetCursorPosCallback(window, root::onCursorPos);
 		glfwSetMouseButtonCallback(window, root::onMouseButton);
+		glfwSetWindowSizeCallback(window, root::onWindowSize);
+		root.onWindowSize(window, screenWidth, screenHeight);
 
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);

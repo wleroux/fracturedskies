@@ -13,12 +13,16 @@ import fs.client.world.WaterMeshGenerator;
 import fs.client.world.World;
 import fs.client.world.WorldMeshGenerator;
 import fs.math.Matrix4;
+import fs.math.Quaternion4;
 import fs.math.Vector3;
+import fs.math.Vector4;
 
 import static fs.client.system.world.WorldGenerationSystem.*;
 import static fs.math.Matrix4.mat4;
-import static fs.math.Matrix4.perspective;
+import static fs.math.Matrix4.orthogonal;
+import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
+import static fs.math.Vector4.vec4;
 import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
 
@@ -69,7 +73,7 @@ public class WorldRenderer extends Component {
                 3
         );
 
-        projection(perspective((float) Math.PI / 4, screenWidth, screenHeight, 0.03f, 1000f));
+        projection(orthogonal(-10, 10, -10, 10, 0.03f, 1000f));
     }
 
     private WorldRenderer projection(Matrix4 mat4) {
@@ -83,9 +87,9 @@ public class WorldRenderer extends Component {
         this.tickCount = tickCount;
     }
 
-    private WorldRenderer view(Vector3 position) {
+    private WorldRenderer view(Vector3 position, Quaternion4 rotation) {
         viewPosition.set(position);
-        inverseView.set(mat4(viewPosition));
+        inverseView.set(mat4(viewPosition, rotation));
         view.set(inverseView).invert();
 
         return this;
@@ -95,7 +99,7 @@ public class WorldRenderer extends Component {
         this.world = world;
 
         model(vec3(-(world.width() / 2), 0f, -(world.height() / 2)));
-        view(vec3(0.0f, 2f, -3f * world.depth()));
+        view(vec3(0.0f, 12f, -3f * world.depth()), quat4(vec3(1, 0, 0), (float) Math.PI / 4f));
 
         // Draw world
         dirty();
@@ -179,20 +183,34 @@ public class WorldRenderer extends Component {
     }
 
     private int pick(int mx, int my) {
-        Vector3 rayVector = vec3(
+        Vector4 rayStart = vec4(
                 -((float) (screenWidth - mx) / (float) screenWidth - 0.5f) * 2,
-                ((float) (screenHeight - my) / (float) screenHeight - 0.5f) * 2,
-                -1f
+                ((float) my / (float) screenHeight - 0.5f) * 2,
+                -1f,
+                1f
         )
                 .multiply(inverseProjection)
-                .multiply(inverseView)
-                .subtract(viewPosition)
-                .normalize();
+                .multiply(inverseView);
+        rayStart.multiply(1f / rayStart.w());
 
-        Vector3 testPoint = vec3(viewPosition)
+        Vector4 rayEnd = vec4(
+                -((float) (screenWidth - mx) / (float) screenWidth - 0.5f) * 2,
+                ((float) (screenHeight - my) / (float) screenHeight - 0.5f) * 2,
+                1f,
+                1f
+        )
+                .multiply(inverseProjection)
+                .multiply(inverseView);
+        rayEnd.multiply(1f / rayEnd.w());
+
+        Vector4 rayVector = vec4(rayEnd).subtract(rayStart);
+        int steps = (int) rayVector.magnitude() * 4;
+        rayVector.normalize().multiply(1f/4f);
+
+        Vector3 stepVector = vec3(rayVector.x(), rayVector.y(), rayVector.z());
+        Vector3 testPoint = vec3(rayStart.x(), rayStart.y(), rayStart.z())
                                 .subtract(modelPosition);
-        for (int i = 0; i < 100; i ++) {
-
+        for (int i = 0; i < steps; i ++) {
             float x = testPoint.x() + 0.5f;
             float y = testPoint.y() + 0.5f;
             float z = testPoint.z() + 0.5f;
@@ -204,7 +222,7 @@ public class WorldRenderer extends Component {
                 }
             }
 
-            testPoint.add(rayVector);
+            testPoint.add(stepVector);
         }
 
         return -1;

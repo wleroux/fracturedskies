@@ -91,7 +91,7 @@ public class Label extends OpenGLComponent {
         if (!displayText().isEmpty()) {
             mesh = LabelMeshGenerator.generate(displayText());
 
-            Matrix4 model = Matrix4.mat4(vec3(x + leftMargin, y + topMargin, -1));
+            Matrix4 model = Matrix4.mat4(vec3(x + leftMargin, y + topMargin, 0));
 
             glUseProgram(program.id());
             uniform(COLOR_LOCATION, color);

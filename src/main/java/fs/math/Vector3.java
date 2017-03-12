@@ -124,7 +124,7 @@ public class Vector3 {
         return set(x * c, y * c, z * c);
     }
 
-    private float magnitude() {
+    public float magnitude() {
         return (float) Math.sqrt(x * x + y * y + z * z);
     }
 

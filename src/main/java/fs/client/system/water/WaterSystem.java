@@ -20,7 +20,8 @@ public class WaterSystem implements GameSystem {
     private World world;
     private int[] maxFlowOut;
     private int tick = 0;
-    private static final int INTERVAL = 15;
+    private static final int RAIN_INTERVAL = 30;
+    private static final int FLOW_INTERVAL = 5;
 
     public WaterSystem(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
@@ -40,13 +41,16 @@ public class WaterSystem implements GameSystem {
             maxFlowOut = new int[world.size()];
         } else if (event instanceof UpdateRequested) {
             tick ++;
-            if (tick % INTERVAL == 0) {
+            if (tick % RAIN_INTERVAL == 0) {
                 world.waterLevel(world.converter().index(
                         world.width() / 2,
                         world.height() - 1,
                         world.depth() / 2
                 ), 1);
+                dispatcher.dispatch(new WaterLevelsUpdated(world.waterLevel())).join();
+            }
 
+            if (tick % FLOW_INTERVAL == 0) {
                 if (flow()) {
                     dispatcher.dispatch(new WaterLevelsUpdated(world.waterLevel())).join();
                 }

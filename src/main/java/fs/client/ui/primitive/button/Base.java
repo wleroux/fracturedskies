@@ -75,7 +75,7 @@ public class Base extends OpenGLComponent {
     public void render() {
         Mesh mesh = generate(width, height);
 
-        Matrix4 model = Matrix4.mat4(vec3(x, y, -1));
+        Matrix4 model = Matrix4.mat4(vec3(x, y, 0));
 
         glUseProgram(program.id());
         glDisable(GL_DEPTH_TEST);
@@ -104,15 +104,15 @@ public class Base extends OpenGLComponent {
             for (int j = 0; j < 3; j ++) {
                 int tile = j * 3 + i;
                 int xOffset = (i != 2) ? ((i == 0) ? 0 : LAYER_WIDTH) : LAYER_WIDTH + fillWidth;
-                int yOffset = ((j != 2) ? ((j == 0) ? 0 : LAYER_HEIGHT) : LAYER_HEIGHT + fillHeight);
+                int yOffset = ((j != 2) ? ((j == 0) ? LAYER_HEIGHT + fillHeight : LAYER_HEIGHT) : 0);
                 int w = (i != 2) ? ((i == 0) ? LAYER_WIDTH : fillWidth) : LAYER_WIDTH;
                 int h = (j != 2) ? ((j == 0) ? LAYER_HEIGHT : fillHeight) : LAYER_HEIGHT;
 
                 verticesBuffer.put(new float[] {
-                    xOffset + 0, yOffset + 0, 0,  0, 0, tile,
-                    xOffset + w, yOffset + 0, 0,  1, 0, tile,
-                    xOffset + w, yOffset + h, 0,  1, 1, tile,
-                    xOffset + 0, yOffset + h, 0,  0, 1, tile
+                    xOffset + 0, yOffset + h, 0,  0, 0, tile,
+                    xOffset + w, yOffset + h, 0,  1, 0, tile,
+                    xOffset + w, yOffset + 0, 0,  1, 1, tile,
+                    xOffset + 0, yOffset + 0, 0,  0, 1, tile
                 });
                 indicesBuffer.put(new int[] {
                         vertexCount + 0, vertexCount + 1, vertexCount + 2,

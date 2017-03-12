@@ -224,8 +224,7 @@ public class WaterMeshGenerator {
     }
 
     private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
-        if (iy + 1 == world.height()) return true;
-        return world.getBlock(world.converter().index(ix, iy + 1, iz)) == null;
+        return true;
     }
 
 

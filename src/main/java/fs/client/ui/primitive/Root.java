@@ -8,6 +8,8 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Root extends Card {
 
+    private int screenWidth;
+    private int screenHeight;
     private int mouseX;
     private int mouseY;
     private Component mouseover = null;
@@ -40,6 +42,11 @@ public class Root extends Card {
 
     // GLFW Event Handlers
 
+    public void onWindowSize(long window, int screenWidth, int screenHeight) {
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+    }
+
     public void onKey(long window, int key, int scancode, int action, int mods) {
         if (focus != null) {
             if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ) {
@@ -56,7 +63,7 @@ public class Root extends Card {
 
     public void onCursorPos(long window, double xpos, double ypos) {
         mouseX = (int) xpos;
-        mouseY = (int) ypos;
+        mouseY = screenHeight - (int) ypos;
 
         Component component = findComponentAt(mouseX, mouseY);
         if (mouseover != component) {
