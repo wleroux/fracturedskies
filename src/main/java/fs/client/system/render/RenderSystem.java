@@ -1,5 +1,6 @@
 package fs.client.system.render;
 
+import fs.client.async.AddBlockRequested;
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
 import fs.client.async.RemoveBlockRequested;
@@ -40,7 +41,8 @@ public class RenderSystem implements GameSystem {
 				event instanceof  Terminated ||
 				event instanceof WorldGenerated ||
 				event instanceof WaterLevelsUpdated ||
-				event instanceof RemoveBlockRequested;
+				event instanceof RemoveBlockRequested ||
+				event instanceof AddBlockRequested;
 	}
 
 	@Override
@@ -63,6 +65,9 @@ public class RenderSystem implements GameSystem {
 			future.complete(null);
 		} else if (o instanceof RemoveBlockRequested) {
 			world.setBlock(((RemoveBlockRequested) o).index(), null);
+			worldRenderer.world(world);
+		} else if (o instanceof AddBlockRequested) {
+			world.setBlock(((AddBlockRequested) o).index(), ((AddBlockRequested) o).tile());
 			worldRenderer.world(world);
 		} else if (o instanceof UpdateRequested) {
 			update(future);

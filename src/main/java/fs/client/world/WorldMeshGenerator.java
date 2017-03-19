@@ -38,10 +38,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.front();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                                xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, tileIndex,   0f, -1f,  0f,
-                                xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, tileIndex,   0f, -1f,  0f,
-                                xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, tileIndex,   0f, -1f,  0f,
-                                xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, tileIndex,   0f, -1f,  0f,
+                                xOffset + 0f, yOffset + 1f, zOffset + 0f,  0f, 0f, tileIndex,   0f, -1f,  0f,
+                                xOffset + 1f, yOffset + 1f, zOffset + 0f,  0f, 1f, tileIndex,   0f, -1f,  0f,
+                                xOffset + 1f, yOffset + 0f, zOffset + 0f,  1f, 1f, tileIndex,   0f, -1f,  0f,
+                                xOffset + 0f, yOffset + 0f, zOffset + 0f,  1f, 0f, tileIndex,   0f, -1f,  0f,
                                 // @formatter:on
                         });
 
@@ -58,10 +58,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.top();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset + -0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 0f, tileIndex,   0f,  1f,  0f,
-                            xOffset +  0.5f, yOffset + 0.5f,  zOffset +  0.5f,   0f, 1f, tileIndex,   0f,  1f,  0f,
-                            xOffset +  0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 1f, tileIndex,   0f,  1f,  0f,
-                            xOffset + -0.5f, yOffset + 0.5f,  zOffset + -0.5f,   1f, 0f, tileIndex,   0f,  1f,  0f,
+                            xOffset + 0f, yOffset + 1f,  zOffset + 1f,   0f, 0f, tileIndex,   0f,  1f,  0f,
+                            xOffset + 1f, yOffset + 1f,  zOffset + 1f,   0f, 1f, tileIndex,   0f,  1f,  0f,
+                            xOffset + 1f, yOffset + 1f,  zOffset + 0f,   1f, 1f, tileIndex,   0f,  1f,  0f,
+                            xOffset + 0f, yOffset + 1f,  zOffset + 0f,   1f, 0f, tileIndex,   0f,  1f,  0f,
                             // @formatter:on
                         });
 
@@ -77,10 +77,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.left();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 0f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 1f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 1f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 0f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + 0f, yOffset + 1f, zOffset + 1f,  0f, 0f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + 0f, yOffset + 1f, zOffset + 0f,  0f, 1f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + 0f, yOffset + 0f, zOffset + 0f,  1f, 1f, tileIndex,  -1f,  0f,  0f,
+                            xOffset + 0f, yOffset + 0f, zOffset + 1f,  1f, 0f, tileIndex,  -1f,  0f,  0f,
                             // @formatter:on
                         });
 
@@ -96,10 +96,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.right();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset + -0.5f,  0f, 0f, tileIndex,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,  0f, 1f, tileIndex,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,  1f, 1f, tileIndex,   1f,  0f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,  1f, 0f, tileIndex,   1f,  0f,  0f,
+                            xOffset + 1f, yOffset + 1f, zOffset + 0f,  0f, 0f, tileIndex,   1f,  0f,  0f,
+                            xOffset + 1f, yOffset + 1f, zOffset + 1f,  0f, 1f, tileIndex,   1f,  0f,  0f,
+                            xOffset + 1f, yOffset + 0f, zOffset + 1f,  1f, 1f, tileIndex,   1f,  0f,  0f,
+                            xOffset + 1f, yOffset + 0f, zOffset + 0f,  1f, 0f, tileIndex,   1f,  0f,  0f,
                             // @formatter:on
                         });
 
@@ -115,10 +115,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.bottom();
                         verticesBuffer.put(new float[]{
                             // @formatter:off
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 0f, tileIndex,  0f, -1f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 1f, tileIndex,  0f, -1f,  0f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, tileIndex,  0f, -1f,  0f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, tileIndex,  0f, -1f,  0f,
+                            xOffset + 0f, yOffset + 0f, zOffset + 0f,   0f, 0f, tileIndex,  0f, -1f,  0f,
+                            xOffset + 1f, yOffset + 0f, zOffset + 0f,   0f, 1f, tileIndex,  0f, -1f,  0f,
+                            xOffset + 1f, yOffset + 0f, zOffset + 1f,   1f, 1f, tileIndex,  0f, -1f,  0f,
+                            xOffset + 0f, yOffset + 0f, zOffset + 1f,   1f, 0f, tileIndex,  0f, -1f,  0f,
                             // @formatter:on
                         });
 
@@ -134,10 +134,10 @@ public class WorldMeshGenerator {
                         int tileIndex = tile.back();
                         verticesBuffer.put(new float[]{
                                 // @formatter:off
-                            xOffset +  0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 0f, tileIndex,  0f,  0f,  1f,
-                            xOffset + -0.5f, yOffset +  0.5f, zOffset +  0.5f,   0f, 1f, tileIndex,  0f,  0f,  1f,
-                            xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, tileIndex,  0f,  0f,  1f,
-                            xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, tileIndex,  0f,  0f,  1f
+                            xOffset + 1f, yOffset + 1f, zOffset + 1f,   0f, 0f, tileIndex,  0f,  0f,  1f,
+                            xOffset + 0f, yOffset + 1f, zOffset + 1f,   0f, 1f, tileIndex,  0f,  0f,  1f,
+                            xOffset + 0f, yOffset + 0f, zOffset + 1f,   1f, 1f, tileIndex,  0f,  0f,  1f,
+                            xOffset + 1f, yOffset + 0f, zOffset + 1f,   1f, 0f, tileIndex,  0f,  0f,  1f
                                 // @formatter:on
                         });
 

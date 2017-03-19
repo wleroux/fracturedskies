@@ -1,5 +1,6 @@
 package fs.client.system.water;
 
+import fs.client.async.AddBlockRequested;
 import fs.client.async.Dispatcher;
 import fs.client.async.GameSystem;
 import fs.client.async.RemoveBlockRequested;
@@ -31,7 +32,8 @@ public class WaterSystem implements GameSystem {
     public boolean canHandle(Object event) {
         return event instanceof WorldGenerated ||
                 event instanceof UpdateRequested ||
-                event instanceof RemoveBlockRequested;
+                event instanceof RemoveBlockRequested ||
+                event instanceof AddBlockRequested;
     }
 
     @Override
@@ -57,6 +59,10 @@ public class WaterSystem implements GameSystem {
             }
         } else if (event instanceof RemoveBlockRequested) {
             world.setBlock(((RemoveBlockRequested) event).index(), null);
+        } else if (event instanceof AddBlockRequested) {
+            world.setBlock(((AddBlockRequested) event).index(), ((AddBlockRequested) event).tile());
+            world.waterLevel(((AddBlockRequested) event).index(), 0);
+            dispatcher.dispatch(new WaterLevelsUpdated(world.waterLevel())).join();
         }
 
         future.complete(null);

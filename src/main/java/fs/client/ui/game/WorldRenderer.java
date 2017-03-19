@@ -1,5 +1,6 @@
 package fs.client.ui.game;
 
+import fs.client.async.AddBlockRequested;
 import fs.client.async.Dispatcher;
 import fs.client.async.RemoveBlockRequested;
 import fs.client.ui.Component;
@@ -9,6 +10,7 @@ import fs.client.ui.primitive.mesh.Mesh;
 import fs.client.ui.primitive.mesh.MeshRenderer;
 import fs.client.ui.primitive.mesh.Program;
 import fs.client.ui.primitive.mesh.TextureArray;
+import fs.client.world.Tile;
 import fs.client.world.WaterMeshGenerator;
 import fs.client.world.World;
 import fs.client.world.WorldMeshGenerator;
@@ -16,10 +18,12 @@ import fs.math.Matrix4;
 import fs.math.Quaternion4;
 import fs.math.Vector3;
 import fs.math.Vector4;
+import org.lwjgl.glfw.GLFW;
 
 import static fs.client.system.world.WorldGenerationSystem.*;
 import static fs.math.Matrix4.mat4;
 import static fs.math.Matrix4.orthogonal;
+import static fs.math.Matrix4.perspective;
 import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
 import static fs.math.Vector4.vec4;
@@ -74,6 +78,7 @@ public class WorldRenderer extends Component {
         );
 
         projection(orthogonal(-10, 10, -10, 10, 0.03f, 1000f));
+        projection(perspective((float) Math.PI / 4, screenWidth, screenHeight, 0.03f, 1000f));
     }
 
     private WorldRenderer projection(Matrix4 mat4) {
@@ -175,14 +180,22 @@ public class WorldRenderer extends Component {
         if (event instanceof MouseDown) {
             int mx = ((MouseDown) event).x();
             int my = ((MouseDown) event).y();
-            int index = pick(mx, my);
-            if (index != -1) {
-                dispatcher.dispatch(new RemoveBlockRequested(index));
+            Hit hit = pick(mx, my);
+            if (hit != null) {
+                int index = hit.index();
+                if (((MouseDown) event).button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                    Vector3 blockLocation = vec3(hit.normal()).multiply(0.5f).add(hit.intersection());
+                    int blockIndex = world.converter().index((int) blockLocation.x(), (int) blockLocation.y(), (int) blockLocation.z());
+
+                    dispatcher.dispatch(new AddBlockRequested(blockIndex, Tile.BLOCK));
+                } else {
+                    dispatcher.dispatch(new RemoveBlockRequested(index));
+                }
             }
         }
     }
 
-    private int pick(int mx, int my) {
+    private Hit pick(int mx, int my) {
         Vector4 rayStart = vec4(
                 -((float) (screenWidth - mx) / (float) screenWidth - 0.5f) * 2,
                 ((float) my / (float) screenHeight - 0.5f) * 2,
@@ -195,7 +208,7 @@ public class WorldRenderer extends Component {
 
         Vector4 rayEnd = vec4(
                 -((float) (screenWidth - mx) / (float) screenWidth - 0.5f) * 2,
-                ((float) (screenHeight - my) / (float) screenHeight - 0.5f) * 2,
+                ((float) my / (float) screenHeight - 0.5f) * 2,
                 1f,
                 1f
         )
@@ -203,28 +216,56 @@ public class WorldRenderer extends Component {
                 .multiply(inverseView);
         rayEnd.multiply(1f / rayEnd.w());
 
-        Vector4 rayVector = vec4(rayEnd).subtract(rayStart);
-        int steps = (int) rayVector.magnitude() * 4;
-        rayVector.normalize().multiply(1f/4f);
+        Vector4 direction = vec4(rayEnd).subtract(rayStart);
+        float distance = direction.magnitude();
+        direction.normalize();
 
-        Vector3 stepVector = vec3(rayVector.x(), rayVector.y(), rayVector.z());
-        Vector3 testPoint = vec3(rayStart.x(), rayStart.y(), rayStart.z())
-                                .subtract(modelPosition);
-        for (int i = 0; i < steps; i ++) {
-            float x = testPoint.x() + 0.5f;
-            float y = testPoint.y() + 0.5f;
-            float z = testPoint.z() + 0.5f;
+        return raycast(vec3(rayStart), vec3(direction), distance);
+    }
 
-            if (0 <= x && x < WORLD_WIDTH && 0 <= y && y < WORLD_HEIGHT && 0 <= z && z < WORLD_DEPTH) {
-                int index = world.converter().index((int) x, (int) y, (int) z);
-                if (world.getBlock(index) != null) {
-                    return index;
+    private Hit raycast(Vector3 origin, Vector3 direction, float distance) {
+        Vector3[] normals = new Vector3[] {
+                vec3(-direction.x(), 0, 0),
+                vec3(0, -direction.y(), 0),
+                vec3(0, 0, -direction.z())
+        };
+
+        float minDistance = Float.MAX_VALUE;
+        Hit minHit = null;
+
+        for (Vector3 normal: normals) {
+            if (normal.magnitude() == 0)
+                continue;
+            normal.normalize();
+
+            float ON = origin.dot(normal);
+            float DN = direction.dot(normal);
+
+            for (int plane = -WORLD_WIDTH; plane < WORLD_WIDTH; plane ++) {
+                // distance = -(origin dot normal + plane) / (direction dot normal)
+                float d = -(ON + plane) / DN;
+                if (d > minDistance) {
+                    continue;
+                }
+
+                // intersection = origin + distance * direction
+                Vector3 intersection = vec3(direction).multiply(d).add(origin).subtract(modelPosition);
+                Vector3 block = vec3(normal).negate().multiply(0.5f).add(intersection);
+
+                int x = (int) block.x();
+                int y = (int) block.y();
+                int z = (int) block.z();
+
+                if (0 <= x && x < WORLD_WIDTH && 0 <= y && y < WORLD_HEIGHT && 0 <= z && z < WORLD_DEPTH) {
+                    int index = world.converter().index(x, y, z);
+                    if (world.getBlock(index) != null) {
+                        minDistance = d;
+                        minHit = new Hit(index, intersection, normal);
+                    }
                 }
             }
-
-            testPoint.add(stepVector);
         }
 
-        return -1;
+        return minHit;
     }
 }

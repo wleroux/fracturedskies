@@ -46,10 +46,10 @@ public class WaterMeshGenerator {
                         if (adjWaterHeight < curWaterHeight) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset + -0.5f, yOffset +  curWaterHeight, zOffset + -0.5f,  0f, 0f, 0f,   0f, -1f,  0f,
-                                    xOffset +  0.5f, yOffset +  curWaterHeight, zOffset + -0.5f,  0f, 1f, 0f,   0f, -1f,  0f,
-                                    xOffset +  0.5f, yOffset +  adjWaterHeight, zOffset + -0.5f,  1f, 1f, 0f,   0f, -1f,  0f,
-                                    xOffset + -0.5f, yOffset +  adjWaterHeight, zOffset + -0.5f,  1f, 0f, 0f,   0f, -1f,  0f,
+                                    xOffset + 0f, yOffset +  curWaterHeight, zOffset + 0f,  0f, 0f, 0f,   0f, -1f,  0f,
+                                    xOffset + 1f, yOffset +  curWaterHeight, zOffset + 0f,  0f, 1f, 0f,   0f, -1f,  0f,
+                                    xOffset + 1f, yOffset +  adjWaterHeight, zOffset + 0f,  1f, 1f, 0f,   0f, -1f,  0f,
+                                    xOffset + 0f, yOffset +  adjWaterHeight, zOffset + 0f,  1f, 0f, 0f,   0f, -1f,  0f,
                                     // @formatter:on
                             });
 
@@ -68,10 +68,10 @@ public class WaterMeshGenerator {
                         if (curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset + -0.5f, yOffset + curWaterHeight,  zOffset +  0.5f,   0f, 0f, 0f,   0f,  1f,  0f,
-                                    xOffset +  0.5f, yOffset + curWaterHeight,  zOffset +  0.5f,   0f, 1f, 0f,   0f,  1f,  0f,
-                                    xOffset +  0.5f, yOffset + curWaterHeight,  zOffset + -0.5f,   1f, 1f, 0f,   0f,  1f,  0f,
-                                    xOffset + -0.5f, yOffset + curWaterHeight,  zOffset + -0.5f,   1f, 0f, 0f,   0f,  1f,  0f,
+                                    xOffset + 0f, yOffset + curWaterHeight,  zOffset + 1f,   0f, 0f, 0f,   0f,  1f,  0f,
+                                    xOffset + 1f, yOffset + curWaterHeight,  zOffset + 1f,   0f, 1f, 0f,   0f,  1f,  0f,
+                                    xOffset + 1f, yOffset + curWaterHeight,  zOffset + 0f,   1f, 1f, 0f,   0f,  1f,  0f,
+                                    xOffset + 0f, yOffset + curWaterHeight,  zOffset + 0f,   1f, 0f, 0f,   0f,  1f,  0f,
                                     // @formatter:on
                             });
 
@@ -91,10 +91,10 @@ public class WaterMeshGenerator {
                         if (adjWaterHeight < curWaterHeight) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset + -0.5f, yOffset +  curWaterHeight, zOffset +  0.5f,  0f, 0f, 0f,  -1f,  0f,  0f,
-                                    xOffset + -0.5f, yOffset +  curWaterHeight, zOffset + -0.5f,  0f, 1f, 0f,  -1f,  0f,  0f,
-                                    xOffset + -0.5f, yOffset +  adjWaterHeight, zOffset + -0.5f,  1f, 1f, 0f,  -1f,  0f,  0f,
-                                    xOffset + -0.5f, yOffset +  adjWaterHeight, zOffset +  0.5f,  1f, 0f, 0f,  -1f,  0f,  0f,
+                                    xOffset + 0f, yOffset +  curWaterHeight, zOffset + 1f,  0f, 0f, 0f,  -1f,  0f,  0f,
+                                    xOffset + 0f, yOffset +  curWaterHeight, zOffset + 0f,  0f, 1f, 0f,  -1f,  0f,  0f,
+                                    xOffset + 0f, yOffset +  adjWaterHeight, zOffset + 0f,  1f, 1f, 0f,  -1f,  0f,  0f,
+                                    xOffset + 0f, yOffset +  adjWaterHeight, zOffset + 1f,  1f, 0f, 0f,  -1f,  0f,  0f,
                                     // @formatter:on
                             });
 
@@ -114,10 +114,10 @@ public class WaterMeshGenerator {
                         if (adjWaterHeight < curWaterHeight) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset +  0.5f, yOffset + curWaterHeight, zOffset + -0.5f,  0f, 0f, 0f,   1f,  0f,  0f,
-                                    xOffset +  0.5f, yOffset + curWaterHeight, zOffset +  0.5f,  0f, 1f, 0f,   1f,  0f,  0f,
-                                    xOffset +  0.5f, yOffset + adjWaterHeight, zOffset +  0.5f,  1f, 1f, 0f,   1f,  0f,  0f,
-                                    xOffset +  0.5f, yOffset + adjWaterHeight, zOffset + -0.5f,  1f, 0f, 0f,   1f,  0f,  0f,
+                                    xOffset + 1f, yOffset + curWaterHeight, zOffset + 0f,  0f, 0f, 0f,   1f,  0f,  0f,
+                                    xOffset + 1f, yOffset + curWaterHeight, zOffset + 1f,  0f, 1f, 0f,   1f,  0f,  0f,
+                                    xOffset + 1f, yOffset + adjWaterHeight, zOffset + 1f,  1f, 1f, 0f,   1f,  0f,  0f,
+                                    xOffset + 1f, yOffset + adjWaterHeight, zOffset + 0f,  1f, 0f, 0f,   1f,  0f,  0f,
                                     // @formatter:on
                             });
 
@@ -135,10 +135,10 @@ public class WaterMeshGenerator {
                         if (adjWaterLevel != MAX_WATER_LEVEL) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset + -0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 0f, 0f,  0f, -1f,  0f,
-                                    xOffset +  0.5f, yOffset + -0.5f, zOffset + -0.5f,   0f, 1f, 0f,  0f, -1f,  0f,
-                                    xOffset +  0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 1f, 0f,  0f, -1f,  0f,
-                                    xOffset + -0.5f, yOffset + -0.5f, zOffset +  0.5f,   1f, 0f, 0f,  0f, -1f,  0f,
+                                    xOffset + 0f, yOffset + 0f, zOffset + 0f,   0f, 0f, 0f,  0f, -1f,  0f,
+                                    xOffset + 1f, yOffset + 0f, zOffset + 0f,   0f, 1f, 0f,  0f, -1f,  0f,
+                                    xOffset + 1f, yOffset + 0f, zOffset + 1f,   1f, 1f, 0f,  0f, -1f,  0f,
+                                    xOffset + 0f, yOffset + 0f, zOffset + 1f,   1f, 0f, 0f,  0f, -1f,  0f,
                                     // @formatter:on
                             });
 
@@ -158,10 +158,10 @@ public class WaterMeshGenerator {
                         if (adjWaterHeight < curWaterHeight) {
                             verticesBuffer.put(new float[]{
                                     // @formatter:off
-                                    xOffset +  0.5f, yOffset +  curWaterHeight, zOffset +  0.5f,   0f, 0f, 0f,  0f,  0f,  1f,
-                                    xOffset + -0.5f, yOffset +  curWaterHeight, zOffset +  0.5f,   0f, 1f, 0f,  0f,  0f,  1f,
-                                    xOffset + -0.5f, yOffset +  adjWaterHeight, zOffset +  0.5f,   1f, 1f, 0f,  0f,  0f,  1f,
-                                    xOffset +  0.5f, yOffset +  adjWaterHeight, zOffset +  0.5f,   1f, 0f, 0f,  0f,  0f,  1f
+                                    xOffset + 1f, yOffset +  curWaterHeight, zOffset + 1f,   0f, 0f, 0f,  0f,  0f,  1f,
+                                    xOffset + 0f, yOffset +  curWaterHeight, zOffset + 1f,   0f, 1f, 0f,  0f,  0f,  1f,
+                                    xOffset + 0f, yOffset +  adjWaterHeight, zOffset + 1f,   1f, 1f, 0f,  0f,  0f,  1f,
+                                    xOffset + 1f, yOffset +  adjWaterHeight, zOffset + 1f,   1f, 0f, 0f,  0f,  0f,  1f
                                     // @formatter:on
                             });
 
@@ -200,7 +200,7 @@ public class WaterMeshGenerator {
     }
 
     private static float waterHeight(int waterLevel) {
-        return map(waterLevel, 0, MAX_WATER_LEVEL, -0.5f, 0.5f);
+        return map(waterLevel, 0, MAX_WATER_LEVEL, 0f, 1f);
     }
 
     private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {

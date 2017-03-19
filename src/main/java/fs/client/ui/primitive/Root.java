@@ -80,7 +80,7 @@ public class Root extends Card {
     }
 
     public void onMouseButton(long window, int button, int action, int mods) {
-        if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+        if (action == GLFW_RELEASE) {
             Component component = findComponentAt(mouseX, mouseY);
             Event.dispatch(new MouseDown(component, button, mouseX, mouseY));
         }

@@ -95,6 +95,10 @@ public class Vector3 {
         return new Vector3(v.x, v.y, v.z);
     }
 
+    public static Vector3 vec3(Vector4 v) {
+        return vec3(v.x(), v.y(), v.z());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Vector3)) {
@@ -120,7 +124,7 @@ public class Vector3 {
         return multiply(1 / magnitude());
     }
 
-    private Vector3 multiply(float c) {
+    public Vector3 multiply(float c) {
         return set(x * c, y * c, z * c);
     }
 
@@ -130,5 +134,13 @@ public class Vector3 {
 
     public Vector3 add(Vector3 v) {
         return set(x + v.x, y + v.y, z + v.z);
+    }
+
+    public float dot(Vector3 v) {
+        return x * v.x + y * v.y + z * v.z;
+    }
+
+    public Vector3 negate() {
+        return multiply(-1);
     }
 }
