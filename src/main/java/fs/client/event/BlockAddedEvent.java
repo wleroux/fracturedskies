@@ -1,6 +1,6 @@
 package fs.client.event;
 
-import fs.client.ui.game.Location;
+import fs.client.world.Location;
 import fs.client.world.BlockType;
 
 public final class BlockAddedEvent extends BlockUpdatedEvent implements Cancellable {

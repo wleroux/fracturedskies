@@ -1,6 +1,6 @@
 package fs.math;
 
-import fs.client.ui.game.Location;
+import fs.client.world.Location;
 import fs.client.world.Direction;
 
 import java.util.ArrayList;

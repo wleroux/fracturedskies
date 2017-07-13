@@ -1,8 +1,4 @@
-package fs.client.ui.game;
-
-import fs.client.world.BlockState;
-import fs.client.world.World;
-import fs.math.Interpolators;
+package fs.client.world;
 
 public class Location {
   private final World world;

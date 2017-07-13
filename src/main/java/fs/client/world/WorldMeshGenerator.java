@@ -1,6 +1,5 @@
 package fs.client.world;
 
-import fs.client.ui.game.Location;
 import fs.client.ui.primitive.mesh.Mesh;
 
 import java.nio.FloatBuffer;
@@ -33,7 +32,7 @@ public class WorldMeshGenerator {
           float yOffset = (float) location.y();
           float zOffset = (float) location.z();
 
-          // front
+          // north
           if (isEmpty(Direction.NORTH.neighbour(location))) {
             int tileIndex = type.front();
             verticesBuffer.put(new float[]{
@@ -53,7 +52,7 @@ public class WorldMeshGenerator {
           }
 
 
-          // top
+          // up
           if (isEmpty(Direction.UP.neighbour(location))) {
             int tileIndex = type.top();
             verticesBuffer.put(new float[]{
@@ -72,7 +71,7 @@ public class WorldMeshGenerator {
             vertexCount += 4;
           }
 
-          // left
+          // west
           if (isEmpty(Direction.WEST.neighbour(location))) {
             int tileIndex = type.left();
             verticesBuffer.put(new float[]{
@@ -91,7 +90,7 @@ public class WorldMeshGenerator {
             vertexCount += 4;
           }
 
-          // right
+          // east
           if (isEmpty(Direction.EAST.neighbour(location))) {
             int tileIndex = type.right();
             verticesBuffer.put(new float[]{
@@ -110,7 +109,7 @@ public class WorldMeshGenerator {
             vertexCount += 4;
           }
 
-          // bottom
+          // down
           if (isEmpty(Direction.DOWN.neighbour(location))) {
             int tileIndex = type.bottom();
             verticesBuffer.put(new float[]{
@@ -129,7 +128,7 @@ public class WorldMeshGenerator {
             vertexCount += 4;
           }
 
-          // back
+          // south
           if (isEmpty(Direction.SOUTH.neighbour(location))) {
             int tileIndex = type.back();
             verticesBuffer.put(new float[]{

@@ -3,7 +3,7 @@ package fs.client.system;
 import fs.client.event.BlockGeneratedEvent;
 import fs.client.event.BlockUpdatedEvent;
 import fs.client.event.TickEvent;
-import fs.client.ui.game.Location;
+import fs.client.world.Location;
 import fs.client.world.Direction;
 import fs.client.world.World;
 
@@ -18,8 +18,8 @@ import static fs.client.world.World.MAX_WATER_LEVEL;
 @Singleton
 public class WaterSystem {
 
-  private static final int RAIN_INTERVAL = 30;
   private static final int FLOW_INTERVAL = 5;
+
   @Inject
   private Event<Object> events;
 
@@ -27,6 +27,7 @@ public class WaterSystem {
   private World world;
 
   private int[] maxFlowOut;
+
   private int tick = 0;
 
   public void onWorldGenerated(@Observes BlockGeneratedEvent event) {
@@ -35,15 +36,6 @@ public class WaterSystem {
 
   public void onUpdateRequested(@Observes TickEvent event) {
     tick++;
-    if (tick % RAIN_INTERVAL == 0) {
-      world.block(
-          world.width() / 2,
-          world.height() - 1,
-          world.depth() / 2
-      ).waterLevel(1);
-      events.fire(new BlockUpdatedEvent());
-    }
-
     if (tick % FLOW_INTERVAL == 0) {
       if (flow()) {
         events.fire(new BlockUpdatedEvent());

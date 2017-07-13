@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import java.util.Random;
 
 public class WorldGenerationSystem {
+
   private static final int SEED = new Random().nextInt();
 
   @Inject
