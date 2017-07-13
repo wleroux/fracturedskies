@@ -171,11 +171,13 @@ public class WorldRenderer extends Component {
     if (event instanceof MouseDown) {
       int mx = ((MouseDown) event).x();
       int my = ((MouseDown) event).y();
-      BlockRayHit blockRay = pick(mx, my).get().orElse(null);
-      if (blockRay != null) {
-        Location blockLocation = blockRay.location();
+      BlockRay blockRay = pick(mx, my);
+      if (blockRay.hasNext()) {
+        BlockRayHit blockRayHit = blockRay.next();
+
+        Location blockLocation = blockRayHit.location();
         if (((MouseDown) event).button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-          Location location = blockRay.faces().get(0).neighbour(blockLocation);
+          Location location = blockRayHit.faces().get(0).neighbour(blockLocation);
           if (location.isWithinWorldLimits()) {
             BlockAddedEvent addBlockEvent = new BlockAddedEvent(location, BlockType.BLOCK);
             events.fire(addBlockEvent);
@@ -218,9 +220,10 @@ public class WorldRenderer extends Component {
     rayEnd.multiply(1f / rayEnd.w());
 
     Vector4 direction = vec4(rayEnd).subtract(rayStart).normalize();
+    Vector3 origin = vec3(rayStart).subtract(modelPosition);
     return new BlockRay(
         world,
-        vec3(rayStart).subtract(modelPosition),
+        origin,
         vec3(direction),
         BlockRay.FILTER_AIR,
         BlockRay.FILTER_NONE

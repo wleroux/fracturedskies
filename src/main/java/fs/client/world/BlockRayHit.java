@@ -1,7 +1,5 @@
 package fs.client.world;
 
-import fs.client.world.Location;
-import fs.client.world.World;
 import fs.math.Vector3;
 
 import java.util.ArrayList;
