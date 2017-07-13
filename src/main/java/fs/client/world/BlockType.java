@@ -4,6 +4,7 @@ package fs.client.world;
  * Created by FracturedSkies on 1/14/2017.
  */
 public enum BlockType {
+  AIR(-1, -1),
   BLOCK(2, 1);
 
 

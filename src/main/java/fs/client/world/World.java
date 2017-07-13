@@ -17,7 +17,7 @@ public class World {
     this.depth = depth;
     blocks = new BlockState[width * height * depth];
     for (int i = 0; i < blocks.length; i ++) {
-      blocks[i] = new BlockState(null, 0);
+      blocks[i] = new BlockState(BlockType.AIR, 0);
     }
 
     converter = new CoordinateConverter(width, height, depth);

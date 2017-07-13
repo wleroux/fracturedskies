@@ -26,7 +26,7 @@ public class WaterMeshGenerator {
         for (int iz = 0; iz < world.depth(); iz++) {
           Location location = new Location(world, ix, iy, iz);
           BlockState block = location.block();
-          if (block.type() != null) {
+          if (block.type() != BlockType.AIR) {
             continue;
           }
 
@@ -213,6 +213,6 @@ public class WaterMeshGenerator {
 
   private static boolean isEmpty(Location location) {
     if (!location.isWithinWorldLimits()) return true;
-    return location.block().type() == null;
+    return location.block().type() == BlockType.AIR;
   }
 }

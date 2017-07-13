@@ -24,7 +24,7 @@ public class WorldMeshGenerator {
         for (int iz = 0; iz < world.depth(); iz++) {
           Location location = new Location(world, ix, iy, iz);
           BlockType type = location.block().type();
-          if (type == null) {
+          if (type == BlockType.AIR) {
             continue;
           }
 
@@ -175,6 +175,6 @@ public class WorldMeshGenerator {
 
   private static boolean isEmpty(Location location) {
     if (!location.isWithinWorldLimits()) return true;
-    return location.block().type() == null;
+    return location.block().type() == BlockType.AIR;
   }
 }

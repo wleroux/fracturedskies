@@ -3,6 +3,7 @@ package fs.client.system;
 import fs.client.event.BlockGeneratedEvent;
 import fs.client.event.BlockUpdatedEvent;
 import fs.client.event.TickEvent;
+import fs.client.world.BlockType;
 import fs.client.world.Location;
 import fs.client.world.Direction;
 import fs.client.world.World;
@@ -54,7 +55,7 @@ public class WaterSystem {
           int waterLevel = location.block().waterLevel();
           maxFlowOut[location.index()] = waterLevel;
 
-          if (location.block().type() == null) {
+          if (location.block().type() == BlockType.AIR) {
             if (isWater(location) || isNeighbouringWater(location)) {
               flowCandidates.add(location);
             }

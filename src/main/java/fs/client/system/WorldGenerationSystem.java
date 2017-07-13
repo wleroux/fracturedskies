@@ -32,9 +32,9 @@ public class WorldGenerationSystem {
       world.block(ix, 1, 1).type(BlockType.BLOCK);
     }
 
-    world.block(1, 0, 0).type(null);
-    world.block(1, 0, 1).type(null);
-    world.block(1, 0, 2).type(null);
+    world.block(1, 0, 0).type(BlockType.AIR);
+    world.block(1, 0, 1).type(BlockType.AIR);
+    world.block(1, 0, 2).type(BlockType.AIR);
 
     events.fire(new BlockGeneratedEvent());
   }

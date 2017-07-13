@@ -171,7 +171,7 @@ public class WorldRenderer extends Component {
     if (event instanceof MouseDown) {
       int mx = ((MouseDown) event).x();
       int my = ((MouseDown) event).y();
-      BlockRayHit blockRay = pick(mx, my).orElse(null);
+      BlockRayHit blockRay = pick(mx, my).get().orElse(null);
       if (blockRay != null) {
         Location blockLocation = blockRay.location();
         if (((MouseDown) event).button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -189,14 +189,14 @@ public class WorldRenderer extends Component {
           BlockRemovedEvent removeBlockEvent = new BlockRemovedEvent(blockLocation);
           events.fire(removeBlockEvent);
           if (!removeBlockEvent.isCancelled()) {
-            blockLocation.block().type(null);
+            blockLocation.block().type(BlockType.AIR);
           }
         }
       }
     }
   }
 
-  private Optional<BlockRayHit> pick(int mx, int my) {
+  private BlockRay pick(int mx, int my) {
     Vector4 rayStart = vec4(
         -((float) (screenWidth - mx) / (float) screenWidth - 0.5f) * 2,
         ((float) my / (float) screenHeight - 0.5f) * 2,
@@ -218,6 +218,12 @@ public class WorldRenderer extends Component {
     rayEnd.multiply(1f / rayEnd.w());
 
     Vector4 direction = vec4(rayEnd).subtract(rayStart).normalize();
-    return new BlockRay(world, vec3(rayStart).subtract(modelPosition), vec3(direction)).get();
+    return new BlockRay(
+        world,
+        vec3(rayStart).subtract(modelPosition),
+        vec3(direction),
+        BlockRay.FILTER_AIR,
+        BlockRay.FILTER_NONE
+    );
   }
 }
