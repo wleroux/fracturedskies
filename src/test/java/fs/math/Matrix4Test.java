@@ -7,18 +7,18 @@ import static fs.math.Vector3.vec3;
 import static org.junit.Assert.assertEquals;
 
 public class Matrix4Test {
-    private static final Matrix4 IDENTITY = mat4(
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1
-    );
+  private static final Matrix4 IDENTITY = mat4(
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+  );
 
-    @Test
-    public void itInverts() {
-        Matrix4 m1 = mat4(vec3(1, 2, 3));
-        Matrix4 m2 = mat4(vec3(1, 2, 3)).invert();
+  @Test
+  public void itInverts() {
+    Matrix4 m1 = mat4(vec3(1, 2, 3));
+    Matrix4 m2 = mat4(vec3(1, 2, 3)).invert();
 
-        assertEquals(IDENTITY, m1.multiply(m2));
-    }
+    assertEquals(IDENTITY, m1.multiply(m2));
+  }
 }

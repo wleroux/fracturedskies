@@ -10,199 +10,199 @@ import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
 
 public class WorldMeshGenerator {
-    public static Mesh generateMesh(World world) {
-        FloatBuffer verticesBuffer = createFloatBuffer(
-                9 * 4 * 6 * world.width() * world.depth()
-        );
-        IntBuffer indicesBuffer = createIntBuffer(
-                6 * 6 * world.width() * world.depth()
-        );
+  public static Mesh generateMesh(World world) {
+    FloatBuffer verticesBuffer = createFloatBuffer(
+        9 * 4 * 6 * world.width() * world.depth()
+    );
+    IntBuffer indicesBuffer = createIntBuffer(
+        6 * 6 * world.width() * world.depth()
+    );
 
-        int vertexCount = 0;
-        for (int iy = 0; iy < world.height(); iy ++) {
-            for (int ix = 0; ix < world.width(); ix ++) {
-                for (int iz = 0; iz < world.depth(); iz ++) {
-                    int index = world.converter().index(ix, iy, iz);
+    int vertexCount = 0;
+    for (int iy = 0; iy < world.height(); iy++) {
+      for (int ix = 0; ix < world.width(); ix++) {
+        for (int iz = 0; iz < world.depth(); iz++) {
+          int index = world.converter().index(ix, iy, iz);
 
-                    Tile tile = world.getBlock(index);
-                    if (tile == null) {
-                        continue;
-                    }
+          Tile tile = world.getBlock(index);
+          if (tile == null) {
+            continue;
+          }
 
-                    float xOffset = (float) ix;
-                    float yOffset = (float) iy;
-                    float zOffset = (float) iz;
+          float xOffset = (float) ix;
+          float yOffset = (float) iy;
+          float zOffset = (float) iz;
 
-                    // front
-                    if (shouldRenderFront(world, ix, iy, iz)) {
-                        int tileIndex = tile.front();
-                        verticesBuffer.put(new float[]{
-                                // @formatter:off
-                                xOffset + 0f, yOffset + 1f, zOffset + 0f,  0f, 0f, tileIndex,   0f, -1f,  0f,
-                                xOffset + 1f, yOffset + 1f, zOffset + 0f,  0f, 1f, tileIndex,   0f, -1f,  0f,
-                                xOffset + 1f, yOffset + 0f, zOffset + 0f,  1f, 1f, tileIndex,   0f, -1f,  0f,
-                                xOffset + 0f, yOffset + 0f, zOffset + 0f,  1f, 0f, tileIndex,   0f, -1f,  0f,
-                                // @formatter:on
-                        });
+          // front
+          if (shouldRenderFront(world, ix, iy, iz)) {
+            int tileIndex = tile.front();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 0f, yOffset + 1f, zOffset + 0f, 0f, 0f, tileIndex, 0f, -1f, 0f,
+                xOffset + 1f, yOffset + 1f, zOffset + 0f, 0f, 1f, tileIndex, 0f, -1f, 0f,
+                xOffset + 1f, yOffset + 0f, zOffset + 0f, 1f, 1f, tileIndex, 0f, -1f, 0f,
+                xOffset + 0f, yOffset + 0f, zOffset + 0f, 1f, 0f, tileIndex, 0f, -1f, 0f,
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
 
 
-                    // top
-                    if (shouldRenderTop(world, ix, iy, iz)) {
-                        int tileIndex = tile.top();
-                        verticesBuffer.put(new float[]{
-                            // @formatter:off
-                            xOffset + 0f, yOffset + 1f,  zOffset + 1f,   0f, 0f, tileIndex,   0f,  1f,  0f,
-                            xOffset + 1f, yOffset + 1f,  zOffset + 1f,   0f, 1f, tileIndex,   0f,  1f,  0f,
-                            xOffset + 1f, yOffset + 1f,  zOffset + 0f,   1f, 1f, tileIndex,   0f,  1f,  0f,
-                            xOffset + 0f, yOffset + 1f,  zOffset + 0f,   1f, 0f, tileIndex,   0f,  1f,  0f,
-                            // @formatter:on
-                        });
+          // top
+          if (shouldRenderTop(world, ix, iy, iz)) {
+            int tileIndex = tile.top();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 0f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, 0f, 1f, 0f,
+                xOffset + 1f, yOffset + 1f, zOffset + 1f, 0f, 1f, tileIndex, 0f, 1f, 0f,
+                xOffset + 1f, yOffset + 1f, zOffset + 0f, 1f, 1f, tileIndex, 0f, 1f, 0f,
+                xOffset + 0f, yOffset + 1f, zOffset + 0f, 1f, 0f, tileIndex, 0f, 1f, 0f,
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
 
-                    // left
-                    if (shouldRenderLeft(world, ix, iy, iz)) {
-                        int tileIndex = tile.left();
-                        verticesBuffer.put(new float[]{
-                                // @formatter:off
-                            xOffset + 0f, yOffset + 1f, zOffset + 1f,  0f, 0f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + 0f, yOffset + 1f, zOffset + 0f,  0f, 1f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + 0f, yOffset + 0f, zOffset + 0f,  1f, 1f, tileIndex,  -1f,  0f,  0f,
-                            xOffset + 0f, yOffset + 0f, zOffset + 1f,  1f, 0f, tileIndex,  -1f,  0f,  0f,
-                            // @formatter:on
-                        });
+          // left
+          if (shouldRenderLeft(world, ix, iy, iz)) {
+            int tileIndex = tile.left();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 0f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, -1f, 0f, 0f,
+                xOffset + 0f, yOffset + 1f, zOffset + 0f, 0f, 1f, tileIndex, -1f, 0f, 0f,
+                xOffset + 0f, yOffset + 0f, zOffset + 0f, 1f, 1f, tileIndex, -1f, 0f, 0f,
+                xOffset + 0f, yOffset + 0f, zOffset + 1f, 1f, 0f, tileIndex, -1f, 0f, 0f,
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
 
-                    // right
-                    if (shouldRenderRight(world, ix, iy, iz)) {
-                        int tileIndex = tile.right();
-                        verticesBuffer.put(new float[]{
-                            // @formatter:off
-                            xOffset + 1f, yOffset + 1f, zOffset + 0f,  0f, 0f, tileIndex,   1f,  0f,  0f,
-                            xOffset + 1f, yOffset + 1f, zOffset + 1f,  0f, 1f, tileIndex,   1f,  0f,  0f,
-                            xOffset + 1f, yOffset + 0f, zOffset + 1f,  1f, 1f, tileIndex,   1f,  0f,  0f,
-                            xOffset + 1f, yOffset + 0f, zOffset + 0f,  1f, 0f, tileIndex,   1f,  0f,  0f,
-                            // @formatter:on
-                        });
+          // right
+          if (shouldRenderRight(world, ix, iy, iz)) {
+            int tileIndex = tile.right();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 1f, yOffset + 1f, zOffset + 0f, 0f, 0f, tileIndex, 1f, 0f, 0f,
+                xOffset + 1f, yOffset + 1f, zOffset + 1f, 0f, 1f, tileIndex, 1f, 0f, 0f,
+                xOffset + 1f, yOffset + 0f, zOffset + 1f, 1f, 1f, tileIndex, 1f, 0f, 0f,
+                xOffset + 1f, yOffset + 0f, zOffset + 0f, 1f, 0f, tileIndex, 1f, 0f, 0f,
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
 
-                    // bottom
-                    if (shouldRenderBottom(world, ix, iy, iz)) {
-                        int tileIndex = tile.bottom();
-                        verticesBuffer.put(new float[]{
-                            // @formatter:off
-                            xOffset + 0f, yOffset + 0f, zOffset + 0f,   0f, 0f, tileIndex,  0f, -1f,  0f,
-                            xOffset + 1f, yOffset + 0f, zOffset + 0f,   0f, 1f, tileIndex,  0f, -1f,  0f,
-                            xOffset + 1f, yOffset + 0f, zOffset + 1f,   1f, 1f, tileIndex,  0f, -1f,  0f,
-                            xOffset + 0f, yOffset + 0f, zOffset + 1f,   1f, 0f, tileIndex,  0f, -1f,  0f,
-                            // @formatter:on
-                        });
+          // bottom
+          if (shouldRenderBottom(world, ix, iy, iz)) {
+            int tileIndex = tile.bottom();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 0f, yOffset + 0f, zOffset + 0f, 0f, 0f, tileIndex, 0f, -1f, 0f,
+                xOffset + 1f, yOffset + 0f, zOffset + 0f, 0f, 1f, tileIndex, 0f, -1f, 0f,
+                xOffset + 1f, yOffset + 0f, zOffset + 1f, 1f, 1f, tileIndex, 0f, -1f, 0f,
+                xOffset + 0f, yOffset + 0f, zOffset + 1f, 1f, 0f, tileIndex, 0f, -1f, 0f,
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
 
-                    // back
-                    if (shouldRenderBack(world, ix, iy, iz)) {
-                        int tileIndex = tile.back();
-                        verticesBuffer.put(new float[]{
-                                // @formatter:off
-                            xOffset + 1f, yOffset + 1f, zOffset + 1f,   0f, 0f, tileIndex,  0f,  0f,  1f,
-                            xOffset + 0f, yOffset + 1f, zOffset + 1f,   0f, 1f, tileIndex,  0f,  0f,  1f,
-                            xOffset + 0f, yOffset + 0f, zOffset + 1f,   1f, 1f, tileIndex,  0f,  0f,  1f,
-                            xOffset + 1f, yOffset + 0f, zOffset + 1f,   1f, 0f, tileIndex,  0f,  0f,  1f
-                                // @formatter:on
-                        });
+          // back
+          if (shouldRenderBack(world, ix, iy, iz)) {
+            int tileIndex = tile.back();
+            verticesBuffer.put(new float[]{
+                // @formatter:off
+                xOffset + 1f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, 0f, 0f, 1f,
+                xOffset + 0f, yOffset + 1f, zOffset + 1f, 0f, 1f, tileIndex, 0f, 0f, 1f,
+                xOffset + 0f, yOffset + 0f, zOffset + 1f, 1f, 1f, tileIndex, 0f, 0f, 1f,
+                xOffset + 1f, yOffset + 0f, zOffset + 1f, 1f, 0f, tileIndex, 0f, 0f, 1f
+                // @formatter:on
+            });
 
-                        indicesBuffer.put(new int[]{
-                                vertexCount + 0, vertexCount + 1, vertexCount + 2,
-                                vertexCount + 2, vertexCount + 3, vertexCount + 0
-                        });
-                        vertexCount += 4;
-                    }
-                }
-            }
-
-            if (verticesBuffer.remaining() < 9 * 4 * 6 * world.width() * world.depth()) {
-                FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * world.width() * world.depth());
-                verticesBuffer.flip();
-                newVerticesBuffer.put(verticesBuffer);
-                verticesBuffer = newVerticesBuffer;
-
-                IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * world.width() * world.depth());
-                indicesBuffer.flip();
-                newIndiciesBuffer.put(indicesBuffer);
-                indicesBuffer = newIndiciesBuffer;
-            }
+            indicesBuffer.put(new int[]{
+                vertexCount + 0, vertexCount + 1, vertexCount + 2,
+                vertexCount + 2, vertexCount + 3, vertexCount + 0
+            });
+            vertexCount += 4;
+          }
         }
+      }
 
+      if (verticesBuffer.remaining() < 9 * 4 * 6 * world.width() * world.depth()) {
+        FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * world.width() * world.depth());
         verticesBuffer.flip();
-        float[] vertices = new float[verticesBuffer.remaining()];
-        verticesBuffer.get(vertices);
+        newVerticesBuffer.put(verticesBuffer);
+        verticesBuffer = newVerticesBuffer;
 
+        IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * world.width() * world.depth());
         indicesBuffer.flip();
-        int[] indices = new int[indicesBuffer.remaining()];
-        indicesBuffer.get(indices);
-
-        return new Mesh(vertices, indices, POSITION, TEXCOORD, NORMAL);
+        newIndiciesBuffer.put(indicesBuffer);
+        indicesBuffer = newIndiciesBuffer;
+      }
     }
 
-    private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {
-        if (iz + 1 == world.depth()) return true;
-        return world.getBlock(world.converter().index(ix, iy, iz + 1)) == null;
-    }
+    verticesBuffer.flip();
+    float[] vertices = new float[verticesBuffer.remaining()];
+    verticesBuffer.get(vertices);
 
-    private static boolean shouldRenderBottom(World world, int ix, int iy, int iz) {
-        if (iy == 0) return true;
-        return world.getBlock(world.converter().index(ix, iy - 1, iz)) == null;
-    }
+    indicesBuffer.flip();
+    int[] indices = new int[indicesBuffer.remaining()];
+    indicesBuffer.get(indices);
 
-    private static boolean shouldRenderRight(World world, int ix, int iy, int iz) {
-        if (ix + 1 == world.width()) return true;
-        return world.getBlock(world.converter().index(ix + 1, iy, iz)) == null;
-    }
+    return new Mesh(vertices, indices, POSITION, TEXCOORD, NORMAL);
+  }
 
-    private static boolean shouldRenderLeft(World world, int ix, int iy, int iz) {
-        if (ix == 0) return true;
-        return world.getBlock(world.converter().index(ix - 1, iy, iz)) == null;
-    }
+  private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {
+    if (iz + 1 == world.depth()) return true;
+    return world.getBlock(world.converter().index(ix, iy, iz + 1)) == null;
+  }
 
-    private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
-        if (iy + 1 == world.height()) return true;
-        return world.getBlock(world.converter().index(ix, iy + 1, iz)) == null;
-    }
+  private static boolean shouldRenderBottom(World world, int ix, int iy, int iz) {
+    if (iy == 0) return true;
+    return world.getBlock(world.converter().index(ix, iy - 1, iz)) == null;
+  }
+
+  private static boolean shouldRenderRight(World world, int ix, int iy, int iz) {
+    if (ix + 1 == world.width()) return true;
+    return world.getBlock(world.converter().index(ix + 1, iy, iz)) == null;
+  }
+
+  private static boolean shouldRenderLeft(World world, int ix, int iy, int iz) {
+    if (ix == 0) return true;
+    return world.getBlock(world.converter().index(ix - 1, iy, iz)) == null;
+  }
+
+  private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
+    if (iy + 1 == world.height()) return true;
+    return world.getBlock(world.converter().index(ix, iy + 1, iz)) == null;
+  }
 
 
-    private static boolean shouldRenderFront(World world, int ix, int iy, int iz) {
-        if (iz == 0) return true;
-        return world.getBlock(world.converter().index(ix, iy, iz - 1)) == null;
-    }
+  private static boolean shouldRenderFront(World world, int ix, int iy, int iz) {
+    if (iz == 0) return true;
+    return world.getBlock(world.converter().index(ix, iy, iz - 1)) == null;
+  }
 
 }

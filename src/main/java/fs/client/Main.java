@@ -1,56 +1,49 @@
 package fs.client;
 
-import fs.client.async.Dispatcher;
-import fs.client.async.GameSystem;
 import fs.client.event.*;
-import fs.client.system.render.RenderSystem;
-import fs.client.system.water.WaterSystem;
-import fs.client.system.world.WorldGenerationSystem;
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
 
-import java.util.concurrent.CompletableFuture;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-public class Main implements Runnable, GameSystem {
-    private final Dispatcher dispatcher;
-    private boolean isTerminated = false;
+@Singleton
+public class Main implements Runnable {
 
-    public static void main(String[] args) {
-        new Main().run();
+  private boolean isTerminated = false;
+
+  @Inject
+  private Event<Object> events;
+
+  public Main() {
+  }
+
+  public static void main(String[] args) {
+    Weld weld = new Weld();
+    try (WeldContainer container = weld.initialize()) {
+      container.select(Main.class).get().run();
     }
+  }
 
-    public Main() {
-        this.dispatcher = new Dispatcher();
-        this.dispatcher.register(this);
-        this.dispatcher.register(new WaterSystem(dispatcher));
-        this.dispatcher.register(new RenderSystem(dispatcher));
-        this.dispatcher.register(new WorldGenerationSystem(dispatcher));
+  @Override
+  public void run() {
+    events.fire(new GamePreInitializationEvent());
+    events.fire(new GameInitializationEvent());
+
+    while (!isTerminated) {
+      events.fire(new TickEvent());
+      events.fire(new RenderEvent());
     }
+  }
 
-    @Override
-    public void run() {
-        dispatcher.dispatch(new Initialized()).join();
+  public void onTerminatedEvent(@Observes TerminatedEvent event) {
+    isTerminated = true;
+  }
 
-        while (!isTerminated) {
-            dispatcher.dispatch(new UpdateRequested()).join();
-            dispatcher.dispatch(new RenderRequested()).join();
-        }
-
-        dispatcher.dispatch(new Terminated()).join();
-    }
-
-    public boolean canHandle(Object event) {
-        return event instanceof TerminationRequested;
-    }
-
-    @Override
-    public void accept(Object event, CompletableFuture<Void> future) {
-        if (event instanceof TerminationRequested) {
-            isTerminated = true;
-        }
-        future.complete(null);
-    }
-
-    @Override
-    public String toString() {
-        return "main";
-    }
+  @Override
+  public String toString() {
+    return "main";
+  }
 }

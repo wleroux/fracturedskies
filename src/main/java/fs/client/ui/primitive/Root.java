@@ -8,87 +8,87 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Root extends Card {
 
-    private int screenWidth;
-    private int screenHeight;
-    private int mouseX;
-    private int mouseY;
-    private Component mouseover = null;
-    private Component focus = null;
+  private int screenWidth;
+  private int screenHeight;
+  private int mouseX;
+  private int mouseY;
+  private Component mouseover = null;
+  private Component focus = null;
 
-    @Override
-    public void handle(Event event) {
-        if (event instanceof MouseDown) {
-            blur();
-        }
+  @Override
+  public void handle(UIEvent event) {
+    if (event instanceof MouseDown) {
+      blur();
+    }
+  }
+
+  public void focus(Component component) {
+    if (focus != component) {
+      if (focus != null) {
+        UIEvent.dispatch(new FocusOut(focus));
+        focus = null;
+      }
+
+      if (component != null) {
+        focus = component;
+        UIEvent.dispatch(new FocusIn(focus));
+      }
+    }
+  }
+
+  public void blur() {
+    focus(null);
+  }
+
+  // GLFW UIEvent Handlers
+
+  public void onWindowSize(long window, int screenWidth, int screenHeight) {
+    this.screenWidth = screenWidth;
+    this.screenHeight = screenHeight;
+  }
+
+  public void onKey(long window, int key, int scancode, int action, int mods) {
+    if (focus != null) {
+      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+        blur();
+      } else {
+        UIEvent.dispatch(new Key(focus, key, scancode, action, mods));
+      }
+    } else {
+      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+        glfwSetWindowShouldClose(window, true);
+      }
+    }
+  }
+
+  public void onCursorPos(long window, double xpos, double ypos) {
+    mouseX = (int) xpos;
+    mouseY = screenHeight - (int) ypos;
+
+    Component component = findComponentAt(mouseX, mouseY);
+    if (mouseover != component) {
+      if (mouseover != null)
+        UIEvent.dispatch(new MouseOut(mouseover));
+      if (component != null)
+        UIEvent.dispatch(new MouseOver(component));
+      mouseover = component;
     }
 
-    public void focus(Component component) {
-        if (focus != component) {
-            if (focus != null) {
-                Event.dispatch(new FocusOut(focus));
-                focus = null;
-            }
-
-            if (component != null) {
-                focus = component;
-                Event.dispatch(new FocusIn(focus));
-            }
-        }
+    if (component != null) {
+      UIEvent.dispatch(new MouseMove(component, (int) xpos, (int) ypos));
     }
+  }
 
-    public void blur() {
-        focus(null);
+  public void onMouseButton(long window, int button, int action, int mods) {
+    if (action == GLFW_RELEASE) {
+      Component component = findComponentAt(mouseX, mouseY);
+      UIEvent.dispatch(new MouseDown(component, button, mouseX, mouseY));
     }
+  }
 
-    // GLFW Event Handlers
-
-    public void onWindowSize(long window, int screenWidth, int screenHeight) {
-        this.screenWidth = screenWidth;
-        this.screenHeight = screenHeight;
+  public void onCharMods(long window, int codepoint, int mods) {
+    if (focus != null) {
+      UIEvent.dispatch(new Char(focus, Character.valueOf((char) codepoint), mods));
     }
-
-    public void onKey(long window, int key, int scancode, int action, int mods) {
-        if (focus != null) {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ) {
-                blur();
-            } else {
-                Event.dispatch(new Key(focus, key, scancode, action, mods));
-            }
-        } else {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ) {
-                glfwSetWindowShouldClose(window, true);
-            }
-        }
-    }
-
-    public void onCursorPos(long window, double xpos, double ypos) {
-        mouseX = (int) xpos;
-        mouseY = screenHeight - (int) ypos;
-
-        Component component = findComponentAt(mouseX, mouseY);
-        if (mouseover != component) {
-            if (mouseover != null)
-                Event.dispatch(new MouseOut(mouseover));
-            if (component != null)
-                Event.dispatch(new MouseOver(component));
-            mouseover = component;
-        }
-
-        if (component != null) {
-            Event.dispatch(new MouseMove(component, (int) xpos, (int) ypos));
-        }
-    }
-
-    public void onMouseButton(long window, int button, int action, int mods) {
-        if (action == GLFW_RELEASE) {
-            Component component = findComponentAt(mouseX, mouseY);
-            Event.dispatch(new MouseDown(component, button, mouseX, mouseY));
-        }
-    }
-
-    public void onCharMods(long window, int codepoint, int mods) {
-        if (focus != null) {
-            Event.dispatch(new Char(focus, Character.valueOf((char) codepoint), mods));
-        }
-    }
+  }
 }
