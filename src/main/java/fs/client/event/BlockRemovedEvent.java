@@ -1,15 +1,17 @@
 package fs.client.event;
 
+import fs.client.ui.game.Location;
+
 public final class BlockRemovedEvent extends BlockUpdatedEvent implements Cancellable {
-  private final int index;
+  private final Location location;
   private boolean cancelled;
 
-  public BlockRemovedEvent(int index) {
-    this.index = index;
+  public BlockRemovedEvent(Location location) {
+    this.location = location;
   }
 
-  public int index() {
-    return index;
+  public Location location() {
+    return location;
   }
 
   @Override

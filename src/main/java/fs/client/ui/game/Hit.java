@@ -4,18 +4,18 @@ import fs.math.Vector3;
 
 public class Hit {
 
-  private final int index;
+  private final Location location;
   private final Vector3 intersection;
   private final Vector3 normal;
 
-  public Hit(int index, Vector3 intersection, Vector3 normal) {
-    this.index = index;
+  public Hit(Location location, Vector3 intersection, Vector3 normal) {
+    this.location = location;
     this.intersection = intersection;
     this.normal = normal;
   }
 
-  public int index() {
-    return index;
+  public Location location() {
+    return location;
   }
 
   public Vector3 intersection() {

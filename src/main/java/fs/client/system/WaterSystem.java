@@ -3,6 +3,8 @@ package fs.client.system;
 import fs.client.event.BlockGeneratedEvent;
 import fs.client.event.BlockUpdatedEvent;
 import fs.client.event.TickEvent;
+import fs.client.ui.game.Location;
+import fs.client.world.Direction;
 import fs.client.world.World;
 
 import javax.enterprise.event.Event;
@@ -34,11 +36,11 @@ public class WaterSystem {
   public void onUpdateRequested(@Observes TickEvent event) {
     tick++;
     if (tick % RAIN_INTERVAL == 0) {
-      world.waterLevel(world.converter().index(
+      world.block(
           world.width() / 2,
           world.height() - 1,
           world.depth() / 2
-      ), 1);
+      ).waterLevel(1);
       events.fire(new BlockUpdatedEvent());
     }
 
@@ -50,16 +52,21 @@ public class WaterSystem {
   }
 
   private boolean flow() {
-    PriorityQueue<Integer> flowCandidates = new PriorityQueue<>(Comparator.comparingInt(this::waterPotential));
+    PriorityQueue<Location> flowCandidates = new PriorityQueue<>(Comparator.comparingInt(this::waterPotential));
 
     // Get all potential flow candidates
-    for (int targetIndex = 0; targetIndex < world.size(); targetIndex++) {
-      int waterLevel = world.waterLevel(targetIndex);
-      maxFlowOut[targetIndex] = waterLevel;
+    for (int ix = 0; ix < world.width(); ix ++) {
+      for (int iy = 0; iy < world.height(); iy ++) {
+        for (int iz = 0; iz < world.depth(); iz ++) {
+          Location location = new Location(world, ix, iy, iz);
+          int waterLevel = location.block().waterLevel();
+          maxFlowOut[location.index()] = waterLevel;
 
-      if (world.getBlock(targetIndex) == null) {
-        if (isWater(targetIndex) || isNeighbouringWater(targetIndex)) {
-          flowCandidates.add(targetIndex);
+          if (location.block().type() == null) {
+            if (isWater(location) || isNeighbouringWater(location)) {
+              flowCandidates.add(location);
+            }
+          }
         }
       }
     }
@@ -68,29 +75,29 @@ public class WaterSystem {
     boolean waterChanged = false;
     while (!flowCandidates.isEmpty()) {
       // Find path from water source to water target
-      int targetIndex = flowCandidates.poll();
-      int targetWaterLevel = world.waterLevel(targetIndex);
+      Location targetLocation = flowCandidates.poll();
+      int targetWaterLevel = targetLocation.block().waterLevel();
       if (targetWaterLevel >= MAX_WATER_LEVEL) {
         continue;
       }
 
-      List<Integer> path = find(targetIndex);
+      List<Location> path = find(targetLocation);
       if (!path.isEmpty()) {
         for (int i = 0; i < path.size() - 1; i++) {
-          maxFlowOut[path.get(i)]--;
+          maxFlowOut[path.get(i).index()]--;
         }
 
-        int sourceIndex = path.get(0);
-        if (sourceIndex != -1) {
-          int sourceWaterLevel = world.waterLevel(sourceIndex);
-          world.waterLevel(sourceIndex, sourceWaterLevel - 1);
-          world.waterLevel(targetIndex, targetWaterLevel + 1);
+        Location sourceLocation = path.get(0);
+        if (sourceLocation != null) {
+          int sourceWaterLevel = sourceLocation.block().waterLevel();
+          sourceLocation.block().waterLevel(sourceWaterLevel - 1);
+          targetLocation.block().waterLevel(targetWaterLevel + 1);
           waterChanged = true;
 
-          flowCandidates.remove(sourceIndex);
-          flowCandidates.add(sourceIndex);
+          flowCandidates.remove(sourceLocation);
+          flowCandidates.add(sourceLocation);
           if (targetWaterLevel != MAX_WATER_LEVEL) {
-            flowCandidates.add(targetIndex);
+            flowCandidates.add(targetLocation);
           }
         }
       }
@@ -99,37 +106,36 @@ public class WaterSystem {
     return waterChanged;
   }
 
-  private List<Integer> find(int startIndex) {
-    int targetWaterPotential = waterPotential(startIndex) + 2;
+  private List<Location> find(Location startLocation) {
+    int targetWaterPotential = waterPotential(startLocation) + 2;
 
-    Map<Integer, Integer> cameFrom = new HashMap<>();
-    cameFrom.put(startIndex, null);
+    Map<Location, Location> cameFrom = new HashMap<>();
+    cameFrom.put(startLocation, null);
 
-    Queue<Integer> unvisitedCells = new LinkedList<>();
-    unvisitedCells.add(startIndex);
+    Queue<Location> unvisitedCells = new LinkedList<>();
+    unvisitedCells.add(startLocation);
     while (!unvisitedCells.isEmpty()) {
-      int cellIndex = unvisitedCells.poll();
+      Location cellLocation = unvisitedCells.poll();
 
       // Find cell with higher potential
-      int cellPotential = waterPotential(cellIndex);
+      int cellPotential = waterPotential(cellLocation);
       if (cellPotential >= targetWaterPotential) {
-
-        List<Integer> path = new ArrayList<>();
-        path.add(cellIndex);
-        while (cameFrom.get(cellIndex) != null) {
-          cellIndex = cameFrom.get(cellIndex);
-          path.add(cellIndex);
+        List<Location> path = new ArrayList<>();
+        path.add(cellLocation);
+        while (cameFrom.get(cellLocation) != null) {
+          cellLocation = cameFrom.get(cellLocation);
+          path.add(cellLocation);
         }
 
         return path;
       }
 
       // If not higher potential, findComponentAt neighbours
-      for (int neighbour : world.converter().neighbours(cellIndex)) {
-        if (maxFlowOut[neighbour] > 0) {
+      for (Location neighbour : world.converter().neighbours(cellLocation)) {
+        if (maxFlowOut[neighbour.index()] > 0) {
           if (!cameFrom.containsKey(neighbour)) {
             unvisitedCells.add(neighbour);
-            cameFrom.put(neighbour, cellIndex);
+            cameFrom.put(neighbour, cellLocation);
           }
         }
       }
@@ -137,19 +143,24 @@ public class WaterSystem {
 
     // If we cannot findComponentAt any path, then any adjacent neighbours would not findComponentAt any better solution either; discard
     // them so we don't waste time!
-    for (Integer cellIndex : cameFrom.keySet()) {
-      maxFlowOut[cellIndex] = 0;
+    for (Location cellLocation : cameFrom.keySet()) {
+      maxFlowOut[cellLocation.index()] = 0;
     }
 
     return Collections.emptyList();
   }
 
-  private boolean isWater(int index) {
-    return world.waterLevel(index) > 0;
+  private boolean isWater(Location location) {
+    return location.block().waterLevel() > 0;
   }
 
-  private boolean isNeighbouringWater(int index) {
-    for (int neighbour : world.converter().neighbours(index)) {
+  private boolean isNeighbouringWater(Location location) {
+    for (Direction direction: Direction.values()) {
+      Location neighbour = direction.neighbour(location);
+      if (! neighbour.isWithinWorldLimits()) {
+        continue;
+      }
+
       if (isWater(neighbour)) {
         return true;
       }
@@ -157,9 +168,8 @@ public class WaterSystem {
     return false;
   }
 
-  private int waterPotential(int index) {
-    int y = world.converter().y(index);
-    int waterLevel = world.waterLevel(index);
-    return y * (MAX_WATER_LEVEL + 1) + waterLevel;
+  private int waterPotential(Location location) {
+    int waterLevel = location.block().waterLevel();
+    return location.y() * (MAX_WATER_LEVEL + 1) + waterLevel;
   }
 }

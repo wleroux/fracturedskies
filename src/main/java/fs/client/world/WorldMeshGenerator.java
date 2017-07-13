@@ -1,5 +1,6 @@
 package fs.client.world;
 
+import fs.client.ui.game.Location;
 import fs.client.ui.primitive.mesh.Mesh;
 
 import java.nio.FloatBuffer;
@@ -22,20 +23,19 @@ public class WorldMeshGenerator {
     for (int iy = 0; iy < world.height(); iy++) {
       for (int ix = 0; ix < world.width(); ix++) {
         for (int iz = 0; iz < world.depth(); iz++) {
-          int index = world.converter().index(ix, iy, iz);
-
-          Tile tile = world.getBlock(index);
-          if (tile == null) {
+          Location location = new Location(world, ix, iy, iz);
+          BlockType type = location.block().type();
+          if (type == null) {
             continue;
           }
 
-          float xOffset = (float) ix;
-          float yOffset = (float) iy;
-          float zOffset = (float) iz;
+          float xOffset = (float) location.x();
+          float yOffset = (float) location.y();
+          float zOffset = (float) location.z();
 
           // front
-          if (shouldRenderFront(world, ix, iy, iz)) {
-            int tileIndex = tile.front();
+          if (isEmpty(Direction.NORTH.neighbour(location))) {
+            int tileIndex = type.front();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 0f, yOffset + 1f, zOffset + 0f, 0f, 0f, tileIndex, 0f, -1f, 0f,
@@ -54,8 +54,8 @@ public class WorldMeshGenerator {
 
 
           // top
-          if (shouldRenderTop(world, ix, iy, iz)) {
-            int tileIndex = tile.top();
+          if (isEmpty(Direction.UP.neighbour(location))) {
+            int tileIndex = type.top();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 0f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, 0f, 1f, 0f,
@@ -73,8 +73,8 @@ public class WorldMeshGenerator {
           }
 
           // left
-          if (shouldRenderLeft(world, ix, iy, iz)) {
-            int tileIndex = tile.left();
+          if (isEmpty(Direction.WEST.neighbour(location))) {
+            int tileIndex = type.left();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 0f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, -1f, 0f, 0f,
@@ -92,8 +92,8 @@ public class WorldMeshGenerator {
           }
 
           // right
-          if (shouldRenderRight(world, ix, iy, iz)) {
-            int tileIndex = tile.right();
+          if (isEmpty(Direction.EAST.neighbour(location))) {
+            int tileIndex = type.right();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 1f, yOffset + 1f, zOffset + 0f, 0f, 0f, tileIndex, 1f, 0f, 0f,
@@ -111,8 +111,8 @@ public class WorldMeshGenerator {
           }
 
           // bottom
-          if (shouldRenderBottom(world, ix, iy, iz)) {
-            int tileIndex = tile.bottom();
+          if (isEmpty(Direction.DOWN.neighbour(location))) {
+            int tileIndex = type.bottom();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 0f, yOffset + 0f, zOffset + 0f, 0f, 0f, tileIndex, 0f, -1f, 0f,
@@ -130,8 +130,8 @@ public class WorldMeshGenerator {
           }
 
           // back
-          if (shouldRenderBack(world, ix, iy, iz)) {
-            int tileIndex = tile.back();
+          if (isEmpty(Direction.SOUTH.neighbour(location))) {
+            int tileIndex = type.back();
             verticesBuffer.put(new float[]{
                 // @formatter:off
                 xOffset + 1f, yOffset + 1f, zOffset + 1f, 0f, 0f, tileIndex, 0f, 0f, 1f,
@@ -174,35 +174,8 @@ public class WorldMeshGenerator {
     return new Mesh(vertices, indices, POSITION, TEXCOORD, NORMAL);
   }
 
-  private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {
-    if (iz + 1 == world.depth()) return true;
-    return world.getBlock(world.converter().index(ix, iy, iz + 1)) == null;
+  private static boolean isEmpty(Location location) {
+    if (!location.isWithinWorldLimits()) return true;
+    return location.block().type() == null;
   }
-
-  private static boolean shouldRenderBottom(World world, int ix, int iy, int iz) {
-    if (iy == 0) return true;
-    return world.getBlock(world.converter().index(ix, iy - 1, iz)) == null;
-  }
-
-  private static boolean shouldRenderRight(World world, int ix, int iy, int iz) {
-    if (ix + 1 == world.width()) return true;
-    return world.getBlock(world.converter().index(ix + 1, iy, iz)) == null;
-  }
-
-  private static boolean shouldRenderLeft(World world, int ix, int iy, int iz) {
-    if (ix == 0) return true;
-    return world.getBlock(world.converter().index(ix - 1, iy, iz)) == null;
-  }
-
-  private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
-    if (iy + 1 == world.height()) return true;
-    return world.getBlock(world.converter().index(ix, iy + 1, iz)) == null;
-  }
-
-
-  private static boolean shouldRenderFront(World world, int ix, int iy, int iz) {
-    if (iz == 0) return true;
-    return world.getBlock(world.converter().index(ix, iy, iz - 1)) == null;
-  }
-
 }

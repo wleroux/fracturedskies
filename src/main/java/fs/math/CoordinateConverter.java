@@ -1,5 +1,8 @@
 package fs.math;
 
+import fs.client.ui.game.Location;
+import fs.client.world.Direction;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,22 +34,14 @@ public final class CoordinateConverter {
     return (index / width / height);
   }
 
-  public List<Integer> neighbours(int index) {
-    List<Integer> neighbours = new ArrayList<>();
-    if (x(index) != 0)
-      neighbours.add(index - 1);
-    if (x(index) + 1 != width)
-      neighbours.add(index + 1);
-
-    if (z(index) != 0)
-      neighbours.add(index - width * height);
-    if (z(index) + 1 != depth)
-      neighbours.add(index + width * height);
-
-    if (y(index) != 0)
-      neighbours.add(index - width);
-    if (y(index) + 1 != height)
-      neighbours.add(index + width);
+  public List<Location> neighbours(Location location) {
+    List<Location> neighbours = new ArrayList<>();
+    for (Direction direction: Direction.values()) {
+      Location neighbour = direction.neighbour(location);
+      if (neighbour.isWithinWorldLimits()) {
+        neighbours.add(neighbour);
+      }
+    }
     return neighbours;
   }
 }

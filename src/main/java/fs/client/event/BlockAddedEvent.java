@@ -1,23 +1,24 @@
 package fs.client.event;
 
-import fs.client.world.Tile;
+import fs.client.ui.game.Location;
+import fs.client.world.BlockType;
 
 public final class BlockAddedEvent extends BlockUpdatedEvent implements Cancellable {
-  private final int index;
-  private final Tile tile;
+  private final Location location;
+  private final BlockType block;
   private boolean cancelled = false;
 
-  public BlockAddedEvent(int index, Tile tile) {
-    this.index = index;
-    this.tile = tile;
+  public BlockAddedEvent(Location location, BlockType block) {
+    this.location = location;
+    this.block = block;
   }
 
-  public int index() {
-    return index;
+  public Location location() {
+    return location;
   }
 
-  public Tile tile() {
-    return tile;
+  public BlockType type() {
+    return block;
   }
 
   @Override

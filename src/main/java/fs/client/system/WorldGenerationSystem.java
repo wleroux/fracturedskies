@@ -2,7 +2,8 @@ package fs.client.system;
 
 import fs.client.event.GameInitializationEvent;
 import fs.client.event.BlockGeneratedEvent;
-import fs.client.world.Tile;
+import fs.client.world.BlockType;
+import fs.client.world.BlockState;
 import fs.client.world.World;
 
 import javax.enterprise.event.Event;
@@ -24,15 +25,15 @@ public class WorldGenerationSystem {
   public void onInitialized(@Observes GameInitializationEvent event) {
     for (int ix = 0; ix < world.width(); ix++) {
       for (int iz = 0; iz < world.depth(); iz++) {
-        world.setBlock(world.converter().index(ix, 0, iz), Tile.BLOCK);
+        world.block(ix, 0, iz).type(BlockType.BLOCK);
       }
 
-      world.setBlock(world.converter().index(ix, 1, 1), Tile.BLOCK);
+      world.block(ix, 1, 1).type(BlockType.BLOCK);
     }
 
-    world.setBlock(world.converter().index(1, 0, 0), null);
-    world.setBlock(world.converter().index(1, 0, 1), null);
-    world.setBlock(world.converter().index(1, 0, 2), null);
+    world.block(1, 0, 0).type(null);
+    world.block(1, 0, 1).type(null);
+    world.block(1, 0, 2).type(null);
 
     events.fire(new BlockGeneratedEvent());
   }

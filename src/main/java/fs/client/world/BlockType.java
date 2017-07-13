@@ -3,7 +3,7 @@ package fs.client.world;
 /**
  * Created by FracturedSkies on 1/14/2017.
  */
-public enum Tile {
+public enum BlockType {
   BLOCK(2, 1);
 
 
@@ -14,15 +14,15 @@ public enum Tile {
   private final int right;
   private final int bottom;
 
-  Tile() {
+  BlockType() {
     this(0, 0, 0, 0, 0, 0);
   }
 
-  Tile(int top, int sides) {
+  BlockType(int top, int sides) {
     this(top, sides, sides, sides, sides, sides);
   }
 
-  Tile(int top, int front, int left, int back, int right, int bottom) {
+  BlockType(int top, int front, int left, int back, int right, int bottom) {
     this.top = top;
     this.front = front;
     this.left = left;

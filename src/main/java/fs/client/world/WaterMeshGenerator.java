@@ -1,5 +1,6 @@
 package fs.client.world;
 
+import fs.client.ui.game.Location;
 import fs.client.ui.primitive.mesh.Mesh;
 
 import java.nio.FloatBuffer;
@@ -24,11 +25,13 @@ public class WaterMeshGenerator {
     for (int iy = 0; iy < world.height(); iy++) {
       for (int ix = 0; ix < world.width(); ix++) {
         for (int iz = 0; iz < world.depth(); iz++) {
-          if (world.getBlock(world.converter().index(ix, iy, iz)) != null) {
+          Location location = new Location(world, ix, iy, iz);
+          BlockState block = location.block();
+          if (block.type() != null) {
             continue;
           }
 
-          int curWaterLevel = world.waterLevel(world.converter().index(ix, iy, iz));
+          int curWaterLevel = block.waterLevel();
           if (curWaterLevel == 0) {
             continue;
           }
@@ -39,8 +42,9 @@ public class WaterMeshGenerator {
           float curWaterHeight = waterHeight(curWaterLevel);
 
           // front
-          if (shouldRenderFront(world, ix, iy, iz)) {
-            int adjWaterLevel = iz == 0 ? 0 : world.waterLevel(world.converter().index(ix, iy, iz - 1));
+          Location frontLocation = Direction.NORTH.neighbour(location);
+          if (isEmpty(frontLocation)) {
+            int adjWaterLevel = iz == 0 ? 0 : frontLocation.block().waterLevel();
             float adjWaterHeight = waterHeight(adjWaterLevel);
 
             if (adjWaterHeight < curWaterHeight) {
@@ -63,8 +67,9 @@ public class WaterMeshGenerator {
 
 
           // top
-          if (shouldRenderTop(world, ix, iy, iz)) {
-            int adjWaterLevel = (iy + 1 == world.height()) ? 0 : world.waterLevel(world.converter().index(ix, iy + 1, iz));
+          Location topLocation = Direction.UP.neighbour(location);
+          if (isEmpty(topLocation)) {
+            int adjWaterLevel = topLocation.isWithinWorldLimits() ? topLocation.block().waterLevel() : 0;
             if (curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0) {
               verticesBuffer.put(new float[]{
                   // @formatter:off
@@ -84,8 +89,9 @@ public class WaterMeshGenerator {
           }
 
           // left
-          if (shouldRenderLeft(world, ix, iy, iz)) {
-            int adjWaterLevel = ix == 0 ? 0 : world.waterLevel(world.converter().index(ix - 1, iy, iz));
+          Location leftLocation = Direction.WEST.neighbour(location);
+          if (isEmpty(leftLocation)) {
+            int adjWaterLevel = leftLocation.isWithinWorldLimits() ? leftLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
 
             if (adjWaterHeight < curWaterHeight) {
@@ -107,8 +113,9 @@ public class WaterMeshGenerator {
           }
 
           // right
-          if (shouldRenderRight(world, ix, iy, iz)) {
-            int adjWaterLevel = (ix + 1 == world.width()) ? 0 : world.waterLevel(world.converter().index(ix + 1, iy, iz));
+          Location rightLocation = Direction.EAST.neighbour(location);
+          if (isEmpty(rightLocation)) {
+            int adjWaterLevel = rightLocation.isWithinWorldLimits() ? rightLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
 
             if (adjWaterHeight < curWaterHeight) {
@@ -130,8 +137,9 @@ public class WaterMeshGenerator {
           }
 
           // bottom
-          if (shouldRenderBottom(world, ix, iy, iz)) {
-            int adjWaterLevel = (iy == 0) ? 0 : world.waterLevel(world.converter().index(ix, iy - 1, iz));
+          Location bottomLocation = Direction.DOWN.neighbour(location);
+          if (isEmpty(bottomLocation)) {
+            int adjWaterLevel = bottomLocation.isWithinWorldLimits() ? bottomLocation.block().waterLevel() : 0;
             if (adjWaterLevel != MAX_WATER_LEVEL) {
               verticesBuffer.put(new float[]{
                   // @formatter:off
@@ -151,8 +159,9 @@ public class WaterMeshGenerator {
           }
 
           // back
-          if (shouldRenderBack(world, ix, iy, iz)) {
-            int adjWaterLevel = (iz + 1 == world.depth()) ? 0 : world.waterLevel(world.converter().index(ix, iy, iz + 1));
+          Location backLocation = Direction.SOUTH.neighbour(location);
+          if (isEmpty(backLocation)) {
+            int adjWaterLevel = backLocation.isWithinWorldLimits() ? backLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
 
             if (adjWaterHeight < curWaterHeight) {
@@ -203,34 +212,8 @@ public class WaterMeshGenerator {
     return map(waterLevel, 0, MAX_WATER_LEVEL, 0f, 1f);
   }
 
-  private static boolean shouldRenderBack(World world, int ix, int iy, int iz) {
-    if (iz + 1 == world.depth()) return true;
-    return world.getBlock(world.converter().index(ix, iy, iz + 1)) == null;
+  private static boolean isEmpty(Location location) {
+    if (!location.isWithinWorldLimits()) return true;
+    return location.block().type() == null;
   }
-
-  private static boolean shouldRenderBottom(World world, int ix, int iy, int iz) {
-    if (iy == 0) return true;
-    return world.getBlock(world.converter().index(ix, iy - 1, iz)) == null;
-  }
-
-  private static boolean shouldRenderRight(World world, int ix, int iy, int iz) {
-    if (ix + 1 == world.width()) return true;
-    return world.getBlock(world.converter().index(ix + 1, iy, iz)) == null;
-  }
-
-  private static boolean shouldRenderLeft(World world, int ix, int iy, int iz) {
-    if (ix == 0) return true;
-    return world.getBlock(world.converter().index(ix - 1, iy, iz)) == null;
-  }
-
-  private static boolean shouldRenderTop(World world, int ix, int iy, int iz) {
-    return true;
-  }
-
-
-  private static boolean shouldRenderFront(World world, int ix, int iy, int iz) {
-    if (iz == 0) return true;
-    return world.getBlock(world.converter().index(ix, iy, iz - 1)) == null;
-  }
-
 }

@@ -10,10 +10,7 @@ import fs.client.ui.primitive.mesh.Mesh;
 import fs.client.ui.primitive.mesh.MeshRenderer;
 import fs.client.ui.primitive.mesh.Program;
 import fs.client.ui.primitive.mesh.TextureArray;
-import fs.client.world.Tile;
-import fs.client.world.WaterMeshGenerator;
-import fs.client.world.World;
-import fs.client.world.WorldMeshGenerator;
+import fs.client.world.*;
 import fs.math.Matrix4;
 import fs.math.Quaternion4;
 import fs.math.Vector3;
@@ -176,20 +173,25 @@ public class WorldRenderer extends Component {
       if (blockRay != null) {
         if (((MouseDown) event).button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
           Vector3 blockLocation = vec3(blockRay.normal()).multiply(0.5f).add(blockRay.intersection());
-          int blockIndex = world.converter().index((int) blockLocation.x(), (int) blockLocation.y(), (int) blockLocation.z());
+          Location location = new Location(world, (int) blockLocation.x(), (int) blockLocation.y(), (int) blockLocation.z());
+          if (!location.isWithinWorldLimits()) {
+            return;
+          }
 
-          BlockAddedEvent addBlockEvent = new BlockAddedEvent(blockIndex, Tile.BLOCK);
+          BlockAddedEvent addBlockEvent = new BlockAddedEvent(location, BlockType.BLOCK);
           events.fire(addBlockEvent);
           if (!addBlockEvent.isCancelled()) {
-            world.setBlock(blockIndex, Tile.BLOCK);
+            BlockState block = location.block();
+            block.type(BlockType.BLOCK);
+            block.waterLevel(0);
           }
         } else {
-          int blockIndex = blockRay.index();
+          Location location = blockRay.location();
 
-          BlockRemovedEvent removeBlockEvent = new BlockRemovedEvent(blockIndex);
+          BlockRemovedEvent removeBlockEvent = new BlockRemovedEvent(location);
           events.fire(removeBlockEvent);
           if (!removeBlockEvent.isCancelled()) {
-            world.setBlock(blockIndex, null);
+            location.block().type(null);
           }
         }
       }
@@ -258,10 +260,10 @@ public class WorldRenderer extends Component {
         int z = (int) block.z();
 
         if (0 <= x && x < world.width() && 0 <= y && y < world.height() && 0 <= z && z < world.depth()) {
-          int index = world.converter().index(x, y, z);
-          if (world.getBlock(index) != null) {
+          Location location = new Location(world, x, y, z);
+          if (location.block().type() != null) {
             minDistance = d;
-            minBlockRay = new Hit(index, intersection, normal);
+            minBlockRay = new Hit(location, intersection, normal);
           }
         }
       }

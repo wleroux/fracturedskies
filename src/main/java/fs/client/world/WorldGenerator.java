@@ -27,9 +27,9 @@ public class WorldGenerator {
           float fz = map(iz, 0, depth, -1, 1);
 
           if (isBlock(seed, fx, fy, fz)) {
-            world.setBlock(world.converter().index(ix, iy, iz), Tile.BLOCK);
+            world.block(ix, iy, iz).type(BlockType.BLOCK);
           } else {
-            world.setBlock(world.converter().index(ix, iy, iz), null);
+            world.block(ix, iy, iz).type(null);
           }
         }
       }
