@@ -30,7 +30,25 @@ public class Quaternion4 {
         axis.x() * s,
         axis.y() * s,
         axis.z() * s
+    ).normalize();
+  }
+
+  public Quaternion4 normalize() {
+    float m = magnitude();
+    return set(
+      w / m,
+      x / m,
+      y / m,
+      z / m
     );
+  }
+
+  public float magnitude() {
+    return (float) Math.sqrt(w * w + x * x + y * y + z * z);
+  }
+
+  public static Quaternion4 quat4() {
+    return quat4(1, 0, 0, 0);
   }
 
   public float w() {
@@ -47,7 +65,7 @@ public class Quaternion4 {
   }
 
   public Quaternion4 x(float x) {
-    this.w = x;
+    this.x = x;
     return this;
   }
 
@@ -56,7 +74,7 @@ public class Quaternion4 {
   }
 
   public Quaternion4 y(float y) {
-    this.w = y;
+    this.y = y;
     return this;
   }
 
@@ -65,7 +83,7 @@ public class Quaternion4 {
   }
 
   public Quaternion4 z(float z) {
-    this.w = z;
+    this.z = z;
     return this;
   }
 
@@ -78,11 +96,55 @@ public class Quaternion4 {
     return this;
   }
 
+  public Quaternion4 set(Quaternion4 o) {
+    return set(o.w(), o.x(), o.y(), o.z());
+  }
+
   public String toString() {
     return format("[%f %f %f %f]", w, x, y, z);
   }
 
   public Quaternion4 conjugate() {
     return set(w, -x, -y, -z);
+  }
+
+  public Quaternion4 multiply(float s) {
+    float halfAngle = (float) Math.acos(w);
+    float sin = (float) Math.sin(halfAngle);
+    float ax = x / sin;
+    float ay = y / sin;
+    float az = z / sin;
+
+    float newHalfAngle = halfAngle * s;
+    float newSin = (float) Math.sin(newHalfAngle);
+    return set(
+        (float) Math.cos(newHalfAngle),
+        ax * newSin,
+        ay * newSin,
+        az * newSin
+    );
+  }
+
+  public Quaternion4 multiply(Quaternion4 o) {
+    return set(
+      w * o.w - x * o.x - y * o.y - z * o.z,
+      w * o.x + x * o.w - y * o.z + z * o.y,
+      w * o.y + x * o.z + y * o.w - z * o.x,
+      w * o.z - x * o.y + y * o.x + z * o.w
+    );
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof Quaternion4)) {
+      return false;
+    }
+
+    Quaternion4 q = (Quaternion4) o;
+
+    return Math.abs(w - q.w) <= 0.00001f &&
+        Math.abs(x - q.x) <= 0.00001f &&
+        Math.abs(y - q.y) <= 0.00001f &&
+        Math.abs(z - q.z) <= 0.00001f;
   }
 }

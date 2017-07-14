@@ -76,6 +76,7 @@ public class RenderSystem {
 
     // Initialize Renderer
     worldRenderer = CDI.current().select(WorldRenderer.class).get();
+    worldRenderer.setWindow(window);
     worldRenderer.setScreenDimensions(screenWidth, screenHeight);
     root.add(worldRenderer);
   }

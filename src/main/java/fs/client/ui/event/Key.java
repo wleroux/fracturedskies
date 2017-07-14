@@ -2,6 +2,8 @@ package fs.client.ui.event;
 
 import fs.client.ui.Component;
 
+import static java.lang.String.format;
+
 public class Key extends UIEvent {
   private final int key;
   private final int scancode;
@@ -33,4 +35,7 @@ public class Key extends UIEvent {
     return mods;
   }
 
+  public String toString() {
+    return format("Key[%d; mods: %s]", key, mods);
+  }
 }

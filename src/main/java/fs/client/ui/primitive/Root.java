@@ -40,6 +40,10 @@ public class Root extends Card {
     focus(null);
   }
 
+  public boolean isFocused(Component component) {
+    return focus == component;
+  }
+
   // GLFW UIEvent Handlers
 
   public void onWindowSize(long window, int screenWidth, int screenHeight) {
