@@ -2,6 +2,7 @@ package fs.client.system;
 
 import fs.client.event.BlockUpdatedEvent;
 import fs.client.event.TickEvent;
+import fs.client.event.WaterUpdatedEvent;
 import fs.client.world.World;
 
 import javax.enterprise.event.Event;
@@ -9,10 +10,12 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import static fs.client.world.World.MAX_WATER_LEVEL;
+
 @Singleton
 public class RainSystem {
 
-  private static final int RAIN_INTERVAL = 15;
+  private static final int RAIN_INTERVAL = 2;
 
   @Inject
   private Event<Object> events;
@@ -29,8 +32,8 @@ public class RainSystem {
           world.width() / 2,
           world.height() - 1,
           world.depth() / 2
-      ).waterLevel(1);
-      events.fire(new BlockUpdatedEvent());
+      ).waterLevel(MAX_WATER_LEVEL);
+      events.fire(new WaterUpdatedEvent());
     }
   }
 }

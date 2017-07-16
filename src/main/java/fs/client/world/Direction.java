@@ -18,7 +18,15 @@ public enum Direction {
     this.dz = dz;
   }
 
-  public Location neighbour(Location location) {
-    return new Location(location.world(), location.x() + dx, location.y() + dy, location.z() + dz);
+  public int dx() {
+    return dx;
+  }
+
+  public int dy() {
+    return dy;
+  }
+
+  public int dz() {
+    return dz;
   }
 }

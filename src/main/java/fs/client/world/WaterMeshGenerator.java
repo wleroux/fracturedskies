@@ -24,7 +24,7 @@ public class WaterMeshGenerator {
     for (int iy = 0; iy < world.height(); iy++) {
       for (int ix = 0; ix < world.width(); ix++) {
         for (int iz = 0; iz < world.depth(); iz++) {
-          Location location = new Location(world, ix, iy, iz);
+          Location location = world.location(ix, iy, iz);
           BlockState block = location.block();
           if (block.type() != BlockType.AIR) {
             continue;
@@ -41,7 +41,7 @@ public class WaterMeshGenerator {
           float curWaterHeight = waterHeight(curWaterLevel);
 
           // north
-          Location northLocation = Direction.NORTH.neighbour(location);
+          Location northLocation = location.neighbour(Direction.NORTH);
           if (isEmpty(northLocation)) {
             int adjWaterLevel = iz == 0 ? 0 : northLocation.block().waterLevel();
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -66,7 +66,7 @@ public class WaterMeshGenerator {
 
 
           // up
-          Location upLocation = Direction.UP.neighbour(location);
+          Location upLocation = location.neighbour(Direction.UP);
           if (isEmpty(upLocation) || curWaterLevel != MAX_WATER_LEVEL) {
             int adjWaterLevel = upLocation.isWithinWorldLimits() ? upLocation.block().waterLevel() : 0;
             if (curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0) {
@@ -88,7 +88,7 @@ public class WaterMeshGenerator {
           }
 
           // west
-          Location westLocation = Direction.WEST.neighbour(location);
+          Location westLocation = location.neighbour(Direction.WEST);
           if (isEmpty(westLocation)) {
             int adjWaterLevel = westLocation.isWithinWorldLimits() ? westLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -112,7 +112,7 @@ public class WaterMeshGenerator {
           }
 
           // east
-          Location eastLocation = Direction.EAST.neighbour(location);
+          Location eastLocation = location.neighbour(Direction.EAST);
           if (isEmpty(eastLocation)) {
             int adjWaterLevel = eastLocation.isWithinWorldLimits() ? eastLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -136,7 +136,7 @@ public class WaterMeshGenerator {
           }
 
           // down
-          Location downLocation = Direction.DOWN.neighbour(location);
+          Location downLocation = location.neighbour(Direction.DOWN);
           if (isEmpty(downLocation)) {
             int adjWaterLevel = downLocation.isWithinWorldLimits() ? downLocation.block().waterLevel() : 0;
             if (adjWaterLevel != MAX_WATER_LEVEL) {
@@ -158,7 +158,7 @@ public class WaterMeshGenerator {
           }
 
           // south
-          Location southLocation = Direction.SOUTH.neighbour(location);
+          Location southLocation = location.neighbour(Direction.SOUTH);
           if (isEmpty(southLocation)) {
             int adjWaterLevel = southLocation.isWithinWorldLimits() ? southLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);

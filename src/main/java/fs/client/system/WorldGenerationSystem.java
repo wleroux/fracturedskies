@@ -1,10 +1,13 @@
 package fs.client.system;
 
+import fs.client.Game;
 import fs.client.event.GameInitializationEvent;
 import fs.client.event.BlockGeneratedEvent;
+import fs.client.event.WaterUpdatedEvent;
 import fs.client.world.BlockType;
 import fs.client.world.BlockState;
 import fs.client.world.World;
+import fs.client.world.WorldGenerator;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -21,21 +24,20 @@ public class WorldGenerationSystem {
   @Inject
   private World world;
 
-  // private static final WorldGenerator worldGenerator = new WorldGenerator(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
+ private static final WorldGenerator worldGenerator = new WorldGenerator(Game.WORLD_WIDTH, Game.WORLD_HEIGHT, Game.WORLD_DEPTH);
 
   public void onInitialized(@Observes GameInitializationEvent event) {
-    for (int ix = 0; ix < world.width(); ix++) {
-      for (int iz = 0; iz < world.depth(); iz++) {
-        world.block(ix, 0, iz).type(BlockType.BLOCK);
-      }
+    World generatedWorld = worldGenerator.generate(SEED);
 
-      world.block(ix, 1, 1).type(BlockType.BLOCK);
+    for (int ix = 0; ix < generatedWorld.width(); ix++) {
+      for (int iz = 0; iz < generatedWorld.depth(); iz++) {
+        for (int iy = 0; iy < generatedWorld.height(); iy ++) {
+          world.block(ix, iy, iz).type(generatedWorld.block(ix, iy, iz).type());
+        }
+      }
     }
 
-    world.block(1, 0, 0).type(BlockType.AIR);
-    world.block(1, 0, 1).type(BlockType.AIR);
-    world.block(1, 0, 2).type(BlockType.AIR);
-
     events.fire(new BlockGeneratedEvent());
+    events.fire(new WaterUpdatedEvent());
   }
 }

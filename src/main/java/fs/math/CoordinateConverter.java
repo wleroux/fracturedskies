@@ -34,10 +34,11 @@ public final class CoordinateConverter {
     return (index / width / height);
   }
 
+  private static final Direction[] directions = Direction.values();
   public List<Location> neighbours(Location location) {
     List<Location> neighbours = new ArrayList<>();
-    for (Direction direction: Direction.values()) {
-      Location neighbour = direction.neighbour(location);
+    for (Direction direction: directions) {
+      Location neighbour = location.neighbour(direction);
       if (neighbour.isWithinWorldLimits()) {
         neighbours.add(neighbour);
       }

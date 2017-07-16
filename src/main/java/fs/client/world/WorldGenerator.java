@@ -29,7 +29,7 @@ public class WorldGenerator {
           if (isBlock(seed, fx, fy, fz)) {
             world.block(ix, iy, iz).type(BlockType.BLOCK);
           } else {
-            world.block(ix, iy, iz).type(null);
+            world.block(ix, iy, iz).type(BlockType.AIR);
           }
         }
       }

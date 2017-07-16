@@ -25,7 +25,7 @@ public class BlockRayHit {
       int blockX = blockCoordinate(intersection.x(), normal.x());
       int blockY = blockCoordinate(intersection.y(), normal.y());
       int blockZ = blockCoordinate(intersection.z(), normal.z());
-      location = new Location(world, blockX, blockY, blockZ);
+      location = world.location(blockX, blockY, blockZ);
     }
     return location;
   }

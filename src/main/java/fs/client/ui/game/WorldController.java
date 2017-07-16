@@ -32,21 +32,33 @@ public class WorldController {
   private static final Vector3 BACKWARDS = vec3(0, 0, -1);
   private static final Vector3 LEFT = vec3(-1, 0, 0);
   private static final Vector3 RIGHT = vec3(1, 0, 0);
+  private static final Vector3 UP = vec3(0, 1, 0);
+  private static final Vector3 DOWN = vec3(0, -1, 0);
 
   public void onKeyDown(Key key) {
     Quaternion4 movementRotation = quat4(game.view().rotation()).x(0).z(0).normalize();
     switch (key.key()) {
       case GLFW_KEY_UP:
+      case GLFW_KEY_W:
         game.view().position().add(vec3(FORWARD).rotate(movementRotation));
         break;
       case GLFW_KEY_DOWN:
+      case GLFW_KEY_S:
         game.view().position().add(vec3(BACKWARDS).rotate(movementRotation));
         break;
       case GLFW_KEY_LEFT:
+      case GLFW_KEY_A:
         game.view().position().add(vec3(LEFT).rotate(movementRotation));
         break;
       case GLFW_KEY_RIGHT:
+      case GLFW_KEY_D:
         game.view().position().add(vec3(RIGHT).rotate(movementRotation));
+        break;
+      case GLFW_KEY_SPACE:
+        game.view().position().add(vec3(UP));
+        break;
+      case GLFW_KEY_LEFT_SHIFT:
+        game.view().position().add(vec3(DOWN));
         break;
     }
   }
@@ -75,7 +87,7 @@ public class WorldController {
 
       Location blockLocation = blockRayHit.location();
       if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-        Location location = blockRayHit.faces().get(0).neighbour(blockLocation);
+        Location location = blockLocation.neighbour(blockRayHit.faces().get(0));
         if (location.isWithinWorldLimits()) {
           BlockAddedEvent addBlockEvent = new BlockAddedEvent(location, BlockType.BLOCK);
           events.fire(addBlockEvent);

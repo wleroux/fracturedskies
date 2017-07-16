@@ -22,7 +22,7 @@ public class WorldMeshGenerator {
     for (int iy = 0; iy < world.height(); iy++) {
       for (int ix = 0; ix < world.width(); ix++) {
         for (int iz = 0; iz < world.depth(); iz++) {
-          Location location = new Location(world, ix, iy, iz);
+          Location location = world.location(ix, iy, iz);
           BlockType type = location.block().type();
           if (type == BlockType.AIR) {
             continue;
@@ -33,7 +33,7 @@ public class WorldMeshGenerator {
           float zOffset = (float) location.z();
 
           // north
-          if (isEmpty(Direction.NORTH.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.NORTH))) {
             int tileIndex = type.front();
             verticesBuffer.put(new float[]{
                 // @formatter:off
@@ -53,7 +53,7 @@ public class WorldMeshGenerator {
 
 
           // up
-          if (isEmpty(Direction.UP.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.UP))) {
             int tileIndex = type.top();
             verticesBuffer.put(new float[]{
                 // @formatter:off
@@ -72,7 +72,7 @@ public class WorldMeshGenerator {
           }
 
           // west
-          if (isEmpty(Direction.WEST.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.WEST))) {
             int tileIndex = type.left();
             verticesBuffer.put(new float[]{
                 // @formatter:off
@@ -91,7 +91,7 @@ public class WorldMeshGenerator {
           }
 
           // east
-          if (isEmpty(Direction.EAST.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.EAST))) {
             int tileIndex = type.right();
             verticesBuffer.put(new float[]{
                 // @formatter:off
@@ -110,7 +110,7 @@ public class WorldMeshGenerator {
           }
 
           // down
-          if (isEmpty(Direction.DOWN.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.DOWN))) {
             int tileIndex = type.bottom();
             verticesBuffer.put(new float[]{
                 // @formatter:off
@@ -129,7 +129,7 @@ public class WorldMeshGenerator {
           }
 
           // south
-          if (isEmpty(Direction.SOUTH.neighbour(location))) {
+          if (isEmpty(location.neighbour(Direction.SOUTH))) {
             int tileIndex = type.back();
             verticesBuffer.put(new float[]{
                 // @formatter:off

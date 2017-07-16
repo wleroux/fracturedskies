@@ -1,6 +1,7 @@
 package fs.client.ui.game;
 
 import fs.client.event.BlockUpdatedEvent;
+import fs.client.event.WaterUpdatedEvent;
 import fs.client.ui.Component;
 import fs.client.ui.event.*;
 import fs.client.ui.primitive.mesh.Mesh;
@@ -52,10 +53,7 @@ public class WorldRenderer extends Component {
   private int screenWidth;
   private int screenHeight;
 
-  private Mesh blockMesh;
   private MeshRenderer blockRenderer;
-
-  private Mesh waterMesh;
   private MeshRenderer waterRenderer;
   private long window;
 
@@ -98,7 +96,11 @@ public class WorldRenderer extends Component {
   }
 
   public void onWorldUpdated(@Observes BlockUpdatedEvent event) {
-    dirty();
+    if (event instanceof WaterUpdatedEvent) {
+      waterRenderer = null;
+    } else {
+      blockRenderer = null;
+    }
   }
 
   private WorldRenderer model(Vector3 position) {
@@ -106,14 +108,6 @@ public class WorldRenderer extends Component {
     model.set(mat4(position));
 
     return this;
-  }
-
-  private void dirty() {
-    blockMesh = WorldMeshGenerator.generateMesh(world);
-    blockRenderer = null;
-
-    waterMesh = WaterMeshGenerator.generateMesh(world);
-    waterRenderer = null;
   }
 
   @Override
@@ -140,14 +134,18 @@ public class WorldRenderer extends Component {
   public void render() {
     view(controller.view().position(), controller.view().rotation());
 
-    if (blockRenderer == null)
+    if (blockRenderer == null) {
+      Mesh blockMesh = WorldMeshGenerator.generateMesh(world);
       blockRenderer = new MeshRenderer(blockMesh, program, textureArray, model, view, projection);
+    }
     blockRenderer
         .bounds(x, y, width, height)
         .render();
 
-    if (waterRenderer == null)
+    if (waterRenderer == null) {
+      Mesh waterMesh = WaterMeshGenerator.generateMesh(world);
       waterRenderer = new MeshRenderer(waterMesh, program, textureArray, model, view, projection);
+    }
     waterRenderer
         .bounds(x, y, width, height)
         .render();
