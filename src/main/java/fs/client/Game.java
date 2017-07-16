@@ -15,8 +15,10 @@ import static fs.math.Vector3.vec3;
 @Singleton
 public class Game {
 
-  public static final int WORLD_WIDTH = 64;
-  public static final int WORLD_HEIGHT = WORLD_WIDTH;
+  public static final int CHUNK_SIZE = 8;
+
+  public static final int WORLD_WIDTH = CHUNK_SIZE * 16;
+  public static final int WORLD_HEIGHT = WORLD_WIDTH * 2;
   public static final int WORLD_DEPTH = WORLD_WIDTH;
 
   private World world = new World(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);

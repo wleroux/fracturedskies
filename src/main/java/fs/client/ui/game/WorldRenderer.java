@@ -1,25 +1,28 @@
 package fs.client.ui.game;
 
-import fs.client.event.BlockUpdatedEvent;
+import fs.client.event.WorldGeneratedEvent;
+import fs.client.event.LocationUpdatedEvent;
 import fs.client.event.WaterUpdatedEvent;
 import fs.client.ui.Component;
 import fs.client.ui.event.*;
+import fs.client.ui.primitive.OpenGLComponent;
 import fs.client.ui.primitive.mesh.Mesh;
-import fs.client.ui.primitive.mesh.MeshRenderer;
 import fs.client.ui.primitive.mesh.Program;
 import fs.client.ui.primitive.mesh.TextureArray;
+import fs.client.world.Location;
 import fs.client.world.WaterMeshGenerator;
 import fs.client.world.World;
 import fs.client.world.WorldMeshGenerator;
-import fs.math.Matrix4;
-import fs.math.Quaternion4;
-import fs.math.Vector3;
-import fs.math.Vector4;
+import fs.math.*;
 
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static fs.client.Game.CHUNK_SIZE;
 import static fs.math.Matrix4.*;
 import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
@@ -27,9 +30,13 @@ import static fs.math.Vector4.vec4;
 import static fs.util.ResourceLoader.loadAsByteBuffer;
 import static fs.util.ResourceLoader.loadAsString;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL20.glUseProgram;
 
 @Singleton
-public class WorldRenderer extends Component {
+public class WorldRenderer extends OpenGLComponent {
 
   @Inject
   private WorldController controller;
@@ -53,9 +60,9 @@ public class WorldRenderer extends Component {
   private int screenWidth;
   private int screenHeight;
 
-  private MeshRenderer blockRenderer;
-  private MeshRenderer waterRenderer;
   private long window;
+  private Map<Integer, Mesh> blockMesh = new HashMap<>();
+  private Map<Integer, Mesh> waterMesh = new HashMap<>();
 
   public WorldRenderer() {
     ClassLoader classLoader = this.getClass().getClassLoader();
@@ -95,12 +102,26 @@ public class WorldRenderer extends Component {
     return this;
   }
 
-  public void onWorldUpdated(@Observes BlockUpdatedEvent event) {
-    if (event instanceof WaterUpdatedEvent) {
-      waterRenderer = null;
-    } else {
-      blockRenderer = null;
+  public void onWorldUpdated(@Observes LocationUpdatedEvent event) {
+    Location updatedWaterBlock = event.location();
+    CoordinateConverter converter = new CoordinateConverter(world.width() / CHUNK_SIZE, world.height() / CHUNK_SIZE, world.depth() / CHUNK_SIZE);
+    for (Location neighbourLocation: updatedWaterBlock.neighbours().values()) {
+      int chunkX = neighbourLocation.x() / CHUNK_SIZE;
+      int chunkY = neighbourLocation.y() / CHUNK_SIZE;
+      int chunkZ = neighbourLocation.z() / CHUNK_SIZE;
+      int chunkIndex = converter.index(chunkX, chunkY, chunkZ);
+
+      if (event instanceof WaterUpdatedEvent) {
+        waterMesh.remove(chunkIndex);
+      }  else {
+        blockMesh.remove(chunkIndex);
+      }
     }
+  }
+
+  public void onWorldGenerated(WorldGeneratedEvent event) {
+    waterMesh.clear();
+    blockMesh.clear();
   }
 
   private WorldRenderer model(Vector3 position) {
@@ -134,21 +155,38 @@ public class WorldRenderer extends Component {
   public void render() {
     view(controller.view().position(), controller.view().rotation());
 
-    if (blockRenderer == null) {
-      Mesh blockMesh = WorldMeshGenerator.generateMesh(world);
-      blockRenderer = new MeshRenderer(blockMesh, program, textureArray, model, view, projection);
-    }
-    blockRenderer
-        .bounds(x, y, width, height)
-        .render();
+    glUseProgram(program.id());
+    glEnable(GL_DEPTH_TEST);
+    uniform(MODEL_LOCATION, model);
+    uniform(VIEW_LOCATION, view);
+    uniform(PROJECTION_LOCATION, projection);
+    uniform(ALBEDO_LOCATION, GL_TEXTURE0, textureArray);
 
-    if (waterRenderer == null) {
-      Mesh waterMesh = WaterMeshGenerator.generateMesh(world);
-      waterRenderer = new MeshRenderer(waterMesh, program, textureArray, model, view, projection);
+    CoordinateConverter converter = new CoordinateConverter(world.width() / CHUNK_SIZE, world.height() / CHUNK_SIZE, world.depth() / CHUNK_SIZE);
+    for (int iz = 0; iz < world.depth() / CHUNK_SIZE; iz ++) {
+      for (int ix = 0; ix < world.width() / CHUNK_SIZE; ix++) {
+        for (int iy = 0; iy < world.height() / CHUNK_SIZE; iy++) {
+          int cacheIndex = converter.index(ix, iy, iz);
+          if (!blockMesh.containsKey(cacheIndex)) {
+            blockMesh.put(cacheIndex, WorldMeshGenerator.generateMesh(world, ix, iy, iz));
+          }
+          draw(blockMesh.get(cacheIndex));
+        }
+      }
     }
-    waterRenderer
-        .bounds(x, y, width, height)
-        .render();
+
+    for (int iz = 0; iz < world.depth() / CHUNK_SIZE; iz ++) {
+      for (int ix = 0; ix < world.width() / CHUNK_SIZE; ix++) {
+        for (int iy = 0; iy < world.height() / CHUNK_SIZE; iy++) {
+          int cacheIndex = converter.index(ix, iy, iz);
+          if (!waterMesh.containsKey(cacheIndex)) {
+            waterMesh.put(cacheIndex, WaterMeshGenerator.generateMesh(world, ix, iy, iz));
+          }
+          draw(waterMesh.get(cacheIndex));
+        }
+      }
+    }
+    glUseProgram(0);
   }
 
   @Override

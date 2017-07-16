@@ -5,23 +5,24 @@ import fs.client.ui.primitive.mesh.Mesh;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import static fs.client.Game.CHUNK_SIZE;
 import static fs.client.ui.primitive.OpenGLComponent.*;
 import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
 
 public class WorldMeshGenerator {
-  public static Mesh generateMesh(World world) {
+  public static Mesh generateMesh(World world, int chunkX, int chunkY, int chunkZ) {
     FloatBuffer verticesBuffer = createFloatBuffer(
-        9 * 4 * 6 * world.width() * world.depth()
+        9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE
     );
     IntBuffer indicesBuffer = createIntBuffer(
-        6 * 6 * world.width() * world.depth()
+        6 * 6 * CHUNK_SIZE * CHUNK_SIZE
     );
 
     int vertexCount = 0;
-    for (int iy = 0; iy < world.height(); iy++) {
-      for (int ix = 0; ix < world.width(); ix++) {
-        for (int iz = 0; iz < world.depth(); iz++) {
+    for (int iy = chunkY * CHUNK_SIZE; iy < (chunkY + 1) * CHUNK_SIZE; iy++) {
+      for (int ix = chunkX * CHUNK_SIZE; ix < (chunkX + 1) * CHUNK_SIZE; ix++) {
+        for (int iz = chunkZ * CHUNK_SIZE; iz < (chunkZ + 1) * CHUNK_SIZE; iz++) {
           Location location = world.location(ix, iy, iz);
           BlockType type = location.block().type();
           if (type == BlockType.AIR) {
@@ -149,13 +150,13 @@ public class WorldMeshGenerator {
         }
       }
 
-      if (verticesBuffer.remaining() < 9 * 4 * 6 * world.width() * world.depth()) {
-        FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * world.width() * world.depth());
+      if (verticesBuffer.remaining() < 9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE) {
+        FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE);
         verticesBuffer.flip();
         newVerticesBuffer.put(verticesBuffer);
         verticesBuffer = newVerticesBuffer;
 
-        IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * world.width() * world.depth());
+        IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * CHUNK_SIZE * CHUNK_SIZE);
         indicesBuffer.flip();
         newIndiciesBuffer.put(indicesBuffer);
         indicesBuffer = newIndiciesBuffer;

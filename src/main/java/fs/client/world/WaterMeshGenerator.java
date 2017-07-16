@@ -5,25 +5,27 @@ import fs.client.ui.primitive.mesh.Mesh;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import static fs.client.Game.CHUNK_SIZE;
 import static fs.client.ui.primitive.OpenGLComponent.*;
+import static fs.client.world.Direction.*;
 import static fs.client.world.World.MAX_WATER_LEVEL;
 import static fs.math.Interpolators.map;
 import static org.lwjgl.BufferUtils.createFloatBuffer;
 import static org.lwjgl.BufferUtils.createIntBuffer;
 
 public class WaterMeshGenerator {
-  public static Mesh generateMesh(World world) {
+  public static Mesh generateMesh(World world, int chunkX, int chunkY, int chunkZ) {
     FloatBuffer verticesBuffer = createFloatBuffer(
-        9 * 4 * 6 * world.width() * world.depth()
+        9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE
     );
     IntBuffer indicesBuffer = createIntBuffer(
-        6 * 6 * world.width() * world.depth()
+        6 * 6 * CHUNK_SIZE * CHUNK_SIZE
     );
 
     int vertexCount = 0;
-    for (int iy = 0; iy < world.height(); iy++) {
-      for (int ix = 0; ix < world.width(); ix++) {
-        for (int iz = 0; iz < world.depth(); iz++) {
+    for (int iy = chunkY * CHUNK_SIZE; iy < (chunkY + 1) * CHUNK_SIZE; iy++) {
+      for (int ix = chunkX * CHUNK_SIZE; ix < (chunkX + 1) * CHUNK_SIZE; ix++) {
+        for (int iz = chunkZ * CHUNK_SIZE; iz < (chunkZ + 1) * CHUNK_SIZE; iz++) {
           Location location = world.location(ix, iy, iz);
           BlockState block = location.block();
           if (block.type() != BlockType.AIR) {
@@ -41,7 +43,7 @@ public class WaterMeshGenerator {
           float curWaterHeight = waterHeight(curWaterLevel);
 
           // north
-          Location northLocation = location.neighbour(Direction.NORTH);
+          Location northLocation = location.neighbour(NORTH);
           if (isEmpty(northLocation)) {
             int adjWaterLevel = iz == 0 ? 0 : northLocation.block().waterLevel();
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -66,7 +68,7 @@ public class WaterMeshGenerator {
 
 
           // up
-          Location upLocation = location.neighbour(Direction.UP);
+          Location upLocation = location.neighbour(UP);
           if (isEmpty(upLocation) || curWaterLevel != MAX_WATER_LEVEL) {
             int adjWaterLevel = upLocation.isWithinWorldLimits() ? upLocation.block().waterLevel() : 0;
             if (curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0) {
@@ -88,7 +90,7 @@ public class WaterMeshGenerator {
           }
 
           // west
-          Location westLocation = location.neighbour(Direction.WEST);
+          Location westLocation = location.neighbour(WEST);
           if (isEmpty(westLocation)) {
             int adjWaterLevel = westLocation.isWithinWorldLimits() ? westLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -112,7 +114,7 @@ public class WaterMeshGenerator {
           }
 
           // east
-          Location eastLocation = location.neighbour(Direction.EAST);
+          Location eastLocation = location.neighbour(EAST);
           if (isEmpty(eastLocation)) {
             int adjWaterLevel = eastLocation.isWithinWorldLimits() ? eastLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -136,7 +138,7 @@ public class WaterMeshGenerator {
           }
 
           // down
-          Location downLocation = location.neighbour(Direction.DOWN);
+          Location downLocation = location.neighbour(DOWN);
           if (isEmpty(downLocation)) {
             int adjWaterLevel = downLocation.isWithinWorldLimits() ? downLocation.block().waterLevel() : 0;
             if (adjWaterLevel != MAX_WATER_LEVEL) {
@@ -158,7 +160,7 @@ public class WaterMeshGenerator {
           }
 
           // south
-          Location southLocation = location.neighbour(Direction.SOUTH);
+          Location southLocation = location.neighbour(SOUTH);
           if (isEmpty(southLocation)) {
             int adjWaterLevel = southLocation.isWithinWorldLimits() ? southLocation.block().waterLevel() : 0;
             float adjWaterHeight = waterHeight(adjWaterLevel);
@@ -183,13 +185,13 @@ public class WaterMeshGenerator {
         }
       }
 
-      if (verticesBuffer.remaining() < 9 * 4 * 6 * world.width() * world.depth()) {
-        FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * world.width() * world.depth());
+      if (verticesBuffer.remaining() < 9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE) {
+        FloatBuffer newVerticesBuffer = createFloatBuffer(verticesBuffer.capacity() + 9 * 4 * 6 * CHUNK_SIZE * CHUNK_SIZE);
         verticesBuffer.flip();
         newVerticesBuffer.put(verticesBuffer);
         verticesBuffer = newVerticesBuffer;
 
-        IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * world.width() * world.depth());
+        IntBuffer newIndiciesBuffer = createIntBuffer(indicesBuffer.capacity() + 6 * 6 * CHUNK_SIZE * CHUNK_SIZE);
         indicesBuffer.flip();
         newIndiciesBuffer.put(indicesBuffer);
         indicesBuffer = newIndiciesBuffer;

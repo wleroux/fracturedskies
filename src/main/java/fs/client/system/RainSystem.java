@@ -1,8 +1,8 @@
 package fs.client.system;
 
-import fs.client.event.BlockUpdatedEvent;
 import fs.client.event.TickEvent;
 import fs.client.event.WaterUpdatedEvent;
+import fs.client.world.Location;
 import fs.client.world.World;
 
 import javax.enterprise.event.Event;
@@ -28,12 +28,13 @@ public class RainSystem {
   public void onUpdateRequested(@Observes TickEvent event) {
     tick++;
     if (tick % RAIN_INTERVAL == 0) {
-      world.block(
+      Location rainLocation = world.location(
           world.width() / 2,
           world.height() - 1,
           world.depth() / 2
-      ).waterLevel(MAX_WATER_LEVEL);
-      events.fire(new WaterUpdatedEvent());
+      );
+      rainLocation.block().waterLevel(MAX_WATER_LEVEL);
+      events.fire(new WaterUpdatedEvent(rainLocation));
     }
   }
 }

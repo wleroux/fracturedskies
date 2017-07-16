@@ -33,16 +33,4 @@ public final class CoordinateConverter {
   public int z(int index) {
     return (index / width / height);
   }
-
-  private static final Direction[] directions = Direction.values();
-  public List<Location> neighbours(Location location) {
-    List<Location> neighbours = new ArrayList<>();
-    for (Direction direction: directions) {
-      Location neighbour = location.neighbour(direction);
-      if (neighbour.isWithinWorldLimits()) {
-        neighbours.add(neighbour);
-      }
-    }
-    return neighbours;
-  }
 }

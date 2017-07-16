@@ -2,10 +2,7 @@ package fs.client.system;
 
 import fs.client.Game;
 import fs.client.event.GameInitializationEvent;
-import fs.client.event.BlockGeneratedEvent;
-import fs.client.event.WaterUpdatedEvent;
-import fs.client.world.BlockType;
-import fs.client.world.BlockState;
+import fs.client.event.WorldGeneratedEvent;
 import fs.client.world.World;
 import fs.client.world.WorldGenerator;
 
@@ -37,7 +34,6 @@ public class WorldGenerationSystem {
       }
     }
 
-    events.fire(new BlockGeneratedEvent());
-    events.fire(new WaterUpdatedEvent());
+    events.fire(new WorldGeneratedEvent());
   }
 }

@@ -3,18 +3,13 @@ package fs.client.event;
 import fs.client.world.Location;
 import fs.client.world.BlockType;
 
-public final class BlockAddedEvent extends BlockUpdatedEvent implements Cancellable {
-  private final Location location;
+public final class BlockAddedEvent extends LocationUpdatedEvent implements Cancellable {
   private final BlockType block;
   private boolean cancelled = false;
 
   public BlockAddedEvent(Location location, BlockType block) {
-    this.location = location;
+    super(location);
     this.block = block;
-  }
-
-  public Location location() {
-    return location;
   }
 
   public BlockType type() {

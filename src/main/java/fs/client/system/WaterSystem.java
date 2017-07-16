@@ -1,12 +1,10 @@
 package fs.client.system;
 
-import fs.client.event.BlockGeneratedEvent;
-import fs.client.event.BlockUpdatedEvent;
+import fs.client.event.WorldGeneratedEvent;
 import fs.client.event.TickEvent;
 import fs.client.event.WaterUpdatedEvent;
 import fs.client.world.BlockType;
 import fs.client.world.Location;
-import fs.client.world.Direction;
 import fs.client.world.World;
 
 import javax.enterprise.event.Event;
@@ -35,7 +33,7 @@ public class WaterSystem {
   private int tick = 0;
   private static Comparator<Location> WATER_POTENTIAL_COMPARATOR = comparingInt(WaterSystem::waterPotential);
 
-  public void onWorldGenerated(@Observes BlockGeneratedEvent event) {
+  public void onWorldGenerated(@Observes WorldGeneratedEvent event) {
     maxFlowOut = new int[world.size()];
     considered = new boolean[world.size()];
   }
@@ -43,9 +41,7 @@ public class WaterSystem {
   public void onUpdateRequested(@Observes TickEvent event) {
     tick++;
     if (tick % FLOW_INTERVAL == 0) {
-      if (flow()) {
-        events.fire(new WaterUpdatedEvent());
-      }
+      flow();
     }
   }
 
@@ -64,10 +60,7 @@ public class WaterSystem {
           considered[location.index()] = true;
         }
 
-        for (Location neighbour: location.neighbours()) {
-          if (!neighbour.isWithinWorldLimits()) {
-            continue;
-          }
+        for (Location neighbour: location.neighbours().values()) {
           if (neighbour.block().type() == BlockType.AIR) {
             if (!considered[neighbour.index()]) {
               unsortedCandidates.add(neighbour);
@@ -103,6 +96,9 @@ public class WaterSystem {
           sourceLocation.block().waterLevel(sourceWaterLevel - 1);
           targetLocation.block().waterLevel(targetWaterLevel + 1);
           waterChanged = true;
+          events.fire(new WaterUpdatedEvent(sourceLocation));
+          events.fire(new WaterUpdatedEvent(targetLocation));
+
 
           flowCandidates.remove(sourceLocation);
           flowCandidates.add(sourceLocation);
@@ -141,7 +137,7 @@ public class WaterSystem {
       }
 
       // If not higher potential, findComponentAt neighbours
-      for (Location neighbour : world.converter().neighbours(cellLocation)) {
+      for (Location neighbour : cellLocation.neighbours().values()) {
         if (maxFlowOut[neighbour.index()] < neighbour.block().waterLevel()) {
           if (!cameFrom.containsKey(neighbour)) {
             unvisitedCells.add(neighbour);
@@ -167,20 +163,5 @@ public class WaterSystem {
 
   public boolean isWater(Location location) {
     return location.block().waterLevel() > 0;
-  }
-
-  private static final Direction[] directions = Direction.values();
-  public boolean isNeighbouringWater(Location location) {
-    for (Direction direction: directions) {
-      Location neighbour = location.neighbour(direction);
-      if (! neighbour.isWithinWorldLimits()) {
-        continue;
-      }
-
-      if (isWater(neighbour)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

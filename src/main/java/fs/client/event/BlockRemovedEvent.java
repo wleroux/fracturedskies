@@ -2,16 +2,11 @@ package fs.client.event;
 
 import fs.client.world.Location;
 
-public final class BlockRemovedEvent extends BlockUpdatedEvent implements Cancellable {
-  private final Location location;
+public final class BlockRemovedEvent extends LocationUpdatedEvent implements Cancellable {
   private boolean cancelled;
 
   public BlockRemovedEvent(Location location) {
-    this.location = location;
-  }
-
-  public Location location() {
-    return location;
+    super(location);
   }
 
   @Override

@@ -5,7 +5,7 @@ import fs.math.CoordinateConverter;
 public class World {
 
   public static final int MAX_WATER_LEVEL = 4;
-  private static final Location INVALID_LOCATION = new Location(null, -1, -1, -1) {
+  public static final Location INVALID_LOCATION = new Location(null, -1, -1, -1) {
     @Override
     public boolean isWithinWorldLimits() {
       return false;

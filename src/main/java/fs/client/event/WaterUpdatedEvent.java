@@ -1,4 +1,9 @@
 package fs.client.event;
 
-public class WaterUpdatedEvent extends BlockUpdatedEvent {
+import fs.client.world.Location;
+
+public class WaterUpdatedEvent extends LocationUpdatedEvent {
+  public WaterUpdatedEvent(Location location) {
+    super(location);
+  }
 }

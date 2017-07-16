@@ -1,6 +1,6 @@
 package fs.client.world;
 
-import java.util.Objects;
+import java.util.*;
 
 public class Location {
   private final World world;
@@ -8,7 +8,7 @@ public class Location {
   private final int y;
   private final int z;
 
-  private Location[] neighbours;
+  private Map<Direction, Location> neighbours;
   private final BlockState block;
   private final int index;
 
@@ -63,15 +63,18 @@ public class Location {
   }
 
   public Location neighbour(Direction direction) {
-    return neighbours()[direction.ordinal()];
+    return neighbours().getOrDefault(direction, World.INVALID_LOCATION);
   }
 
   private static Direction[] directions = Direction.values();
-  public Location[] neighbours() {
+  public Map<Direction, Location> neighbours() {
     if (neighbours == null) {
-      neighbours = new Location[6];
+      neighbours = new HashMap<>();
       for (Direction direction: directions) {
-        neighbours[direction.ordinal()] = world.location(x + direction.dx(), y + direction.dy(), z + direction.dz());
+        Location location = world.location(x + direction.dx(), y + direction.dy(), z + direction.dz());
+        if (location.isWithinWorldLimits()) {
+          neighbours.put(direction, world.location(x + direction.dx(), y + direction.dy(), z + direction.dz()));
+        }
       }
     }
     return neighbours;
