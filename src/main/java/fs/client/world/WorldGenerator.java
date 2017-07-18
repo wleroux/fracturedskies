@@ -16,9 +16,7 @@ public class WorldGenerator {
     this.depth = depth;
   }
 
-  public World generate(int seed) {
-    World world = new World(width, height, depth);
-
+  public void generate(World world, int seed) {
     for (int iy = 0; iy < height; iy++) {
       for (int ix = 0; ix < width; ix++) {
         for (int iz = 0; iz < depth; iz++) {
@@ -34,8 +32,6 @@ public class WorldGenerator {
         }
       }
     }
-
-    return world;
   }
 
   private boolean isBlock(int seed, float x, float y, float z) {

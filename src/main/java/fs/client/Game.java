@@ -9,9 +9,6 @@ import javax.inject.Singleton;
 import static fs.math.Quaternion4.quat4;
 import static fs.math.Vector3.vec3;
 
-/**
- *
- */
 @Singleton
 public class Game {
 

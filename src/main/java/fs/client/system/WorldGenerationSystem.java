@@ -24,16 +24,7 @@ public class WorldGenerationSystem {
  private static final WorldGenerator worldGenerator = new WorldGenerator(Game.WORLD_WIDTH, Game.WORLD_HEIGHT, Game.WORLD_DEPTH);
 
   public void onInitialized(@Observes GameInitializationEvent event) {
-    World generatedWorld = worldGenerator.generate(SEED);
-
-    for (int ix = 0; ix < generatedWorld.width(); ix++) {
-      for (int iz = 0; iz < generatedWorld.depth(); iz++) {
-        for (int iy = 0; iy < generatedWorld.height(); iy ++) {
-          world.block(ix, iy, iz).type(generatedWorld.block(ix, iy, iz).type());
-        }
-      }
-    }
-
+    worldGenerator.generate(world, SEED);
     events.fire(new WorldGeneratedEvent());
   }
 }

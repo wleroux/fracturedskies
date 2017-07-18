@@ -15,7 +15,7 @@ import static fs.client.world.World.MAX_WATER_LEVEL;
 @Singleton
 public class RainSystem {
 
-  private static final int RAIN_INTERVAL = 2;
+  private static final int RAIN_INTERVAL = 1;
 
   @Inject
   private Event<Object> events;
@@ -33,8 +33,10 @@ public class RainSystem {
           world.height() - 1,
           world.depth() / 2
       );
-      rainLocation.block().waterLevel(MAX_WATER_LEVEL);
-      events.fire(new WaterUpdatedEvent(rainLocation));
+      if (rainLocation.block().waterLevel() != MAX_WATER_LEVEL) {
+        rainLocation.block().waterLevel(MAX_WATER_LEVEL);
+        events.fire(new WaterUpdatedEvent(rainLocation));
+      }
     }
   }
 }

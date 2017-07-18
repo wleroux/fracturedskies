@@ -115,6 +115,7 @@ public class WorldRenderer extends OpenGLComponent {
         waterMesh.remove(chunkIndex);
       }  else {
         blockMesh.remove(chunkIndex);
+        waterMesh.remove(chunkIndex);
       }
     }
   }

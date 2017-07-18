@@ -1,11 +1,14 @@
 package fs.client.system;
 
+import fs.client.event.LocationUpdatedEvent;
 import fs.client.event.WorldGeneratedEvent;
 import fs.client.event.TickEvent;
 import fs.client.event.WaterUpdatedEvent;
+import fs.client.world.BlockState;
 import fs.client.world.BlockType;
 import fs.client.world.Location;
 import fs.client.world.World;
+import fs.math.CoordinateConverter;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -29,6 +32,7 @@ public class WaterSystem {
 
   private int[] maxFlowOut;
   private boolean[] considered;
+  private boolean[] disturbed;
 
   private int tick = 0;
   private static Comparator<Location> WATER_POTENTIAL_COMPARATOR = comparingInt(WaterSystem::waterPotential);
@@ -36,6 +40,7 @@ public class WaterSystem {
   public void onWorldGenerated(@Observes WorldGeneratedEvent event) {
     maxFlowOut = new int[world.size()];
     considered = new boolean[world.size()];
+    disturbed = new boolean[world.size()];
   }
 
   public void onUpdateRequested(@Observes TickEvent event) {
@@ -45,34 +50,14 @@ public class WaterSystem {
     }
   }
 
+  public void onDisruption(@Observes LocationUpdatedEvent event) {
+    disturbed[event.location().index()] = true;
+  }
+
 
   private boolean flow() {
-    // Reset flow
-    Arrays.fill(maxFlowOut, 0);
-    Arrays.fill(considered, false);
-
     // Get all potential flow candidates
-    List<Location> unsortedCandidates = new ArrayList<>();
-    for (Location location: world.locations()) {
-      if (isWater(location)) {
-        if (!considered[location.index()]) {
-          unsortedCandidates.add(location);
-          considered[location.index()] = true;
-        }
-
-        for (Location neighbour: location.neighbours().values()) {
-          if (neighbour.block().type() == BlockType.AIR) {
-            if (!considered[neighbour.index()]) {
-              unsortedCandidates.add(neighbour);
-            }
-          }
-        }
-      }
-    }
-
-    PriorityQueue<Location> flowCandidates = new PriorityQueue<>(WATER_POTENTIAL_COMPARATOR);
-    Collections.shuffle(unsortedCandidates);
-    flowCandidates.addAll(unsortedCandidates);
+    PriorityQueue<Location> flowCandidates = flowCandidates();
 
     // Process water
     boolean waterChanged = false;
@@ -87,7 +72,7 @@ public class WaterSystem {
       List<Location> path = find(targetLocation);
       if (!path.isEmpty()) {
         for (int i = 0; i < path.size() - 1; i++) {
-          maxFlowOut[path.get(i).index()]++;
+          maxFlowOut[path.get(i).index()]--;
         }
 
         Location sourceLocation = path.get(0);
@@ -110,6 +95,62 @@ public class WaterSystem {
     }
 
     return waterChanged;
+  }
+
+  private PriorityQueue<Location> flowCandidates() {
+    Arrays.fill(maxFlowOut, 0);
+    int w = world.width(), h = world.height(), d = world.depth();
+    List<Location> unsortedCandidates = new ArrayList<>();
+    int index = 0;
+    for (int iz = 0; iz < d; iz ++) {
+      for (int iy = 0; iy < h; iy++) {
+        for (int ix = 0; ix < w; ix ++) {
+          if (disturbed[index]) {
+            disturbed[index] = false;
+            Location location = world.location(ix, iy, iz);
+            for (Location adjacentLocations: findAdjacentLocations(location)) {
+              maxFlowOut[adjacentLocations.index()] = adjacentLocations.block().waterLevel();
+              disturbed[adjacentLocations.index()] = false;
+              unsortedCandidates.add(adjacentLocations);
+            }
+          }
+          index ++;
+        }
+      }
+    }
+    Collections.shuffle(unsortedCandidates);
+
+    PriorityQueue<Location> flowCandidates = new PriorityQueue<>(WATER_POTENTIAL_COMPARATOR);
+    flowCandidates.addAll(unsortedCandidates);
+    return flowCandidates;
+  }
+
+  /**
+   * @param startLocation
+   * @return
+   */
+  private List<Location> findAdjacentLocations(Location startLocation) {
+    Arrays.fill(considered, false);
+    considered[startLocation.index()] = true;
+    Queue<Location> unvisitedCells = new LinkedList<>();
+    unvisitedCells.add(startLocation);
+    List<Location> locations = new ArrayList<>();
+    while (!unvisitedCells.isEmpty()) {
+      Location location = unvisitedCells.poll();
+      if (location.block().type() == BlockType.AIR)
+        locations.add(location);
+
+      for (Location neighbour : location.neighbours().values()) {
+        if (considered[neighbour.index()])
+          continue;
+        if (isWater(location) || isWater(neighbour)) {
+          considered[neighbour.index()] = true;
+          unvisitedCells.add(neighbour);
+        }
+      }
+    }
+
+    return locations;
   }
 
   private List<Location> find(Location startLocation) {
@@ -136,9 +177,9 @@ public class WaterSystem {
         return path;
       }
 
-      // If not higher potential, findComponentAt neighbours
+      // If not higher potential, check neighbours for higher potential
       for (Location neighbour : cellLocation.neighbours().values()) {
-        if (maxFlowOut[neighbour.index()] < neighbour.block().waterLevel()) {
+        if (maxFlowOut[neighbour.index()] > 0) {
           if (!cameFrom.containsKey(neighbour)) {
             unvisitedCells.add(neighbour);
             cameFrom.put(neighbour, cellLocation);
@@ -147,10 +188,9 @@ public class WaterSystem {
       }
     }
 
-    // If we cannot findComponentAt any path, then any adjacent neighbours would not findComponentAt any better solution either; discard
-    // them so we don't waste time!
+    // If no neighbours have higher water potential, then any higher water potential neighbours will not find any better solution either; don't waste time processing them
     for (Location cellLocation : cameFrom.keySet()) {
-      maxFlowOut[cellLocation.index()] = cellLocation.block().waterLevel();
+      maxFlowOut[cellLocation.index()] = 0;
     }
 
     return Collections.emptyList();

@@ -42,7 +42,12 @@ public class Location {
   }
 
   public int hashCode() {
-    return Objects.hash(x, y, z);
+    int result = 1;
+    result = 31 * result + x;
+    result = 31 * result + y;
+    result = 31 * result + z;
+
+    return result;
   }
 
   public boolean equals(Object object) {
