@@ -29,6 +29,8 @@ dependencies {
   compile "org.lwjgl:lwjgl-openal:3.1.1";
   compile "org.lwjgl:lwjgl-opengl:3.1.1";
   compile "org.lwjgl:lwjgl-stb:3.1.1";
+  compileOnly 'org.projectlombok:lombok:1.16.18'
+
   runtime "org.lwjgl:lwjgl:3.1.1:${lwjglNatives}";
   runtime "org.lwjgl:lwjgl-glfw:3.1.1:${lwjglNatives}";
   runtime "org.lwjgl:lwjgl-jemalloc:3.1.1:${lwjglNatives}";

@@ -1,0 +1,29 @@
+package fs.render.event;
+
+import fs.render.Component;
+
+public class MouseDown extends UIEvent {
+  private final int button;
+  private final int x;
+  private final int y;
+
+  public MouseDown(Component target, int button, int x, int y) {
+    super(target);
+
+    this.button = button;
+    this.x = x;
+    this.y = y;
+  }
+
+  public int button() {
+    return button;
+  }
+
+  public int x() {
+    return x;
+  }
+
+  public int y() {
+    return y;
+  }
+}
