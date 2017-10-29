@@ -1,4 +1,4 @@
-package com.fracturedskies.events
+package com.fracturedskies.engine.events
 
 import kotlin.reflect.KClass
 
@@ -6,10 +6,6 @@ interface Event {
   val cause: Cause
   val context: Context
 }
-interface Cancellable {
-  var cancelled: Boolean
-}
-fun Event.isCancelled(): Boolean = this is Cancellable && this.cancelled
 
 class Cause private constructor(private val objects: List<Any>): Sequence<Any> {
   override fun iterator(): ListIterator<Any> {
