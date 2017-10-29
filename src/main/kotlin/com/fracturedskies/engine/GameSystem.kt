@@ -31,5 +31,10 @@ abstract class GameSystem(coroutineContext: CoroutineContext = DefaultDispatcher
     channel.send(event)
   }
   fun isIdle(): Boolean = !processing && channel.isEmpty
+
+  override fun toString(): String {
+    return this.javaClass.simpleName
+  }
+
   abstract suspend operator fun invoke(event: Event)
 }
