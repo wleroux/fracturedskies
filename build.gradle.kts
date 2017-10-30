@@ -38,4 +38,7 @@ dependencies {
   runtime("org.lwjgl:lwjgl-openal:$lwjglVersion:$lwjglNatives")
   runtime("org.lwjgl:lwjgl-opengl:$lwjglVersion:$lwjglNatives")
   runtime("org.lwjgl:lwjgl-stb:$lwjglVersion:$lwjglNatives")
+
+  testCompile("junit:junit:4.11")
+  testCompile("org.jetbrains.kotlin:kotlin-test-junit")
 }
