@@ -1,7 +1,9 @@
 package com.fracturedskies.render.mesh
 
-data class Material<in P, in V>(private val program: ShaderProgram<P, V>, private val properties: P) {
-  fun render(variables: V, mesh: Mesh) {
+import com.fracturedskies.engine.collections.TypedMap
+
+data class Material(private val program: ShaderProgram, private val properties: TypedMap) {
+  fun render(variables: TypedMap, mesh: Mesh) {
     program.render(properties, variables, mesh)
   }
 }

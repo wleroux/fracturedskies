@@ -1,5 +1,6 @@
 package com.fracturedskies.render.mesh
 
+import com.fracturedskies.engine.collections.TypedMap
 import com.fracturedskies.engine.math.Matrix4
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
@@ -7,7 +8,7 @@ import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30
 
-abstract class ShaderProgram<in P, in V>(vertexShaderSource: String, fragmentShaderSource: String) {
+abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: String) {
   val id = glCreateProgram()
 
   init {
@@ -59,5 +60,7 @@ abstract class ShaderProgram<in P, in V>(vertexShaderSource: String, fragmentSha
     glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0)
   }
 
-  abstract fun render(properties: P, variables: V, mesh: Mesh)
+  override fun toString(): String = this.javaClass.simpleName
+
+  abstract fun render(properties: TypedMap, variables: TypedMap, mesh: Mesh)
 }

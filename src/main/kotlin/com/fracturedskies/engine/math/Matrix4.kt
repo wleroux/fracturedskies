@@ -49,15 +49,8 @@ data class Matrix4(
               m02 * m10 * m21 * m33 - m00 * m12 * m21 * m33 - m01 * m10 * m22 * m33 + m00 * m11 * m22 * m33
     }
 
-  override fun toString(): String {
-    return String.format(
-            "[%f %f %f %f | %f %f %f %f | %f %f %f %f | %f %f %f %f]",
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33
-    )
-  }
+  override fun toString(): String =
+    "[$m00, $m01, $m02, $m03, $m10, $m11, $m12, $m13, $m20, $m21, $m22, $m23, $m30, $m31, $m32, $m33]"
 
   fun store(buffer: FloatBuffer) {
     buffer.put(m00).put(m10).put(m20).put(m30)

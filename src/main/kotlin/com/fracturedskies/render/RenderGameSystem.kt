@@ -5,9 +5,13 @@ import com.fracturedskies.engine.events.Cause
 import com.fracturedskies.engine.events.Context
 import com.fracturedskies.engine.events.Event
 import com.fracturedskies.engine.events.EventBus.publish
-import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.mesh.standard.StandardShaderProgram.*
+import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.jeact.VNode
+import com.fracturedskies.engine.jeact.toNode
+import com.fracturedskies.engine.jeact.unmount
+import com.fracturedskies.render.components.render
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
@@ -16,7 +20,7 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
 import kotlin.coroutines.experimental.CoroutineContext
 
-class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineContext) {
+class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode: VNode): GameSystem(coroutineContext) {
   suspend override fun invoke(event: Event) {
     when (event) {
       is Initialize -> initialize()
@@ -26,11 +30,11 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     }
   }
 
+  private var rootNode: Node? = null
+
   private var window: Long = 0
 
-  private var block: Block? = null
-
-  private fun initialize() {
+  private suspend fun initialize() {
     GLFWErrorCallback.createPrint(System.err).set()
 
     // Initialize GLFW
@@ -74,46 +78,25 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
-
-    // Initialize Resources
-    block = Block()
   }
 
   private suspend fun update() {
     glfwPollEvents()
   }
 
-  private val model: Matrix4 = Matrix4(
-    1f, 0f, 0f, 0f,
-    0f, 1f, 0f, 0f,
-    0f, 0f, 1f, 0f,
-    0f, 0f, 0f, 1f
-  )
-
-  private val view: Matrix4 = Matrix4(
-    1f, 0f, 0f, 0f,
-    0f, 1f, 0f, 0f,
-    0f, 0f, 1f, 0f,
-    0f, 0f, 0f, 1f
-  ).invert()
-
-  private val projection: Matrix4 = Matrix4(
-    1f, 0f, 0f, 0f,
-    0f, 1f, 0f, 0f,
-    0f, 0f, 1f, 0f,
-    0f, 0f, 0f, 1f
-  )
-
-  private fun render() {
+  private suspend fun render() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
     // Render Block
-    block!!.render(Variables(model, view, projection))
+    rootNode = rootVnode.toNode(rootNode)
+    rootNode?.render()
 
     glfwSwapBuffers(window) // swap the color buffers
   }
 
-  private fun shutdown() {
+  private suspend fun shutdown() {
+    rootNode?.unmount()
+
     glfwFreeCallbacks(window)
     glfwDestroyWindow(window)
 
@@ -126,9 +109,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
   @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) = Unit
   @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) = Unit
   @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) = Unit
-  @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) {
-    launch {
-      publish(RequestShutdown(Cause.of(this), Context.empty()))
-    }
+  @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) = runBlocking {
+    publish(RequestShutdown(Cause.of(this), Context.empty()))
   }
 }

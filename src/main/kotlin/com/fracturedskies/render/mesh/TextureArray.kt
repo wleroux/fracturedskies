@@ -7,7 +7,7 @@ import org.lwjgl.opengl.GL42.*
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import java.nio.ByteBuffer
 
-class TextureArray(rawImageBuffer: ByteBuffer, width: Int, height: Int, layers: Int) {
+class TextureArray(private val label: String, rawImageBuffer: ByteBuffer, width: Int, height: Int, layers: Int) {
   val id = glGenTextures()
   init {
     glBindTexture(GL_TEXTURE_2D_ARRAY, id)
@@ -24,4 +24,6 @@ class TextureArray(rawImageBuffer: ByteBuffer, width: Int, height: Int, layers: 
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0)
   }
+
+  override fun toString(): String = label
 }

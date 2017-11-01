@@ -5,8 +5,8 @@ import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 
-class Mesh(vertices: FloatArray, indices: IntArray, vararg attributes: Attribute) {
-  data class Attribute(val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
+data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes: List<Attribute>) {
+  data class Attribute(val label: String, val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
     /**
      * Standard Vertex Attributes
      */
@@ -15,10 +15,12 @@ class Mesh(vertices: FloatArray, indices: IntArray, vararg attributes: Attribute
       private val TEXCOORD_LOCATION = 1
       private val NORMAL_LOCATION = 2
 
-      val POSITION = Mesh.Attribute(POSITION_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
-      val TEXCOORD = Mesh.Attribute(TEXCOORD_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
-      val NORMAL = Mesh.Attribute(NORMAL_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
+      val POSITION = Mesh.Attribute("POSITION", POSITION_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
+      val TEXCOORD = Mesh.Attribute("TEXCOORD", TEXCOORD_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
+      val NORMAL = Mesh.Attribute("NORMAL", NORMAL_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
     }
+
+    override fun toString(): String = label
   }
 
   val vao = glGenVertexArrays()
@@ -35,7 +37,7 @@ class Mesh(vertices: FloatArray, indices: IntArray, vararg attributes: Attribute
       acc + attr.elements * attr.elementSize
     })
     var offset = 0
-    for ((location, elementType, elements, elementSize) in attributes) {
+    for ((_, location, elementType, elements, elementSize) in attributes) {
       glVertexAttribPointer(location, elements, elementType, false, stride, offset.toLong())
       glEnableVertexAttribArray(location)
       offset += elements * elementSize
