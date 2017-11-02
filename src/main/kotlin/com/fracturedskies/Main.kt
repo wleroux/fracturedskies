@@ -1,16 +1,19 @@
 package com.fracturedskies
 
 import com.fracturedskies.engine.*
-import com.fracturedskies.engine.events.*
-import com.fracturedskies.engine.events.EventBus.publishAndWait
-import com.fracturedskies.engine.events.EventBus.subscribe
-import com.fracturedskies.engine.jeact.VNode
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.Message
+import com.fracturedskies.engine.messages.MessageBus.publishAndWait
+import com.fracturedskies.engine.messages.MessageBus.subscribe
 import com.fracturedskies.render.FramePerSecondGameSystem
 import com.fracturedskies.render.LoggingGameSystem
 import com.fracturedskies.render.RenderGameSystem
-import com.fracturedskies.render.components.AlternatingBlock
-import kotlinx.coroutines.experimental.*
-import java.util.concurrent.TimeUnit.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.cancelChildren
+import kotlinx.coroutines.experimental.runBlocking
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -23,25 +26,25 @@ class MainGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineCo
   private val shutdownRequested = AtomicBoolean(false)
 
   suspend fun run(coroutineContext: CoroutineContext) {
-    publishAndWait(Initialize(Cause.of(this), Context.empty()))
+    publishAndWait(Initialize(Cause.of(this), Context()))
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
       while (now - last >= NANOSECONDS_PER_UPDATE) {
-        publishAndWait(Update(MILLISECONDS_PER_UPDATE, Cause.of(this), Context.empty()))
+        publishAndWait(Update(MILLISECONDS_PER_UPDATE, Cause.of(this), Context()))
         last += NANOSECONDS_PER_UPDATE
       }
 
       val alpha = (now - last).toFloat() / NANOSECONDS_PER_UPDATE.toFloat()
-      publishAndWait(Render(alpha, Cause.of(this), Context.empty()))
+      publishAndWait(Render(alpha, Cause.of(this), Context()))
     }
 
-    publishAndWait(Shutdown(Cause.of(this), Context.empty()))
+    publishAndWait(Shutdown(Cause.of(this), Context()))
     coroutineContext.cancelChildren()
   }
 
-  suspend override fun invoke(event: Event) {
-    when (event) {
+  suspend override fun invoke(message: Message) {
+    when (message) {
       is RequestShutdown -> shutdownRequested.set(true)
     }
   }
@@ -53,7 +56,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   subscribe(mainGameSystem)
   subscribe(LoggingGameSystem(coroutineContext + CommonPool))
   subscribe(FramePerSecondGameSystem(coroutineContext + CommonPool))
-  subscribe(RenderGameSystem(coroutineContext, VNode(::AlternatingBlock)))
+  subscribe(RenderGameSystem(coroutineContext))
 
   // Run game
   mainGameSystem.run(coroutineContext)

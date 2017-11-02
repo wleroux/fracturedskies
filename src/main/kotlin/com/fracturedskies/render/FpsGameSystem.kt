@@ -2,7 +2,7 @@ package com.fracturedskies.render
 
 import com.fracturedskies.engine.GameSystem
 import com.fracturedskies.engine.Render
-import com.fracturedskies.engine.events.Event
+import com.fracturedskies.engine.messages.Message
 import kotlinx.coroutines.experimental.DefaultDispatcher
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
@@ -14,8 +14,8 @@ class FramePerSecondGameSystem(coroutineContext: CoroutineContext = DefaultDispa
 
   private var last = System.nanoTime()
   private var ticks = 0
-  override suspend fun invoke(event: Event) {
-    if (event !is Render) return
+  override suspend fun invoke(message: Message) {
+    if (message !is Render) return
 
     val now = System.nanoTime()
     if (now - last >= ONE_SECOND_IN_NANOSECONDS) {

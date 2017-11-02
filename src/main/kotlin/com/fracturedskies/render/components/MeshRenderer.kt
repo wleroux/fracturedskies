@@ -1,29 +1,28 @@
 package com.fracturedskies.render.components
 
-import com.fracturedskies.engine.collections.TypedKey
-import com.fracturedskies.engine.collections.TypedMap
-import com.fracturedskies.engine.jeact.Component
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.collections.Key
+import com.fracturedskies.engine.jeact.AbstractComponent
+import com.fracturedskies.engine.jeact.Node.Companion.BOUNDS
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
+import org.lwjgl.opengl.GL11
 
-class MeshRenderer(override var attributes: TypedMap) : Component, Renderable {
+class MeshRenderer(attributes: Context) : AbstractComponent(attributes) {
   companion object {
-    val MESH = TypedKey<Mesh>("mesh")
-    val MATERIAL = TypedKey<Material>("material")
-    val VARIABLES = TypedKey<TypedMap>("variables")
+    val MESH = Key<Mesh>("mesh")
+    val MATERIAL = Key<Material>("material")
+    val VARIABLES = Key<Context>("variables")
   }
 
-  override var state: Any? = null
-  override var nextState: Any? = null
-
-  val mesh: Mesh
-    get() = requireNotNull(attributes[MESH])
-  val material: Material
-    get() = requireNotNull(attributes[MATERIAL])
-  val variables: TypedMap
-    get() = requireNotNull(attributes[VARIABLES])
+  /** Attributes */
+  val bounds get() = requireNotNull(attributes[BOUNDS])
+  val mesh get() = requireNotNull(attributes[MESH])
+  val material get() = requireNotNull(attributes[MATERIAL])
+  val variables get() = requireNotNull(attributes[VARIABLES])
 
   override fun render() {
+    GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
     material.render(variables, mesh)
   }
 }

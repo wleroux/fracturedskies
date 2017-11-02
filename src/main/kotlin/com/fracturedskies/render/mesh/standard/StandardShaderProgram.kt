@@ -1,7 +1,7 @@
 package com.fracturedskies.render.mesh.standard
 
-import com.fracturedskies.engine.collections.TypedKey
-import com.fracturedskies.engine.collections.TypedMap
+import com.fracturedskies.engine.collections.Key
+import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.render.mesh.Mesh
 import com.fracturedskies.render.mesh.ShaderProgram
@@ -15,14 +15,14 @@ class StandardShaderProgram: ShaderProgram(this::class.java.getResource("standar
     /**
      * Properties
      */
-    val ALBEDO = TypedKey<TextureArray>("albedo")
+    val ALBEDO = Key<TextureArray>("albedo")
 
     /**
      * Variables
      */
-    val MODEL = TypedKey<Matrix4>("model")
-    val VIEW = TypedKey<Matrix4>("view")
-    val PROJECTION = TypedKey<Matrix4>("projection")
+    val MODEL = Key<Matrix4>("model")
+    val VIEW = Key<Matrix4>("view")
+    val PROJECTION = Key<Matrix4>("projection")
 
     /**
      * Standard Shader Uniforms
@@ -33,7 +33,7 @@ class StandardShaderProgram: ShaderProgram(this::class.java.getResource("standar
     private val ALBEDO_LOCATION = 3
   }
 
-  override fun render(properties: TypedMap, variables: TypedMap, mesh: Mesh) {
+  override fun render(properties: Context, variables: Context, mesh: Mesh) {
     // Shader Configuration
     GL20.glUseProgram(id)
     GL11.glEnable(GL11.GL_DEPTH_TEST)

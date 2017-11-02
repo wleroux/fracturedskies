@@ -1,6 +1,6 @@
 package com.fracturedskies.engine
 
-import com.fracturedskies.engine.events.Event
+import com.fracturedskies.engine.messages.Message
 import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.yield
 import kotlin.coroutines.experimental.CoroutineContext
 
 abstract class GameSystem(coroutineContext: CoroutineContext = DefaultDispatcher) {
-  private val channel = Channel<Event>(Channel.UNLIMITED)
+  private val channel = Channel<Message>(Channel.UNLIMITED)
   private var processing = false
   init {
     launch(coroutineContext) {
@@ -27,8 +27,8 @@ abstract class GameSystem(coroutineContext: CoroutineContext = DefaultDispatcher
       }
     }
   }
-  suspend fun send(event: Event) {
-    channel.send(event)
+  suspend fun send(message: Message) {
+    channel.send(message)
   }
   fun isIdle(): Boolean = !processing && channel.isEmpty
 
@@ -36,5 +36,5 @@ abstract class GameSystem(coroutineContext: CoroutineContext = DefaultDispatcher
     return this.javaClass.simpleName
   }
 
-  abstract suspend operator fun invoke(event: Event)
+  abstract suspend operator fun invoke(message: Message)
 }

@@ -1,87 +1,87 @@
 package com.fracturedskies.engine.jeact
 
-import com.fracturedskies.engine.collections.TypedKey
-import com.fracturedskies.engine.collections.TypedMap
+import com.fracturedskies.engine.collections.Key
+import com.fracturedskies.engine.collections.Context
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.reflect
 
-data class VNode private constructor(val type: (TypedMap) -> Component, val attributes: TypedMap) {
+data class VNode private constructor(val type: (Context) -> Component, val attributes: Context) {
   companion object {
-    val CHILDREN = TypedKey<List<VNode>>("children")
-    operator fun invoke(type: (TypedMap) -> Component, vararg attributes: Pair<TypedKey<*>, Any>, block: Builder.() -> Unit = {}) = Builder(type, *attributes).apply(block).build()
+    val CHILDREN = Key<List<VNode>>("children")
+    operator fun invoke(type: (Context) -> Component, context: Context = Context(), block: Builder.() -> Unit = {}) = Builder(type, context).apply(block).build()
   }
 
-  val children: List<VNode>
-    get() = requireNotNull(attributes[CHILDREN])
+  class Builder internal constructor(private val type: (Context) -> Component, private val context: Context) {
+    val children = mutableListOf<VNode>()
+    fun build(): VNode {
+      return VNode(type, context.with(CHILDREN to children))
+    }
+  }
+
   @Suppress("UNCHECKED_CAST")
   val typeClass: KClass<Component> = type.reflect()!!.returnType.jvmErasure as KClass<Component>
 
-  override fun toString(): String {
-    val curr = "${typeClass.simpleName}($attributes)"
-    return if (children.isEmpty()) {
-      curr
+  override fun toString() =
+          "${typeClass.simpleName}($attributes)"
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other)
+      return true
+    return when (other) {
+      is VNode -> this.type == other.type && this.attributes == other.attributes
+      else -> false
+    }
+  }
+
+  // Create new node from vnode
+  fun toNode(prevNode: Node? = null, parentNode: Node? = null): Node {
+    val reuseNode = this.typeClass == prevNode?.typeClass
+    val node = if (reuseNode) {
+      prevNode!!
     } else {
-      curr + "\n" + children.map({ it -> it.toString() }).joinToString(separator = "\n").split("\n").map({ "  $it" }).joinToString(separator = "\n")
+      // Unmount previous node
+      prevNode?.unmount()
+
+      // Mount new component
+      val newComponent = this.type(this.attributes)
+      newComponent.willMount()
+      newComponent.attributes = this.attributes
+      newComponent.state = newComponent.nextState ?: newComponent.state
+      newComponent.didMount()
+      Node(this, newComponent, parentNode, listOf())
     }
-  }
+    node.vnode = this
 
-  class Builder internal constructor(private val type: (TypedMap) -> Component, vararg attributes: Pair<TypedKey<*>, Any>) {
-    private val attributes = attributes
-    val children = mutableListOf<VNode>()
-    fun build(): VNode {
-      return VNode(type, TypedMap(mapOf(*attributes, CHILDREN to children)))
+    // Update component
+    val prevAttributes = node.component.attributes
+    val prevState = node.component.state
+
+    val nextAttributes = if (this.attributes == prevAttributes) prevAttributes else this.attributes
+    if (nextAttributes !== prevAttributes)
+      node.component.willReceiveProps(nextAttributes)
+    val nextState = node.component.nextState ?: node.component.state
+    if (!reuseNode || node.component.shouldUpdate(nextAttributes, nextState)) {
+      node.component.willUpdate(nextAttributes, nextState)
+
+      val prevChildren = node.children
+      node.component.attributes = nextAttributes
+      node.component.state = nextState
+      node.component.nextState = null
+      node.children = node.component.children().mapIndexed({ index, vnode ->
+        val prevChildNode = node.children.getOrNull(index)
+        vnode.toNode(prevChildNode, node)
+      })
+
+      // Unmount discarded children
+      prevChildren.minus(node.children).forEach({ it.unmount() })
+      node.component.didUpdate(prevAttributes, prevState)
+      return node
+    } else {
+      node.children = node.children.map({ childNode ->
+        childNode.vnode.toNode(childNode, node)
+      })
+      return node
     }
-  }
-}
-
-// Create new node from vnode
-fun VNode.toNode(prevNode: Node? = null): Node {
-  val prevComponent = prevNode?.component
-  val isNewComponent = !(this.typeClass == prevNode?.typeClass && prevComponent != null)
-  val component = if (!isNewComponent) {
-    // Reuse previous component
-    prevComponent!!
-  } else {
-    // Unmount previous component
-    prevNode?.unmount()
-
-    // Mount new component
-    val newComponent = this.type(this.attributes)
-    newComponent.willMount()
-    newComponent.attributes = this.attributes
-    newComponent.state = newComponent.nextState ?: newComponent.state
-    newComponent.didMount()
-    newComponent
-  }
-
-  // Update component
-  val prevAttributes = component.attributes
-  val prevState = component.state
-
-  val nextAttributes = this.attributes
-  if (nextAttributes !== prevAttributes)
-    component.willReceiveProps(nextAttributes)
-  val nextState = component.nextState ?: component.state
-  if (isNewComponent || component.shouldUpdate(nextAttributes, nextState)) {
-    component.willUpdate(nextAttributes, nextState)
-    component.attributes = nextAttributes
-    component.state = nextState
-
-    // Get Child VNodes
-    val childrenNodes = component.children().mapIndexed({
-      index, vnode -> vnode.toNode(if (isNewComponent) { null } else {prevNode?.children?.getOrNull(index)})
-    })
-
-    // Unmount discarded children
-    if (!isNewComponent) {
-      prevNode?.children?.drop(childrenNodes.size)?.forEach({ it.unmount() })
-    }
-
-    component.didUpdate(prevAttributes, prevState)
-
-    return Node(this, component, childrenNodes)
-  } else {
-    return Node(this, component, prevNode!!.children.map({ node -> node.vnode.toNode(node) }))
   }
 }

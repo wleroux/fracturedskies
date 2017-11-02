@@ -1,16 +1,17 @@
 package com.fracturedskies.render
 
 import com.fracturedskies.engine.*
-import com.fracturedskies.engine.events.Cause
-import com.fracturedskies.engine.events.Context
-import com.fracturedskies.engine.events.Event
-import com.fracturedskies.engine.events.EventBus.publish
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.jeact.Node.Companion.BOUNDS
+import com.fracturedskies.engine.jeact.Point
 import com.fracturedskies.engine.jeact.VNode
-import com.fracturedskies.engine.jeact.toNode
-import com.fracturedskies.engine.jeact.unmount
-import com.fracturedskies.render.components.render
-import kotlinx.coroutines.experimental.launch
+import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.Message
+import com.fracturedskies.engine.messages.MessageBus.publish
+import com.fracturedskies.render.components.Scene
+import com.fracturedskies.render.events.*
 import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
@@ -20,9 +21,9 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
 import kotlin.coroutines.experimental.CoroutineContext
 
-class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode: VNode): GameSystem(coroutineContext) {
-  suspend override fun invoke(event: Event) {
-    when (event) {
+class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineContext) {
+  suspend override fun invoke(message: Message) {
+    when (message) {
       is Initialize -> initialize()
       is Update -> update()
       is Render -> render()
@@ -30,6 +31,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode
     }
   }
 
+  private lateinit var rootVNode: VNode
   private var rootNode: Node? = null
 
   private var window: Long = 0
@@ -78,6 +80,8 @@ class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
+
+    rootVNode = VNode(::Scene, Context(BOUNDS to Bounds(0, 0, screenWidth, screenHeight)))
   }
 
   private suspend fun update() {
@@ -87,8 +91,8 @@ class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode
   private suspend fun render() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-    // Render Block
-    rootNode = rootVnode.toNode(rootNode)
+    // Render Scene
+    rootNode = rootVNode.toNode(rootNode)
     rootNode?.render()
 
     glfwSwapBuffers(window) // swap the color buffers
@@ -104,12 +108,52 @@ class RenderGameSystem(coroutineContext: CoroutineContext, private val rootVnode
     glfwSetErrorCallback(null).free()
   }
 
-  @Suppress("UNUSED_PARAMETER") private fun keyCallback(window: Long, key: Int, scancode: Int, action: Int, mods: Int) = Unit
-  @Suppress("UNUSED_PARAMETER") private fun charModsCallback(window: Long, codepoint: Int, mods: Int) = Unit
-  @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) = Unit
-  @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) = Unit
-  @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) = Unit
+  private var focus: Node? = null
+  @Suppress("UNUSED_PARAMETER") private fun keyCallback(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {
+    if (focus != null) {
+      focus?.dispatch(Key(focus!!.component, key, scancode, action, mods))
+    }
+  }
+  @Suppress("UNUSED_PARAMETER") private fun charModsCallback(window: Long, codepoint: Int, mods: Int) {
+    if (focus != null) {
+      focus?.dispatch(CharMods(focus!!.component, codepoint, mods))
+    }
+  }
+
+  private var mousePos = Point(0, 0)
+  private var hover: Node? = null
+  @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) {
+    mousePos = Point(xpos.toInt(), ypos.toInt())
+    val nextHover = rootNode?.nodeFromPoint(mousePos)
+    val prevHover = hover
+    if (prevHover !== nextHover) {
+      prevHover?.dispatch(Unhover(prevHover.component))
+      nextHover?.dispatch(Hover(nextHover.component))
+      hover = nextHover
+    }
+  }
+  @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) {
+    val node = rootNode?.nodeFromPoint(mousePos)
+    if (node != null) {
+      val event = Click(node.component, mousePos, button, action, mods)
+      node.dispatch(event)
+      if (!event.stopPropogation) {
+        val prevFocus = focus
+        val nextFocus = node
+
+        if (prevFocus !== nextFocus) {
+          prevFocus?.dispatch(Unfocus(prevFocus.component))
+          nextFocus.dispatch(Focus(nextFocus.component))
+          focus = nextFocus
+        }
+      }
+    }
+  }
+
+  @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) {
+    rootVNode = VNode(::Scene, Context(BOUNDS to Bounds(0, 0, width, height)))
+  }
   @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) = runBlocking {
-    publish(RequestShutdown(Cause.of(this), Context.empty()))
+    publish(RequestShutdown(Cause.of(this@RenderGameSystem), Context()))
   }
 }

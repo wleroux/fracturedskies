@@ -1,48 +1,38 @@
 package com.fracturedskies.render.components
 
-import com.fracturedskies.engine.collections.TypedMap
-import com.fracturedskies.engine.jeact.Component
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.jeact.AbstractComponent
+import com.fracturedskies.engine.jeact.Bounds
+import com.fracturedskies.engine.jeact.Node.Companion.BOUNDS
 import com.fracturedskies.engine.jeact.VNode
+import com.fracturedskies.engine.jeact.event.EventHandlers
+import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.Matrix4
+import com.fracturedskies.render.components.MeshRenderer.Companion.MATERIAL
+import com.fracturedskies.render.components.MeshRenderer.Companion.MESH
+import com.fracturedskies.render.components.MeshRenderer.Companion.VARIABLES
+import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import com.fracturedskies.render.mesh.TextureArray
 import com.fracturedskies.render.mesh.standard.StandardShaderProgram
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
-class AlternatingBlock(override var attributes: TypedMap) : Component {
-  override var state: Any? = null
-  override var nextState: Any? = null
-  var blockType: Int
-    get() = state as Int
-    set(value) {
-      nextState = value
-    }
+class AlternatingBlock(attributes: Context) : AbstractComponent(attributes) {
+  /* Attributes */
+  private val bounds get() = requireNotNull(attributes[BOUNDS])
+
+  /* State */
+  private var blockType
+    get() = (nextState ?: state) as Int
+    set(value) {nextState = value}
   init {
     blockType = 0
   }
 
-  lateinit var job: Job
-  override fun didMount() {
-    super.didMount()
-    job = launch {
-      while(isActive) {
-        blockType = (blockType + 1) % 3
-        delay(1000)
-      }
-    }
-  }
-
-  override fun willUnmount() {
-    super.willUnmount()
-    job.cancel()
-  }
-
   override fun children(): List<VNode> {
-    val variables = TypedMap(
+    val variables = Context(
       StandardShaderProgram.MODEL to Matrix4(
         1f, 0f, 0f, 0f,
         0f, 1f, 0f, 0f,
@@ -64,18 +54,32 @@ class AlternatingBlock(override var attributes: TypedMap) : Component {
     )
     val material = Material(
             StandardShaderProgram(),
-            TypedMap(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("com/fracturedskies/render/tileset.png", this.javaClass.classLoader), 16, 16, 3))
+            Context(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("com/fracturedskies/render/tileset.png", this.javaClass.classLoader), 16, 16, 3))
     )
     val mesh = Mesh(floatArrayOf(
-      -0.5f, -0.5f, 0f,   0f, 0f, blockType.toFloat(),   0f, 0f, 1f,
-      -0.5f,  0.5f, 0f,   0f, 1f, blockType.toFloat(),   0f, 0f, 1f,
-       0.5f,  0.5f, 0f,   1f, 1f, blockType.toFloat(),   0f, 0f, 1f,
-       0.5f, -0.5f, 0f,   1f, 0f, blockType.toFloat(),   0f, 0f, 1f
+      -1f, -1f, 0f,   0f, 0f, blockType.toFloat(),   0f, 0f, 1f,
+      -1f,  1f, 0f,   0f, 1f, blockType.toFloat(),   0f, 0f, 1f,
+       1f,  1f, 0f,   1f, 1f, blockType.toFloat(),   0f, 0f, 1f,
+       1f, -1f, 0f,   1f, 0f, blockType.toFloat(),   0f, 0f, 1f
     ), intArrayOf(
       0, 1, 2,
       2, 3, 0
     ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD, Mesh.Attribute.NORMAL))
 
-    return listOf(VNode(::MeshRenderer, MeshRenderer.MESH to mesh, MeshRenderer.MATERIAL to material, MeshRenderer.VARIABLES to variables))
+    return listOf(VNode(::MeshRenderer, Context(
+            BOUNDS to Bounds(bounds.x, bounds.y, bounds.width, bounds.height),
+            MESH to mesh,
+            MATERIAL to material,
+            VARIABLES to variables
+    )))
+  }
+
+  override val handler: EventHandlers = EventHandlers(on(Click::class) {
+    if (it.action == GLFW_RELEASE) {
+      nextBlock()
+    }
+  })
+  private fun nextBlock() {
+    blockType = (blockType + 1) % 3
   }
 }

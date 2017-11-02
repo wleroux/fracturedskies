@@ -1,6 +1,6 @@
 package com.fracturedskies.render.mesh
 
-import com.fracturedskies.engine.collections.TypedMap
+import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.math.Matrix4
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
@@ -62,5 +62,5 @@ abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: S
 
   override fun toString(): String = this.javaClass.simpleName
 
-  abstract fun render(properties: TypedMap, variables: TypedMap, mesh: Mesh)
+  abstract fun render(properties: Context, variables: Context, mesh: Mesh)
 }
