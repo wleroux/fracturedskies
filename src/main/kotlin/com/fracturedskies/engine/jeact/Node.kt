@@ -1,64 +1,46 @@
 package com.fracturedskies.engine.jeact
 
+import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
-import com.fracturedskies.engine.jeact.event.Event
-import com.fracturedskies.engine.jeact.event.Phase
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.jvm.reflect
 
-data class Node(var vnode: VNode, val component: Component, var parent: Node?, var children: List<Node>) {
+data class Node private constructor(val type: (Context) -> Component, val attributes: Context) {
   companion object {
-    val BOUNDS = Key<Bounds>("bounds")
-  }
-  val bounds get() = vnode.attributes[BOUNDS]
-  val typeClass: KClass<Component>
-    get() = vnode.typeClass
-
-  fun unmount() {
-    this.children.forEach({it.unmount()})
-    this.component.willUnmount()
+    val NODES = Key<List<Node>>("nodes")
+    operator fun invoke(type: (Context) -> Component, context: Context = Context(), block: Builder.() -> Unit = {}) = Builder(type, context).apply(block).build()
   }
 
-  fun nodeFromPoint(point: Point): Node? {
-    val childNode = children.mapNotNull({ it.nodeFromPoint(point) } ).firstOrNull()
-    return childNode ?: if (point within this.bounds) this else null
-  }
-
-  fun render() {
-    this.component.render()
-    this.children.forEach({it.render()})
-  }
-
-  fun dispatch(event: Event) {
-    // Capture phase
-    event.phase = Phase.CAPTURE
-    val ancestry = mutableListOf<Node>()
-    var child: Node? = this.parent
-    while (child != null) {
-      ancestry.add(child)
-      child = child.parent
-    }
-
-    for (node in ancestry.reversed()) {
-      node.component.handler(event)
-      if (event.stopPropogation)
-        return
-    }
-
-    // Target phase
-    event.phase = Phase.TARGET
-    this.component.handler(event)
-    if (event.stopPropogation)
-      return
-
-    // Bubble phase
-    event.phase = Phase.BUBBLE
-    for (node in ancestry) {
-      node.component.handler(event)
-      if (event.stopPropogation)
-        return
+  class Builder internal constructor(private val type: (Context) -> Component, private val context: Context) {
+    val nodes = mutableListOf<Node>()
+    fun build(): Node {
+      return Node(type, context.with(NODES to nodes))
     }
   }
 
-  override fun toString() =
-          "${vnode.typeClass.simpleName}(${vnode.attributes})"
+  @Suppress("UNCHECKED_CAST")
+  private val typeClass: KClass<Component> = type.reflect()!!.returnType.jvmErasure as KClass<Component>
+  override fun toString() = "${typeClass.simpleName}($attributes)"
+  override fun hashCode() = 31 * type.hashCode() + attributes.hashCode()
+  override fun equals(other: Any?): Boolean {
+    if (this === other)
+      return true
+    return when (other) {
+      is Node -> this.type == other.type && this.attributes == other.attributes
+      else -> false
+    }
+  }
+
+  fun toComponent(prev: Component? = null, parent: Component? = null): Component {
+    val reuseComponent = if (prev != null) prev::class == this.typeClass else false
+    val component = if (reuseComponent) {
+      prev!!
+    } else {
+      prev?.unmount()
+      mount(type, parent, this.attributes)
+    }
+    component.update(this.attributes, !reuseComponent)
+    return component
+  }
 }

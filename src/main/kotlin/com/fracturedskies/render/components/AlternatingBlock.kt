@@ -3,8 +3,8 @@ package com.fracturedskies.render.components
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
-import com.fracturedskies.engine.jeact.Node.Companion.BOUNDS
-import com.fracturedskies.engine.jeact.VNode
+import com.fracturedskies.engine.jeact.Component.Companion.BOUNDS
+import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.loadByteBuffer
@@ -20,9 +20,6 @@ import com.fracturedskies.render.mesh.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
 class AlternatingBlock(attributes: Context) : AbstractComponent(attributes) {
-  /* Attributes */
-  private val bounds get() = requireNotNull(attributes[BOUNDS])
-
   /* State */
   private var blockType
     get() = (nextState ?: state) as Int
@@ -31,7 +28,7 @@ class AlternatingBlock(attributes: Context) : AbstractComponent(attributes) {
     blockType = 0
   }
 
-  override fun children(): List<VNode> {
+  override fun toNode(): List<Node> {
     val variables = Context(
       StandardShaderProgram.MODEL to Matrix4(
         1f, 0f, 0f, 0f,
@@ -66,7 +63,7 @@ class AlternatingBlock(attributes: Context) : AbstractComponent(attributes) {
       2, 3, 0
     ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD, Mesh.Attribute.NORMAL))
 
-    return listOf(VNode(::MeshRenderer, Context(
+    return listOf(Node(::MeshRenderer, Context(
             BOUNDS to Bounds(bounds.x, bounds.y, bounds.width, bounds.height),
             MESH to mesh,
             MATERIAL to material,
