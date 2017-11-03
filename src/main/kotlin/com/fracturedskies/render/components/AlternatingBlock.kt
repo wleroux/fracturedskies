@@ -19,16 +19,13 @@ import com.fracturedskies.render.mesh.TextureArray
 import com.fracturedskies.render.mesh.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
-class AlternatingBlock(attributes: Context) : AbstractComponent(attributes) {
+class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   /* State */
   private var blockType
-    get() = (nextState ?: state) as Int
+    get() = (nextState ?: state)
     set(value) {nextState = value}
-  init {
-    blockType = 0
-  }
 
-  override fun toNode(): List<Node> {
+  override fun toNode(): List<Node<*>> {
     val variables = Context(
       StandardShaderProgram.MODEL to Matrix4(
         1f, 0f, 0f, 0f,

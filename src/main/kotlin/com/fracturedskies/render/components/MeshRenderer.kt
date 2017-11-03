@@ -7,7 +7,7 @@ import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import org.lwjgl.opengl.GL11
 
-class MeshRenderer(attributes: Context) : AbstractComponent(attributes) {
+class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
     val MESH = Key<Mesh>("mesh")
     val MATERIAL = Key<Material>("material")

@@ -7,10 +7,10 @@ import com.fracturedskies.engine.jeact.event.Event
 import com.fracturedskies.engine.jeact.event.EventHandler
 import com.fracturedskies.engine.jeact.event.Phase
 
-interface Component {
+interface Component<T> {
   var attributes: Context
-  var state: Any?
-  var nextState: Any?
+  var state: T
+  var nextState: T?
   val handler: EventHandler
 
   // Bounds
@@ -20,8 +20,8 @@ interface Component {
   val bounds get() = requireNotNull(attributes[BOUNDS])
 
   // Component Tree
-  var parent: Component?
-  var children: List<Component>
+  var parent: Component<*>?
+  var children: List<Component<*>>
 
   // Mounting
   fun willMount() = Unit
@@ -29,15 +29,15 @@ interface Component {
 
   // Updating
   fun willReceiveProps(nextAttributes: Context) = Unit
-  fun shouldUpdate(nextAttributes: Context, nextState: Any?): Boolean =
+  fun shouldUpdate(nextAttributes: Context, nextState: T): Boolean =
           attributes !== nextAttributes || state !== nextState
-  fun willUpdate(nextAttributes: Context, nextState: Any?) = Unit
-  fun didUpdate(prevAttributes: Context, prevState: Any?) = Unit
+  fun willUpdate(nextAttributes: Context, nextState: T) = Unit
+  fun didUpdate(prevAttributes: Context, prevState: T) = Unit
 
   // Unmounting
   fun willUnmount() = Unit
 
-  fun toNode(): List<Node> = requireNotNull(attributes[NODES])
+  fun toNode(): List<Node<*>> = requireNotNull(attributes[NODES])
   fun render() {
     for (child in children) {
       child.render()
@@ -84,8 +84,8 @@ interface Component {
   fun dispatch(event: Event) {
     // Capture phase
     event.phase = Phase.CAPTURE
-    val ancestry = mutableListOf<Component>()
-    var child: Component? = parent
+    val ancestry = mutableListOf<Component<*>>()
+    var child: Component<*>? = parent
     while (child != null) {
       ancestry.add(child)
       child = child.parent
@@ -112,23 +112,23 @@ interface Component {
     }
   }
 
-  fun componentFromPoint(point: Point): Component? {
+  fun componentFromPoint(point: Point): Component<*>? {
     val child = children.mapNotNull({ it.componentFromPoint(point) } ).firstOrNull()
     return child ?: if (point within this.bounds) this else null
   }
 }
 
-abstract class AbstractComponent(override var attributes: Context) : Component {
-  override var state: Any? = null
-  override var nextState: Any? = null
+abstract class AbstractComponent<T>(override var attributes: Context, initialState: T) : Component<T> {
+  override var state: T = initialState
+  override var nextState: T? = null
   override val handler: EventHandler = {}
-  override var parent: Component? = null
-  override var children: List<Component> = listOf()
+  override var parent: Component<*>? = null
+  override var children: List<Component<*>> = listOf()
 
   override fun toString(): String = this.javaClass.simpleName
 }
 
-fun mount(type: (Context) -> Component, parent: Component?, attributes: Context): Component {
+fun <T> mount(type: (Context) -> Component<T>, parent: Component<*>?, attributes: Context): Component<T> {
   val component = type(attributes)
 
   component.willMount()

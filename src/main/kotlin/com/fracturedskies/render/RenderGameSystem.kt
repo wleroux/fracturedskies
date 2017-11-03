@@ -2,8 +2,11 @@ package com.fracturedskies.render
 
 import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.engine.jeact.Bounds
+import com.fracturedskies.engine.jeact.Component
 import com.fracturedskies.engine.jeact.Component.Companion.BOUNDS
+import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.jeact.Point
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
 import com.fracturedskies.engine.messages.MessageBus.publish
@@ -28,8 +31,8 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     }
   }
 
-  private lateinit var rootNode: Node
-  private var rootComponent: Component? = null
+  private lateinit var rootNode: Node<*>
+  private var rootComponent: Component<*>? = null
 
   private var window: Long = 0
 
@@ -105,7 +108,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     glfwSetErrorCallback(null).free()
   }
 
-  private var focus: Component? = null
+  private var focus: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun keyCallback(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {
     if (focus != null) {
       focus?.dispatch(Key(focus!!, key, scancode, action, mods))
@@ -118,7 +121,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
   }
 
   private var mousePos = Point(0, 0)
-  private var hover: Component? = null
+  private var hover: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) {
     mousePos = Point(xpos.toInt(), ypos.toInt())
     val nextHover = rootComponent?.componentFromPoint(mousePos)
