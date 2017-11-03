@@ -37,6 +37,21 @@ data class Matrix4(
               0f, 0f, 0f, 1f
       )
     }
+
+
+    fun orthogonal(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Matrix4 {
+      val width = right - left
+      val height = top - bottom
+      val depth = far - near
+      //@formatter:off
+      return Matrix4(
+              2 / width, 0f, 0f, -(left + right) / width,
+              0f, 2 / height, 0f, -(top + bottom) / height,
+              0f, 0f, 2 / depth, -(far + near) / depth,
+              0f, 0f, 0f, 1f
+      )
+      //@formatter:on
+    }
   }
 
   private val determinant: Float

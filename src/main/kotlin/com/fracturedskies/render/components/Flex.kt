@@ -154,7 +154,7 @@ class Flex(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
           while (currentComponentIndex < components.size) {
             val component = components[currentComponentIndex]
             val componentMainSize = direction.main(component.preferredWidth(), component.preferredHeight())
-            if (cumulativeMainAxisSize + componentMainSize > mainAxisSize) {
+            if (cumulativeMainAxisSize + componentMainSize > mainAxisSize && componentRow.size > 0) {
               break
             } else {
               cumulativeMainAxisSize += componentMainSize

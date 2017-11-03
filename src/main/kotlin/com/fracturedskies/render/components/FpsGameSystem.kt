@@ -1,4 +1,4 @@
-package com.fracturedskies.render
+package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.GameSystem
 import com.fracturedskies.engine.Render
@@ -14,12 +14,13 @@ class FramePerSecondGameSystem(coroutineContext: CoroutineContext = DefaultDispa
 
   private var last = System.nanoTime()
   private var ticks = 0
+  var fps = 0
   override suspend fun invoke(message: Message) {
     if (message !is Render) return
 
     val now = System.nanoTime()
     if (now - last >= ONE_SECOND_IN_NANOSECONDS) {
-      println("FPS: $ticks")
+      fps = ticks
       ticks = 0
       last = now
     } else {

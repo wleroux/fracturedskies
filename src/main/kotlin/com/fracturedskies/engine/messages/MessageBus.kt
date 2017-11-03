@@ -17,6 +17,9 @@ object MessageBus {
       yield()
     }
   }
+  fun unsubscribe(gameSystem: GameSystem) {
+    gameSystems.remove(gameSystem)
+  }
 
   private fun isIdle() = gameSystems.all {it.isIdle()}
 }

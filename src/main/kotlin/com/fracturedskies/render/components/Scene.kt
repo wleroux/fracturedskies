@@ -24,7 +24,7 @@ class Scene(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
       JUSTIFY_CONTENT to Flex.JustifyContent.SPACE_AROUND,
       ALIGN_ITEMS to Flex.ItemAlign.START,
       ALIGN_CONTENT to Flex.ContentAlign.CENTER,
-      WRAP to Flex.Wrap.NO_WRAP
+      WRAP to Flex.Wrap.WRAP
     )) {
       nodes.addAll(listOf(
               Node(::AlternatingBlock),
@@ -33,6 +33,6 @@ class Scene(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
               Node(::AlternatingBlock),
               Node(::AlternatingBlock)
       ))
-    })
+    }, Node(::FpsRenderer))
   }
 }

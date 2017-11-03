@@ -2,8 +2,10 @@ package com.fracturedskies.render.mesh
 
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL30.*
+import org.lwjgl.opengl.GL20.glEnableVertexAttribArray
+import org.lwjgl.opengl.GL20.glVertexAttribPointer
+import org.lwjgl.opengl.GL30.glBindVertexArray
+import org.lwjgl.opengl.GL30.glGenVertexArrays
 
 data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes: List<Attribute>) {
   data class Attribute(val label: String, val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
@@ -14,10 +16,12 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
       private val POSITION_LOCATION = 0
       private val TEXCOORD_LOCATION = 1
       private val NORMAL_LOCATION = 2
+      private val COLOR_LOCATION = 3
 
       val POSITION = Mesh.Attribute("POSITION", POSITION_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
       val TEXCOORD = Mesh.Attribute("TEXCOORD", TEXCOORD_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
       val NORMAL = Mesh.Attribute("NORMAL", NORMAL_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
+      val COLOR = Mesh.Attribute("COLOR", COLOR_LOCATION, GL11.GL_UNSIGNED_BYTE, 4, java.lang.Byte.BYTES)
     }
 
     override fun toString(): String = label
