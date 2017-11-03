@@ -6,7 +6,6 @@ import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
 import com.fracturedskies.engine.messages.MessageBus.publishAndWait
 import com.fracturedskies.engine.messages.MessageBus.subscribe
-import com.fracturedskies.render.components.FramePerSecondGameSystem
 import com.fracturedskies.render.LoggingGameSystem
 import com.fracturedskies.render.RenderGameSystem
 import kotlinx.coroutines.experimental.CommonPool
@@ -55,7 +54,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   val mainGameSystem = MainGameSystem(coroutineContext)
   subscribe(mainGameSystem)
   subscribe(LoggingGameSystem(coroutineContext + CommonPool))
-  subscribe(FramePerSecondGameSystem(coroutineContext + CommonPool))
   subscribe(RenderGameSystem(coroutineContext))
 
   // Run game

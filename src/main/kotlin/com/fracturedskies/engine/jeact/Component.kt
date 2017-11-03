@@ -126,6 +126,13 @@ abstract class AbstractComponent<T>(override var attributes: Context, initialSta
   override var children: List<Component<*>> = listOf()
   override lateinit var bounds: Bounds
 
+  override fun render(bounds: Bounds) {
+    this.bounds = bounds
+    for (child in children) {
+      child.render(this.bounds)
+    }
+  }
+
   override fun toString(): String = this.javaClass.simpleName
 }
 

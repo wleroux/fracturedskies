@@ -4,12 +4,24 @@ import com.fracturedskies.engine.GameSystem
 import kotlinx.coroutines.experimental.yield
 
 object MessageBus {
-  private val gameSystems = mutableListOf<GameSystem>()
+  private val messageChannels = mutableListOf<MessageChannel>()
   fun subscribe(gameSystem: GameSystem) {
-    gameSystems.add(gameSystem)
+    subscribe(gameSystem.messageChannel)
   }
+  fun unsubscribe(gameSystem: GameSystem) {
+    unsubscribe(gameSystem.messageChannel)
+  }
+
+  fun subscribe(messageChannel: MessageChannel): MessageChannel {
+    messageChannels.add(messageChannel)
+    return messageChannel
+  }
+  fun unsubscribe(messageChannel: MessageChannel) {
+    messageChannels.remove(messageChannel)
+  }
+
   suspend fun <T: Message> publish(message: T) {
-    gameSystems.forEach { it.send(message) }
+    messageChannels.forEach { it.send(message) }
   }
   suspend fun <T: Message> publishAndWait(message: T) {
     publish(message)
@@ -17,9 +29,5 @@ object MessageBus {
       yield()
     }
   }
-  fun unsubscribe(gameSystem: GameSystem) {
-    gameSystems.remove(gameSystem)
-  }
-
-  private fun isIdle() = gameSystems.all {it.isIdle()}
+  private fun isIdle() = messageChannels.all {it.isIdle()}
 }

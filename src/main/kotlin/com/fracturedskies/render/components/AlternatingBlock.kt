@@ -2,7 +2,6 @@ package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
@@ -26,7 +25,6 @@ class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes,
 
   override fun preferredWidth() = 100
   override fun preferredHeight() = 100
-
   override fun toNode(): List<Node<*>> {
     val variables = Context(
       StandardShaderProgram.MODEL to Matrix4(
@@ -76,12 +74,5 @@ class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes,
   })
   private fun nextBlock() {
     blockType = (blockType + 1) % 3
-  }
-
-  override fun render(bounds: Bounds) {
-    this.bounds = bounds
-    for (child in children) {
-      child.render(this.bounds)
-    }
   }
 }

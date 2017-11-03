@@ -2,7 +2,6 @@ package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.render.components.Flex.Companion.ALIGN_CONTENT
 import com.fracturedskies.render.components.Flex.Companion.ALIGN_ITEMS
@@ -11,13 +10,6 @@ import com.fracturedskies.render.components.Flex.Companion.JUSTIFY_CONTENT
 import com.fracturedskies.render.components.Flex.Companion.WRAP
 
 class Scene(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
-  override fun render(bounds: Bounds) {
-    this.bounds = bounds
-    for (child in children) {
-      child.render(this.bounds)
-    }
-  }
-
   override fun toNode(): List<Node<*>> {
     return listOf(Node(::Flex, Context(
       DIRECTION to Flex.Direction.ROW,
