@@ -12,6 +12,9 @@ class Context(private val delegate: Map<Key<*>, *>) {
     @Suppress("UNCHECKED_CAST") operator fun <A, B, C, D> invoke(value1: ContextEntry<A>, value2: ContextEntry<B>, value3: ContextEntry<C>, value4: ContextEntry<D>) = Context(mapOf(
             value1, value2, value3, value4
     ))
+    @Suppress("UNCHECKED_CAST") operator fun <A, B, C, D, E> invoke(value1: ContextEntry<A>, value2: ContextEntry<B>, value3: ContextEntry<C>, value4: ContextEntry<D>, value5: ContextEntry<E>) = Context(mapOf(
+            value1, value2, value3, value4, value5
+    ))
   }
 
   val entries: Set<Map.Entry<Key<*>, *>> = delegate.entries
@@ -64,6 +67,13 @@ class Context(private val delegate: Map<Key<*>, *>) {
     put(value2.first, value2.second)
     put(value3.first, value3.second)
     put(value4.first, value4.second)
+  }))
+  fun <A, B, C, D, E> with(value1: ContextEntry<A>, value2: ContextEntry<B>, value3: ContextEntry<C>, value4: ContextEntry<D>, value5: ContextEntry<E>) = Context(delegate.toMutableMap().apply({
+    put(value1.first, value1.second)
+    put(value2.first, value2.second)
+    put(value3.first, value3.second)
+    put(value4.first, value4.second)
+    put(value5.first, value5.second)
   }))
 }
 

@@ -1,7 +1,6 @@
 package com.fracturedskies.engine.jeact
 
 import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
 import com.fracturedskies.engine.jeact.event.Event
 import com.fracturedskies.engine.jeact.event.EventHandler
@@ -14,10 +13,9 @@ interface Component<T> {
   val handler: EventHandler
 
   // Bounds
-  companion object {
-    val BOUNDS = Key<Bounds>("bounds")
-  }
-  val bounds get() = requireNotNull(attributes[BOUNDS])
+  var bounds: Bounds
+  fun preferredWidth(): Int = 0
+  fun preferredHeight(): Int = 0
 
   // Component Tree
   var parent: Component<*>?
@@ -38,11 +36,7 @@ interface Component<T> {
   fun willUnmount() = Unit
 
   fun toNode(): List<Node<*>> = requireNotNull(attributes[NODES])
-  fun render() {
-    for (child in children) {
-      child.render()
-    }
-  }
+  fun render(bounds: Bounds)
 
   // Lifecycle functions
   fun update(attributes: Context, forceUpdate: Boolean = false) {
@@ -113,8 +107,12 @@ interface Component<T> {
   }
 
   fun componentFromPoint(point: Point): Component<*>? {
-    val child = children.mapNotNull({ it.componentFromPoint(point) } ).firstOrNull()
-    return child ?: if (point within this.bounds) this else null
+    return if (point within this.bounds) {
+      val child = children.reversed().mapNotNull({ it.componentFromPoint(point) }).firstOrNull()
+      child ?: this
+    } else {
+      null
+    }
   }
 }
 
@@ -124,6 +122,7 @@ abstract class AbstractComponent<T>(override var attributes: Context, initialSta
   override val handler: EventHandler = {}
   override var parent: Component<*>? = null
   override var children: List<Component<*>> = listOf()
+  override lateinit var bounds: Bounds
 
   override fun toString(): String = this.javaClass.simpleName
 }

@@ -4,7 +4,6 @@ import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Component
-import com.fracturedskies.engine.jeact.Component.Companion.BOUNDS
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.Point
 import com.fracturedskies.engine.messages.Cause
@@ -33,6 +32,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
 
   private lateinit var rootNode: Node<*>
   private var rootComponent: Component<*>? = null
+  private lateinit var screenDimension: Bounds
 
   private var window: Long = 0
 
@@ -81,7 +81,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
 
-    rootNode = Node(::Scene, Context(BOUNDS to Bounds(0, 0, screenWidth, screenHeight)))
+    rootNode = Node(::Scene)
   }
 
   private suspend fun update() {
@@ -93,7 +93,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
 
     // Render Scene
     rootComponent = rootNode.toComponent(rootComponent)
-    rootComponent?.render()
+    rootComponent?.render(screenDimension)
 
     glfwSwapBuffers(window) // swap the color buffers
   }
@@ -123,7 +123,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
   private var mousePos = Point(0, 0)
   private var hover: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) {
-    mousePos = Point(xpos.toInt(), ypos.toInt())
+    mousePos = Point(xpos.toInt(), screenDimension.height - ypos.toInt())
     val nextHover = rootComponent?.componentFromPoint(mousePos)
     val prevHover = hover
     if (prevHover !== nextHover) {
@@ -151,7 +151,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
   }
 
   @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) {
-    rootNode = Node(::Scene, Context(BOUNDS to Bounds(0, 0, width, height)))
+    screenDimension = Bounds(0, 0, width, height)
   }
   @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) = runBlocking {
     publish(RequestShutdown(Cause.of(this@RenderGameSystem), Context()))

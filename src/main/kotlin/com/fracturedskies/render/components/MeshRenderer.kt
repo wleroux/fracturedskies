@@ -3,6 +3,7 @@ package com.fracturedskies.render.components
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
+import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import org.lwjgl.opengl.GL11
@@ -19,7 +20,8 @@ class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
   val material get() = requireNotNull(attributes[MATERIAL])
   val variables get() = requireNotNull(attributes[VARIABLES])
 
-  override fun render() {
+  override fun render(bounds: Bounds) {
+    this.bounds = bounds
     GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
     material.render(variables, mesh)
   }
