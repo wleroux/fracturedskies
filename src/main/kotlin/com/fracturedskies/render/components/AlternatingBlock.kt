@@ -5,11 +5,10 @@ import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
+import com.fracturedskies.engine.jeact.nodes
 import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.components.MeshRenderer.Companion.MATERIAL
-import com.fracturedskies.render.components.MeshRenderer.Companion.MESH
-import com.fracturedskies.render.components.MeshRenderer.Companion.VARIABLES
+import com.fracturedskies.render.components.MeshRenderer.Companion.meshRenderer
 import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
@@ -18,6 +17,12 @@ import com.fracturedskies.render.mesh.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
 class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
+  companion object {
+    fun Node.Builder<*>.alternatingBlock() {
+      nodes.add(Node(::AlternatingBlock))
+    }
+  }
+
   /* State */
   private var blockType
     get() = (nextState ?: state)
@@ -60,11 +65,9 @@ class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes,
       2, 3, 0
     ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD, Mesh.Attribute.NORMAL))
 
-    return listOf(Node(::MeshRenderer, Context(
-            MESH to mesh,
-            MATERIAL to material,
-            VARIABLES to variables
-    )))
+    return nodes {
+      meshRenderer(mesh, material, variables)
+    }
   }
 
   override val handler: EventHandlers = EventHandlers(on(Click::class) {

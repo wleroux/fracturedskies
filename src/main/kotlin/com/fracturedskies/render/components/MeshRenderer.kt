@@ -4,6 +4,7 @@ import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
+import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import org.lwjgl.opengl.GL11
@@ -13,6 +14,13 @@ class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
     val MESH = Key<Mesh>("mesh")
     val MATERIAL = Key<Material>("material")
     val VARIABLES = Key<Context>("variables")
+    fun Node.Builder<*>.meshRenderer(mesh: Mesh, material: Material, variables: Context = Context()) {
+      nodes.add(Node(::MeshRenderer, Context(
+              MESH to mesh,
+              MATERIAL to material,
+              VARIABLES to variables
+      )))
+    }
   }
 
   /** Attributes */

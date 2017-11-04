@@ -5,6 +5,7 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Component
+import com.fracturedskies.engine.jeact.Node
 import java.util.*
 
 
@@ -15,6 +16,22 @@ class Flex(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
     val ALIGN_ITEMS = Key<ItemAlign>("itemAlign")
     val ALIGN_CONTENT = Key<ContentAlign>("contentAlign")
     val WRAP = Key<Wrap>("wrap")
+    fun Node.Builder<*>.flex(
+            direction: Direction = Direction.ROW,
+            justifyContent: JustifyContent = JustifyContent.LEFT,
+            alignItems: ItemAlign = ItemAlign.START,
+            alignContent: ContentAlign = ContentAlign.START,
+            wrap: Wrap = Wrap.WRAP,
+            block: Node.Builder<Unit>.() -> (Unit) = {}
+    ) {
+      nodes.add(Node(::Flex, Context(
+              DIRECTION to direction,
+              JUSTIFY_CONTENT to justifyContent,
+              ALIGN_ITEMS to alignItems,
+              ALIGN_CONTENT to alignContent,
+              WRAP to wrap
+      ), block))
+    }
   }
 
   private val direction get() = requireNotNull(attributes[DIRECTION])
@@ -24,19 +41,11 @@ class Flex(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   private val wrap get() = requireNotNull(attributes[WRAP])
 
   override fun preferredWidth(): Int {
-    var preferredWidth = 0
-    for (component in children) {
-      preferredWidth += component.preferredWidth()
-    }
-    return preferredWidth
+    return children.sumBy({ it.preferredWidth() })
   }
 
   override fun preferredHeight(): Int {
-    var preferredHeight = 0
-    for (component in children) {
-      preferredHeight += component.preferredHeight()
-    }
-    return preferredHeight
+    return children.sumBy({ it.preferredHeight() })
   }
 
   override fun render(bounds: Bounds) {
@@ -103,172 +112,170 @@ class Flex(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
       componentCrossOffset += maxCrossSpace + betweenCrossOffset
     }
   }
+}
 
-  enum class Direction {
-    ROW {
-      override fun main(x: Int, y: Int) = x
-      override fun cross(x: Int, y: Int) = y
-      override fun x(main: Int, cross: Int) = main
-      override fun y(main: Int, cross: Int) = cross
-      override fun iterator(componentRow: List<Component<*>>) = componentRow.iterator()
-    },
-    ROW_REVERSE {
-      override fun main(x: Int, y: Int) = x
-      override fun cross(x: Int, y: Int) = y
-      override fun x(main: Int, cross: Int) = main
-      override fun y(main: Int, cross: Int) = cross
-      override fun iterator(componentRow: List<Component<*>>) = componentRow.reversed().iterator()
-    },
-    COLUMN {
-      override fun main(x: Int, y: Int) = y
-      override fun cross(x: Int, y: Int) = x
-      override fun x(main: Int, cross: Int) = cross
-      override fun y(main: Int, cross: Int) = main
-      override fun iterator(componentRow: List<Component<*>>) = componentRow.iterator()
-    },
-    COLUMN_RESVERSE {
-      override fun main(x: Int, y: Int) = y
-      override fun cross(x: Int, y: Int) = x
-      override fun x(main: Int, cross: Int) = cross
-      override fun y(main: Int, cross: Int) = main
-      override fun iterator(componentRow: List<Component<*>>) = componentRow.reversed().iterator()
-    };
+enum class Direction {
+  ROW {
+    override fun main(x: Int, y: Int) = x
+    override fun cross(x: Int, y: Int) = y
+    override fun x(main: Int, cross: Int) = main
+    override fun y(main: Int, cross: Int) = cross
+    override fun iterator(componentRow: List<Component<*>>) = componentRow.iterator()
+  },
+  ROW_REVERSE {
+    override fun main(x: Int, y: Int) = x
+    override fun cross(x: Int, y: Int) = y
+    override fun x(main: Int, cross: Int) = main
+    override fun y(main: Int, cross: Int) = cross
+    override fun iterator(componentRow: List<Component<*>>) = componentRow.reversed().iterator()
+  },
+  COLUMN {
+    override fun main(x: Int, y: Int) = y
+    override fun cross(x: Int, y: Int) = x
+    override fun x(main: Int, cross: Int) = cross
+    override fun y(main: Int, cross: Int) = main
+    override fun iterator(componentRow: List<Component<*>>) = componentRow.iterator()
+  },
+  COLUMN_RESVERSE {
+    override fun main(x: Int, y: Int) = y
+    override fun cross(x: Int, y: Int) = x
+    override fun x(main: Int, cross: Int) = cross
+    override fun y(main: Int, cross: Int) = main
+    override fun iterator(componentRow: List<Component<*>>) = componentRow.reversed().iterator()
+  };
 
-    abstract fun main(x: Int, y: Int): Int
-    abstract fun cross(x: Int, y: Int): Int
-    abstract fun x(main: Int, cross: Int): Int
-    abstract fun y(main: Int, cross: Int): Int
-    abstract fun iterator(componentRow: List<Component<*>>): Iterator<Component<*>>
-  }
+  abstract fun main(x: Int, y: Int): Int
+  abstract fun cross(x: Int, y: Int): Int
+  abstract fun x(main: Int, cross: Int): Int
+  abstract fun y(main: Int, cross: Int): Int
+  abstract fun iterator(componentRow: List<Component<*>>): Iterator<Component<*>>
+}
 
-  enum class Wrap {
-    WRAP {
-      override fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>> {
-        val mainAxisSize = direction.main(width, height)
-        val componentRows = ArrayList<List<Component<*>>>()
-        var currentComponentIndex = 0
+enum class Wrap {
+  WRAP {
+    override fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>> {
+      val mainAxisSize = direction.main(width, height)
+      val componentRows = ArrayList<List<Component<*>>>()
+      var currentComponentIndex = 0
+      while (currentComponentIndex < components.size) {
+        val componentRow = mutableListOf<Component<*>>()
+
+        var cumulativeMainAxisSize = 0
         while (currentComponentIndex < components.size) {
-          val componentRow = mutableListOf<Component<*>>()
-
-          var cumulativeMainAxisSize = 0
-          while (currentComponentIndex < components.size) {
-            val component = components[currentComponentIndex]
-            val componentMainSize = direction.main(component.preferredWidth(), component.preferredHeight())
-            if (cumulativeMainAxisSize + componentMainSize > mainAxisSize && componentRow.size > 0) {
-              break
-            } else {
-              cumulativeMainAxisSize += componentMainSize
-              componentRow.add(component)
-              currentComponentIndex++
-            }
+          val component = components[currentComponentIndex]
+          val componentMainSize = direction.main(component.preferredWidth(), component.preferredHeight())
+          if (cumulativeMainAxisSize + componentMainSize > mainAxisSize && componentRow.size > 0) {
+            break
+          } else {
+            cumulativeMainAxisSize += componentMainSize
+            componentRow.add(component)
+            currentComponentIndex++
           }
-          componentRows.add(componentRow)
         }
-
-        return componentRows
+        componentRows.add(componentRow)
       }
-    },
-    NO_WRAP {
-      override fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>> {
-        val componentRows = ArrayList<List<Component<*>>>()
-        componentRows.add(components)
-        return componentRows
-      }
-    };
 
-    abstract fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>>
-  }
+      return componentRows
+    }
+  },
+  NO_WRAP {
+    override fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>> {
+      val componentRows = ArrayList<List<Component<*>>>()
+      componentRows.add(components)
+      return componentRows
+    }
+  };
 
-  enum class JustifyContent {
-    LEFT {
-      override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
-      override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
-    },
-    CENTER {
-      override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace / 2
-      override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
-    },
-    RIGHT {
-      override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace
-      override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
-    },
-    SPACE_BETWEEN {
-      override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
-      override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int {
-        return if (componentRow.size <= 1) 0 else extraMainSpace / (componentRow.size - 1)
-      }
-    },
-    SPACE_AROUND {
-      override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = betweenOffset(componentRow, extraMainSpace) / 2
-      override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace / componentRow.size
-    };
+  abstract fun split(components: List<Component<*>>, direction: Direction, width: Int, height: Int): List<List<Component<*>>>
+}
 
-    abstract fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int
-    abstract fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int
-  }
+enum class JustifyContent {
+  LEFT {
+    override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
+    override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
+  },
+  CENTER {
+    override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace / 2
+    override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
+  },
+  RIGHT {
+    override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace
+    override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
+  },
+  SPACE_BETWEEN {
+    override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = 0
+    override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int {
+      return if (componentRow.size <= 1) 0 else extraMainSpace / (componentRow.size - 1)
+    }
+  },
+  SPACE_AROUND {
+    override fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = betweenOffset(componentRow, extraMainSpace) / 2
+    override fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int) = extraMainSpace / componentRow.size
+  };
 
-  enum class ItemAlign {
-    START {
-      override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
-      override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = 0
-    },
-    END{
-      override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
-      override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = rowCrossSpace - columnCrossSpace
-    },
-    CENTER{
-      override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
-      override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = (rowCrossSpace - columnCrossSpace) / 2
-    },
-    STRETCH{
-      override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = rowCrossSpace
-      override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = 0
-    };
+  abstract fun initialOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int
+  abstract fun betweenOffset(componentRow: List<Component<*>>, extraMainSpace: Int): Int
+}
 
-    abstract fun cross(columnCrossSpace: Int, rowCrossSpace: Int): Int
-    abstract fun offset(columnCrossSpace: Int, rowCrossSpace: Int): Int
-  }
+enum class ItemAlign {
+  START {
+    override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
+    override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = 0
+  },
+  END{
+    override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
+    override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = rowCrossSpace - columnCrossSpace
+  },
+  CENTER{
+    override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = columnCrossSpace
+    override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = (rowCrossSpace - columnCrossSpace) / 2
+  },
+  STRETCH{
+    override fun cross(columnCrossSpace: Int, rowCrossSpace: Int) = rowCrossSpace
+    override fun offset(columnCrossSpace: Int, rowCrossSpace: Int) = 0
+  };
 
-  enum class ContentAlign {
-    START {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-    },
-    END {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = extraCrossSpace
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-    },
-    CENTER {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = extraCrossSpace / 2
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-    },
-    STRETCH {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
-              extraCrossSpace / componentRows.size
-    },
-    SPACE_BETWEEN {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
-              if (componentRows.size <= 1) 0 else extraCrossSpace / (componentRows.size - 1)
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-    },
-    SPACE_AROUND {
-      override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
-              betweenCrossOffset(componentRows, extraCrossSpace) / 2
-      override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
-              extraCrossSpace / componentRows.size
-      override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
-    };
+  abstract fun cross(columnCrossSpace: Int, rowCrossSpace: Int): Int
+  abstract fun offset(columnCrossSpace: Int, rowCrossSpace: Int): Int
+}
 
-    abstract fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
-    abstract fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
-    abstract fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
-  }
+enum class ContentAlign {
+  START {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+  },
+  END {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = extraCrossSpace
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+  },
+  CENTER {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = extraCrossSpace / 2
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+  },
+  STRETCH {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
+            extraCrossSpace / componentRows.size
+  },
+  SPACE_BETWEEN {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
+            if (componentRows.size <= 1) 0 else extraCrossSpace / (componentRows.size - 1)
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+  },
+  SPACE_AROUND {
+    override fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
+            betweenCrossOffset(componentRows, extraCrossSpace) / 2
+    override fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) =
+            extraCrossSpace / componentRows.size
+    override fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int) = 0
+  };
 
-
+  abstract fun componentCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
+  abstract fun betweenCrossOffset(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
+  abstract fun additionalCrossSpace(componentRows: List<List<Component<*>>>, extraCrossSpace: Int): Int
 }

@@ -19,6 +19,9 @@ import kotlin.coroutines.experimental.EmptyCoroutineContext
 class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
+    fun Node.Builder<*>.fpsRenderer() {
+      nodes.add(Node(::FpsRenderer))
+    }
   }
   /* State */
   var fps

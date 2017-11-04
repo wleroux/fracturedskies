@@ -9,7 +9,7 @@ import com.fracturedskies.engine.jeact.Point
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
 import com.fracturedskies.engine.messages.MessageBus.publish
-import com.fracturedskies.render.components.Scene
+import com.fracturedskies.render.components.Scene.Companion.scene
 import com.fracturedskies.render.events.*
 import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
@@ -81,7 +81,7 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
 
-    rootNode = Node(::Scene)
+    rootNode = scene()
   }
 
   private suspend fun update() {

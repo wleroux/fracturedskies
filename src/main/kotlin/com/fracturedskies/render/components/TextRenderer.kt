@@ -5,11 +5,10 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.jeact.nodes
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.components.MeshRenderer.Companion.MATERIAL
-import com.fracturedskies.render.components.MeshRenderer.Companion.MESH
-import com.fracturedskies.render.components.MeshRenderer.Companion.VARIABLES
+import com.fracturedskies.render.components.MeshRenderer.Companion.meshRenderer
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import com.fracturedskies.render.mesh.Mesh.Attribute.Companion.POSITION
@@ -63,13 +62,11 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
     )
     val projection = Matrix4.orthogonal(0f, preferredWidth().toFloat(), preferredHeight().toFloat(), 0f, -1f, 1000f)
 
-    return listOf(Node(::MeshRenderer, Context(
-            MESH to mesh,
-            MATERIAL to material,
-            VARIABLES to Context(
-                    PROJECTION to projection
-            )
-    )))
+    return nodes {
+      meshRenderer(mesh, material, Context(
+              PROJECTION to projection
+      ))
+    }
   }
 
   override fun render(bounds: Bounds) {

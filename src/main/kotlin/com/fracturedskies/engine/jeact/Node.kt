@@ -45,3 +45,8 @@ data class Node<T> private constructor(val type: (Context) -> Component<T>, val 
     return component
   }
 }
+
+class NodeCollector(attributes: Context) : AbstractComponent<Unit>(attributes, Unit)
+fun nodes(block: Node.Builder<*>.() -> Unit): List<Node<*>> {
+  return requireNotNull(Node(::NodeCollector, Context(), block).attributes[Node.NODES])
+}
