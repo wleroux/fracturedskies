@@ -3,17 +3,23 @@ package com.fracturedskies.render.components
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
+import com.fracturedskies.engine.jeact.Component
 import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.jeact.event.Event
+import com.fracturedskies.engine.jeact.event.EventHandlers
+import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.jeact.nodes
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.render.components.MeshRenderer.Companion.meshRenderer
+import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
 import com.fracturedskies.render.mesh.text.Text
 import com.fracturedskies.render.mesh.text.TextShaderProgram
 import com.fracturedskies.render.mesh.text.TextShaderProgram.Companion.PROJECTION
 import org.lwjgl.BufferUtils
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.stb.STBEasyFont
 import org.lwjgl.stb.STBEasyFont.stb_easy_font_height
 import org.lwjgl.stb.STBEasyFont.stb_easy_font_width
@@ -72,4 +78,38 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
       ))
     }
   }
+
+  private fun doOnClick(event: Click) {
+    if (event.action != GLFW.GLFW_RELEASE)
+      return
+
+    val offset = event.mousePos.x - this.bounds.x
+    val cursorPosition = if (offset > stb_easy_font_width(text.value)) {
+      text.value.length
+    } else {
+      var prevWidth = 0
+      var temp = 0
+      for (i in 0..text.value.length) {
+        val subTextWidth = stb_easy_font_width(text.value.substring(0, i))
+        val halfPoint = prevWidth + (subTextWidth - prevWidth / 2)
+        if (offset < prevWidth) {
+          break
+        } else if (offset < halfPoint) {
+          temp = i
+        } else if (offset > halfPoint){
+          temp = i + 1
+        }
+        prevWidth = subTextWidth
+      }
+      temp
+    }
+
+    dispatch(CursorPosition(this, cursorPosition))
+  }
+
+  class CursorPosition(target: Component<*>, val cursorPosition: Int) : Event(target)
+
+  override val handler = EventHandlers(
+          on(Click::class) { doOnClick(it) }
+  )
 }

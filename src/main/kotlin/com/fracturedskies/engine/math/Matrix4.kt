@@ -121,13 +121,13 @@ data class Matrix4(
     )
   }
 
-  override fun equals(o: Any?): Boolean {
-    return when (o) {
+  override fun equals(other: Any?): Boolean {
+    return when (other) {
       is Matrix4 ->
-        Math.abs(m00 - o.m00) <= 0.00001f && Math.abs(m01 - o.m01) <= 0.00001f && Math.abs(m02 - o.m02) <= 0.00001f && Math.abs(m03 - o.m03) <= 0.00001f &&
-        Math.abs(m10 - o.m10) <= 0.00001f && Math.abs(m11 - o.m11) <= 0.00001f && Math.abs(m12 - o.m12) <= 0.00001f && Math.abs(m13 - o.m13) <= 0.00001f &&
-        Math.abs(m20 - o.m20) <= 0.00001f && Math.abs(m21 - o.m21) <= 0.00001f && Math.abs(m22 - o.m22) <= 0.00001f && Math.abs(m23 - o.m23) <= 0.00001f &&
-        Math.abs(m30 - o.m30) <= 0.00001f && Math.abs(m31 - o.m31) <= 0.00001f && Math.abs(m32 - o.m32) <= 0.00001f && Math.abs(m33 - o.m33) <= 0.00001f
+        Math.abs(m00 - other.m00) <= 0.00001f && Math.abs(m01 - other.m01) <= 0.00001f && Math.abs(m02 - other.m02) <= 0.00001f && Math.abs(m03 - other.m03) <= 0.00001f &&
+        Math.abs(m10 - other.m10) <= 0.00001f && Math.abs(m11 - other.m11) <= 0.00001f && Math.abs(m12 - other.m12) <= 0.00001f && Math.abs(m13 - other.m13) <= 0.00001f &&
+        Math.abs(m20 - other.m20) <= 0.00001f && Math.abs(m21 - other.m21) <= 0.00001f && Math.abs(m22 - other.m22) <= 0.00001f && Math.abs(m23 - other.m23) <= 0.00001f &&
+        Math.abs(m30 - other.m30) <= 0.00001f && Math.abs(m31 - other.m31) <= 0.00001f && Math.abs(m32 - other.m32) <= 0.00001f && Math.abs(m33 - other.m33) <= 0.00001f
       else -> false
     }
   }

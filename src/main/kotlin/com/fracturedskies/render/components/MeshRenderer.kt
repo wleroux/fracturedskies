@@ -24,9 +24,9 @@ class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
   }
 
   /** Attributes */
-  val mesh get() = requireNotNull(attributes[MESH])
-  val material get() = requireNotNull(attributes[MATERIAL])
-  val variables get() = requireNotNull(attributes[VARIABLES])
+  private val mesh get() = requireNotNull(attributes[MESH])
+  private val material get() = requireNotNull(attributes[MATERIAL])
+  private val variables get() = requireNotNull(attributes[VARIABLES])
 
   override fun render(bounds: Bounds) {
     this.bounds = bounds

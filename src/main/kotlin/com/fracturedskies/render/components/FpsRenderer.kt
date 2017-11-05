@@ -22,7 +22,7 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
     get() = nextState ?: state
     set(value) { nextState = value }
 
-  lateinit var fpsCounter: MessageChannel
+  lateinit private var fpsCounter: MessageChannel
   override fun willMount() {
     super.willMount()
     var last = System.nanoTime()
@@ -44,13 +44,7 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
     super.willUnmount()
     unsubscribe(fpsCounter)
   }
-
   override fun componentFromPoint(point: Point): Component<*>? = null
-
-  override fun preferredWidth(parentWidth: Int, parentHeight: Int) =
-          children.map({it -> it.preferredWidth(parentWidth, parentHeight)}).max() ?: 0
-  override fun preferredHeight(parentWidth: Int, parentHeight: Int) =
-          children.map({it -> it.preferredHeight(parentWidth, parentHeight)}).max() ?: 0
   override fun toNode(): List<Node<*>> {
     return nodes {
       textRenderer("FPS: $fps")

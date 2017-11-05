@@ -5,9 +5,9 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.*
 
 /**
- * FlexBox takes the `bounds` provided and divides the space with to child components
+ * Layout takes the `bounds` provided and divides the space with to child components
  */
-class FlexBox(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
+class Layout(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
     // Flex Attributes
     val DIRECTION = Key<Direction>("direction")
@@ -21,7 +21,7 @@ class FlexBox(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
     val SHRINK = Key<Double>("shrink")
     val ALIGN_SELF = Key<ItemAlign>("alignSelf")
 
-    fun Node.Builder<*>.flexBox(
+    fun Node.Builder<*>.layout(
             direction: Direction = Direction.ROW,
             justifyContent: JustifyContent = JustifyContent.LEFT,
             alignItems: ItemAlign = ItemAlign.START,
@@ -29,7 +29,7 @@ class FlexBox(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
             wrap: Wrap = Wrap.WRAP,
             block: Node.Builder<Unit>.() -> (Unit) = {}
     ) {
-      nodes.add(Node(::FlexBox, Context(
+      nodes.add(Node(::Layout, Context(
               DIRECTION to direction,
               JUSTIFY_CONTENT to justifyContent,
               ALIGN_ITEMS to alignItems,

@@ -5,61 +5,32 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.engine.jeact.event.EventHandlers
-import com.fracturedskies.engine.jeact.event.on
-import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.events.Click
-import com.fracturedskies.render.events.Hover
-import com.fracturedskies.render.events.Unhover
 import com.fracturedskies.render.mesh.Material
 import com.fracturedskies.render.mesh.Mesh
-import com.fracturedskies.render.mesh.TextureArray
 import com.fracturedskies.render.mesh.standard.StandardShaderProgram
-import org.lwjgl.BufferUtils.createFloatBuffer
-import org.lwjgl.BufferUtils.createIntBuffer
-import org.lwjgl.opengl.GL11.*
+import org.lwjgl.BufferUtils
+import org.lwjgl.opengl.GL11
 
-class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false) {
+
+class BorderImage(attributes: Context) : AbstractComponent<Boolean>(attributes, false) {
   companion object {
-    val ON_CLICK = Key<(Click) -> Unit>("onClick")
+    val MATERIAL = Key<Material>("material")
     private val LAYER_WIDTH = 10
     private val LAYER_HEIGHT = 10
-
-    fun Node.Builder<*>.button(onClick: (Click) -> Unit = {}, additionalContext: Context = Context(), block: Node.Builder<*>.()->Unit = {}) {
-      nodes.add(Node(::Button, Context(
-              ON_CLICK to onClick
+    fun Node.Builder<*>.borderImage(material: Material, additionalContext: Context = Context(), block: Node.Builder<*>.()->Unit = {}) {
+      nodes.add(Node(::BorderImage, Context(
+              MATERIAL to material
       ).with(additionalContext), block))
     }
   }
-  var hover: Boolean
-    get() = nextState ?: state
-    set(value) {nextState = value}
-  val onClick get() = requireNotNull(attributes[ON_CLICK])
   override fun preferredWidth(parentWidth: Int, parentHeight: Int) =
-          (children.map({it.preferredWidth(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)}).max() ?: 0) + 2 * LAYER_WIDTH
+          2 * LAYER_WIDTH + super.preferredWidth(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
   override fun preferredHeight(parentWidth: Int, parentHeight: Int) =
-          (children.map({it.preferredHeight(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)}).max() ?: 0) + 2 * LAYER_HEIGHT
-  override val handler = EventHandlers(on(Hover::class) {message ->
-    hover = true
-    message.stopPropogation = true
-  }, on(Unhover::class) {message ->
-    hover = false
-    message.stopPropogation = true
-  }, on(Click::class) {
-    message -> onClick(message)
-  })
+          2 * LAYER_HEIGHT + super.preferredHeight(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
 
-  lateinit var defaultMaterial: Material
-  lateinit var hoverMaterial: Material
-  override fun willMount() {
-    hoverMaterial = Material(StandardShaderProgram(), Context(
-            StandardShaderProgram.ALBEDO to TextureArray("button_hover.png", loadByteBuffer("com/fracturedskies/render/components/button_hover.png", this.javaClass.classLoader), 4, 4, 9)
-    ))
-    defaultMaterial = Material(StandardShaderProgram(), Context(
-            StandardShaderProgram.ALBEDO to TextureArray("button_default.png", loadByteBuffer("com/fracturedskies/render/components/button_default.png", this.javaClass.classLoader), 4, 4, 9)
-    ))
-  }
+  /* Attributes */
+  private val material: Material get() = requireNotNull(attributes[MATERIAL])
 
   override fun render(bounds: Bounds) {
     this.bounds = bounds
@@ -67,8 +38,8 @@ class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false
     val fillHeight = bounds.height - 2 * LAYER_HEIGHT
 
     // @formatter:off
-    val verticesBuffer = createFloatBuffer(9 * 4 * 9)
-    val indicesBuffer = createIntBuffer(6 * 9)
+    val verticesBuffer = BufferUtils.createFloatBuffer(9 * 4 * 9)
+    val indicesBuffer = BufferUtils.createIntBuffer(6 * 9)
     var vertexCount = 0
     for (i in 0..2) {
       for (j in 0..2) {
@@ -100,7 +71,6 @@ class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false
     val indices = IntArray(indicesBuffer.remaining())
     indicesBuffer.get(indices)
 
-    val material = if (hover) hoverMaterial else defaultMaterial
     val mesh = Mesh(vertices, indices, listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD, Mesh.Attribute.NORMAL))
     val variables = Context(
             StandardShaderProgram.MODEL to Matrix4.IDENTITY,
@@ -108,10 +78,9 @@ class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false
             StandardShaderProgram.PROJECTION to Matrix4.orthogonal(0f, bounds.width.toFloat(), 0f, bounds.height.toFloat(), -1f, 1000f)
     )
 
-    glClear(GL_DEPTH_BUFFER_BIT)
-    glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
+    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
+    GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
     material.render(variables, mesh)
-
     for (child in children) {
       child.render(Bounds(bounds.x + LAYER_WIDTH, bounds.y + LAYER_HEIGHT, bounds.width - 2 * LAYER_WIDTH, bounds.height - 2 * LAYER_HEIGHT))
     }

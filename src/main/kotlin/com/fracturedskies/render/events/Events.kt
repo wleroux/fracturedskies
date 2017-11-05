@@ -12,4 +12,4 @@ class Hover(target: Component<*>): Event(target)
 class Click(target: Component<*>, val mousePos: Point, val button: Int, val action: Int, val mods: Int): Event(target)
 
 class Key(target: Component<*>, val key: Int, val scancode: Int, val action: Int, val mods: Int) : Event(target)
-class CharMods(target: Component<*>, val scancode: Int, val mods: Int) : Event(target)
+class CharMods(target: Component<*>, val codepoint: Int, val mods: Int) : Event(target)
