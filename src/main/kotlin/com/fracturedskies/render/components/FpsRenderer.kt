@@ -2,17 +2,11 @@ package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.Render
 import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Component
-import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.engine.jeact.Point
-import com.fracturedskies.engine.math.Color4
+import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.messages.MessageBus.subscribe
 import com.fracturedskies.engine.messages.MessageBus.unsubscribe
 import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.render.components.TextRenderer.Companion.COLOR
-import com.fracturedskies.render.components.TextRenderer.Companion.TEXT
-import com.fracturedskies.render.mesh.text.Text
+import com.fracturedskies.render.components.TextRenderer.Companion.textRenderer
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 
@@ -53,10 +47,13 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
 
   override fun componentFromPoint(point: Point): Component<*>? = null
 
+  override fun preferredWidth(parentWidth: Int, parentHeight: Int) =
+          children.map({it -> it.preferredWidth(parentWidth, parentHeight)}).max() ?: 0
+  override fun preferredHeight(parentWidth: Int, parentHeight: Int) =
+          children.map({it -> it.preferredHeight(parentWidth, parentHeight)}).max() ?: 0
   override fun toNode(): List<Node<*>> {
-    return listOf(Node(::TextRenderer, Context(
-            TEXT to Text("FPS: $fps"),
-            COLOR to Color4.WHITE
-    )))
+    return nodes {
+      textRenderer("FPS: $fps")
+    }
   }
 }

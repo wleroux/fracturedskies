@@ -30,6 +30,7 @@ class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
 
   override fun render(bounds: Bounds) {
     this.bounds = bounds
+    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
     GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
     material.render(variables, mesh)
   }

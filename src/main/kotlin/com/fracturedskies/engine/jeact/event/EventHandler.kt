@@ -20,9 +20,9 @@ class EventHandlers(private val handlers: List<EventHandler>): EventHandler {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T: Event> on(type: KClass<T>, phase: Phase = Phase.BUBBLE, handler: (T) -> Unit): EventHandler {
+fun <T: Event> on(type: KClass<T>, filter: (Event) -> Boolean = {event -> event.phase == Phase.TARGET || event.phase == Phase.BUBBLE}, handler: (T) -> Unit): EventHandler {
   return { event ->
-    if (event.phase === phase && type.isInstance(event)) {
+    if (filter(event) && type.isInstance(event)) {
       handler(event as T)
     }
   }

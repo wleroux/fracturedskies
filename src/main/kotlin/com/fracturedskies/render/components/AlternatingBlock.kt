@@ -3,7 +3,6 @@ package com.fracturedskies.render.components
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.jeact.nodes
 import com.fracturedskies.engine.loadByteBuffer
@@ -18,8 +17,8 @@ import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
 class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   companion object {
-    fun Node.Builder<*>.alternatingBlock() {
-      nodes.add(Node(::AlternatingBlock))
+    fun Node.Builder<*>.alternatingBlock(additionalContext: Context = Context()) {
+      nodes.add(Node(::AlternatingBlock, additionalContext))
     }
   }
 
@@ -28,28 +27,13 @@ class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes,
     get() = (nextState ?: state)
     set(value) {nextState = value}
 
-  override fun preferredWidth() = 100
-  override fun preferredHeight() = 100
+  override fun preferredWidth(parentWidth: Int, parentHeight: Int) = 100
+  override fun preferredHeight(parentWidth: Int, parentHeight: Int) = 100
   override fun toNode(): List<Node<*>> {
     val variables = Context(
-      StandardShaderProgram.MODEL to Matrix4(
-        1f, 0f, 0f, 0f,
-        0f, 1f, 0f, 0f,
-        0f, 0f, 1f, 0f,
-        0f, 0f, 0f, 1f
-      ),
-      StandardShaderProgram.VIEW to Matrix4(
-        1f, 0f, 0f, 0f,
-        0f, 1f, 0f, 0f,
-        0f, 0f, 1f, 0f,
-        0f, 0f, 0f, 1f
-      ).invert(),
-      StandardShaderProgram.PROJECTION to Matrix4(
-        1f, 0f, 0f, 0f,
-        0f, 1f, 0f, 0f,
-        0f, 0f, 1f, 0f,
-        0f, 0f, 0f, 1f
-      )
+      StandardShaderProgram.MODEL to Matrix4.IDENTITY,
+      StandardShaderProgram.VIEW to Matrix4.IDENTITY,
+      StandardShaderProgram.PROJECTION to Matrix4.IDENTITY
     )
     val material = Material(
             StandardShaderProgram(),
@@ -70,11 +54,12 @@ class AlternatingBlock(attributes: Context) : AbstractComponent<Int>(attributes,
     }
   }
 
-  override val handler: EventHandlers = EventHandlers(on(Click::class) {
+  override val handler = on(Click::class) {
     if (it.action == GLFW_RELEASE) {
       nextBlock()
     }
-  })
+  }
+
   private fun nextBlock() {
     blockType = (blockType + 1) % 3
   }

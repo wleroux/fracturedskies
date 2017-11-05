@@ -14,10 +14,8 @@ interface Component<T> {
 
   // Bounds
   var bounds: Bounds
-  fun preferredWidth(): Int =
-          children.map { it.preferredWidth() }.max() ?: 0
-  fun preferredHeight(): Int =
-          children.map { it.preferredHeight() }.max() ?: 0
+  fun preferredWidth(parentWidth: Int, parentHeight: Int): Int = 0
+  fun preferredHeight(parentWidth: Int, parentHeight: Int): Int = 0
 
   // Component Tree
   var parent: Component<*>?

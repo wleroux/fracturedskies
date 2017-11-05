@@ -50,6 +50,12 @@ class Context(private val delegate: Map<Key<*>, *>) {
     }
   }
 
+  fun with(context: Context): Context {
+    return Context(delegate.toMutableMap().apply({
+      putAll(context.delegate)
+    }))
+  }
+
   fun <A> with(value1: ContextEntry<A>) = Context(delegate.toMutableMap().apply({
     put(value1.first, value1.second)
   }))
