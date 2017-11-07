@@ -1,5 +1,6 @@
 package com.fracturedskies.render
 
+import com.fracturedskies.Contexts.UI_CONTEXT
 import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.Bounds
@@ -8,7 +9,7 @@ import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.Point
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
-import com.fracturedskies.engine.messages.MessageBus.publish
+import com.fracturedskies.engine.messages.MessageBus.dispatch
 import com.fracturedskies.render.components.Scene.Companion.scene
 import com.fracturedskies.render.events.*
 import kotlinx.coroutines.experimental.runBlocking
@@ -18,9 +19,8 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
-import kotlin.coroutines.experimental.CoroutineContext
 
-class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineContext) {
+class RenderGameSystem: GameSystem(UI_CONTEXT) {
   suspend override fun invoke(message: Message) {
     when (message) {
       is Initialize -> initialize()
@@ -154,6 +154,6 @@ class RenderGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutine
     screenDimension = Bounds(0, 0, width, height)
   }
   @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) = runBlocking {
-    publish(RequestShutdown(Cause.of(this@RenderGameSystem), Context()))
+    dispatch(RequestShutdown(Cause.of(this@RenderGameSystem), Context()))
   }
 }

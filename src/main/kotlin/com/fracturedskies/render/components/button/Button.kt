@@ -46,7 +46,7 @@ class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false
     ))
   }
 
-  override fun toNode(): List<Node<*>> = nodes {
+  override fun toNode() = nodes {
     borderImage(if (hover) hoverMaterial else defaultMaterial) {
       nodes.addAll(super.toNode())
     }

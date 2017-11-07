@@ -1,12 +1,12 @@
 package com.fracturedskies
 
 import com.fracturedskies.engine.*
+import com.fracturedskies.engine.GameSystem.Companion.register
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
-import com.fracturedskies.engine.messages.MessageBus.publishAndWait
-import com.fracturedskies.engine.messages.MessageBus.subscribe
-import com.fracturedskies.render.LoggingGameSystem
+import com.fracturedskies.engine.messages.MessageBus.dispatchAndWait
+import com.fracturedskies.game.WorldGeneratorSystem
 import com.fracturedskies.render.RenderGameSystem
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.cancelChildren
@@ -25,20 +25,20 @@ class MainGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineCo
   private val shutdownRequested = AtomicBoolean(false)
 
   suspend fun run(coroutineContext: CoroutineContext) {
-    publishAndWait(Initialize(Cause.of(this), Context()))
+    dispatchAndWait(Initialize(Cause.of(this), Context()))
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
       while (now - last >= NANOSECONDS_PER_UPDATE) {
-        publishAndWait(Update(MILLISECONDS_PER_UPDATE, Cause.of(this), Context()))
+        dispatchAndWait(Update(MILLISECONDS_PER_UPDATE, Cause.of(this), Context()))
         last += NANOSECONDS_PER_UPDATE
       }
 
       val alpha = (now - last).toFloat() / NANOSECONDS_PER_UPDATE.toFloat()
-      publishAndWait(Render(alpha, Cause.of(this), Context()))
+      dispatchAndWait(Render(alpha, Cause.of(this), Context()))
     }
 
-    publishAndWait(Shutdown(Cause.of(this), Context()))
+    dispatchAndWait(Shutdown(Cause.of(this), Context()))
     coroutineContext.cancelChildren()
   }
 
@@ -49,13 +49,19 @@ class MainGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineCo
   }
 }
 
+object Contexts {
+  lateinit var UI_CONTEXT: CoroutineContext
+}
+
 fun main(args: Array<String>) = runBlocking<Unit> {
+  Contexts.UI_CONTEXT = coroutineContext
+
   // Subscribe all game systems
   val mainGameSystem = MainGameSystem(coroutineContext)
-  subscribe(mainGameSystem)
-  subscribe(LoggingGameSystem(coroutineContext + CommonPool))
-  subscribe(RenderGameSystem(coroutineContext))
+  register(mainGameSystem)
+  register(RenderGameSystem())
+  register(WorldGeneratorSystem(coroutineContext + CommonPool))
 
   // Run game
-  mainGameSystem.run(coroutineContext)
+  mainGameSystem.run(coroutineContext+CommonPool)
 }

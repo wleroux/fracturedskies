@@ -42,7 +42,7 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
   override fun preferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text.value)
   override fun preferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text.value)
 
-  override fun toNode(): List<Node<*>> {
+  override fun toNode() = nodes {
     val colorBuffer = BufferUtils.createByteBuffer(4)
     colorBuffer.put(color.red.toByte())
     colorBuffer.put(color.green.toByte())
@@ -72,15 +72,14 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
     val textWidth = stb_easy_font_width(text.value)
     val textHeight = stb_easy_font_height(text.value)
     val projection = Matrix4.orthogonal(0f, textWidth.toFloat(), textHeight.toFloat(), 0f, -1f, 1000f)
-    return nodes {
-      meshRenderer(mesh, material, Context(
-              PROJECTION to projection
-      ))
-    }
+
+    meshRenderer(mesh, material, Context(
+            PROJECTION to projection
+    ))
   }
 
   private fun doOnClick(event: Click) {
-    if (event.action != GLFW.GLFW_RELEASE)
+    if (event.action != GLFW.GLFW_PRESS)
       return
 
     val offset = event.mousePos.x - this.bounds.x

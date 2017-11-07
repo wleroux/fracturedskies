@@ -16,8 +16,8 @@ import org.lwjgl.opengl.GL11
 class BorderImage(attributes: Context) : AbstractComponent<Boolean>(attributes, false) {
   companion object {
     val MATERIAL = Key<Material>("material")
-    private val LAYER_WIDTH = 10
-    private val LAYER_HEIGHT = 10
+    private val LAYER_WIDTH = 4
+    private val LAYER_HEIGHT = 4
     fun Node.Builder<*>.borderImage(material: Material, additionalContext: Context = Context(), block: Node.Builder<*>.()->Unit = {}) {
       nodes.add(Node(::BorderImage, Context(
               MATERIAL to material

@@ -1,6 +1,15 @@
 package com.fracturedskies.engine.math
 
 data class Vector3(val x: Float, val y: Float, val z: Float) {
+  companion object {
+    val AXIS_X = Vector3(1f, 0f, 0f)
+    val AXIS_NEG_X = Vector3(-1f, 0f, 0f)
+    val AXIS_Y = Vector3(0f, 1f, 0f)
+    val AXIS_NEG_Y = Vector3(0f, -1f, 0f)
+    val AXIS_Z = Vector3(0f, 0f, 1f)
+    val AXIS_NEG_Z = Vector3(0f, 0f, -1f)
+  }
+
   operator fun times(mat4: Matrix4): Vector3 {
     return Vector3(
       x * mat4.m00 + y * mat4.m01 + z * mat4.m02 + mat4.m03,

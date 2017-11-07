@@ -4,8 +4,9 @@ import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.yield
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
-class MessageChannel(coroutineContext: CoroutineContext, private val handler: suspend (Message) -> Unit) {
+class MessageChannel(coroutineContext: CoroutineContext = EmptyCoroutineContext, private val handler: suspend (Message) -> Unit) {
   private val channel = Channel<Message>(Channel.UNLIMITED)
   private var processing = false
   init {

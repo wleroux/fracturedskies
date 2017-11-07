@@ -3,12 +3,11 @@ package com.fracturedskies.render.components
 import com.fracturedskies.engine.Render
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.*
-import com.fracturedskies.engine.messages.MessageBus.subscribe
-import com.fracturedskies.engine.messages.MessageBus.unsubscribe
+import com.fracturedskies.engine.messages.MessageBus.register
+import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.render.components.TextRenderer.Companion.textRenderer
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   companion object {
@@ -27,7 +26,7 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
     super.willMount()
     var last = System.nanoTime()
     var ticks = 0
-    fpsCounter = subscribe(MessageChannel(EmptyCoroutineContext, { message ->
+    fpsCounter = register(MessageChannel { message ->
       if (message is Render) {
         val now = System.nanoTime()
         if (now - last >= ONE_SECOND_IN_NANOSECONDS) {
@@ -38,16 +37,14 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
           ticks++
         }
       }
-    }))
+    })
   }
   override fun willUnmount() {
     super.willUnmount()
-    unsubscribe(fpsCounter)
+    unregister(fpsCounter)
   }
   override fun componentFromPoint(point: Point): Component<*>? = null
-  override fun toNode(): List<Node<*>> {
-    return nodes {
-      textRenderer("FPS: $fps")
-    }
+  override fun toNode() = nodes {
+    textRenderer("FPS: $fps")
   }
 }

@@ -30,12 +30,14 @@ data class Matrix4(
       val zz = rotation.z * rotation.z
       val zw = rotation.z * rotation.w
 
+      //@formatter:off
       return Matrix4(
               1 - 2 * (yy + zz), 2 * (xy - zw), 2 * (xz + yw), position.x,
               2 * (xy + zw), 1 - 2 * (xx + zz), 2 * (yz - xw), position.y,
               2 * (xz - yw), 2 * (yz + xw), 1 - 2 * (xx + yy), position.z,
               0f, 0f, 0f, 1f
       )
+      //@formatter:on
     }
 
 
@@ -45,10 +47,24 @@ data class Matrix4(
       val depth = far - near
       //@formatter:off
       return Matrix4(
-              2 / width, 0f, 0f, -(left + right) / width,
-              0f, 2 / height, 0f, -(top + bottom) / height,
-              0f, 0f, 2 / depth, -(far + near) / depth,
-              0f, 0f, 0f, 1f
+              2 / width,         0f,        0f,  -(left + right) / width,
+                     0f, 2 / height,        0f, -(top + bottom) / height,
+                     0f,         0f, 2 / depth,    -(far + near) / depth,
+                     0f,         0f,        0f,                        1f
+      )
+      //@formatter:on
+    }
+
+
+    fun perspective(fov: Float, width: Int, height: Int, near: Float, far: Float): Matrix4 {
+      val angle = Math.tan((fov / 2).toDouble()).toFloat()
+      val aspect = width.toFloat() / height.toFloat()
+      //@formatter:off
+      return Matrix4(
+              1f / (aspect * angle),         0f,                           0f,                             0f,
+                                 0f, 1f / angle,                           0f,                             0f,
+                                 0f,         0f, (-near - far) / (near - far), 2f * near * far / (near - far),
+                                 0f,         0f,                           1f,                             0f
       )
       //@formatter:on
     }
