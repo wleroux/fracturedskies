@@ -1,6 +1,8 @@
 package com.fracturedskies.engine.math
 
-data class Vector3(val x: Float, val y: Float, val z: Float) {
+import java.lang.Math.sqrt
+
+data class Vector3(var x: Float, var y: Float, var z: Float) {
   companion object {
     val AXIS_X = Vector3(1f, 0f, 0f)
     val AXIS_NEG_X = Vector3(-1f, 0f, 0f)
@@ -47,4 +49,21 @@ data class Vector3(val x: Float, val y: Float, val z: Float) {
       else -> false
     }
   }
+
+  operator fun plusAssign(o: Vector3) {
+    this.x += o.x
+    this.y += o.y
+    this.z += o.z
+  }
+
+  operator fun timesAssign(s: Float) {
+    this.x *= s
+    this.y *= s
+    this.z *= s
+  }
+
+  val magnitude: Float
+    get() = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+
+  operator fun plus(o: Vector3) = Vector3(this.x + o.x, this.y + o.y, this.z + o.z)
 }

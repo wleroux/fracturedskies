@@ -20,6 +20,7 @@ class MainGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineCo
   companion object {
     private val MILLISECONDS_PER_UPDATE: Long = 50
     private val NANOSECONDS_PER_UPDATE: Long = NANOSECONDS.convert(MILLISECONDS_PER_UPDATE, MILLISECONDS)
+    private val SECONDS_PER_UPDATE: Float = MILLISECONDS_PER_UPDATE.toFloat() / 1000f
   }
 
   private val shutdownRequested = AtomicBoolean(false)
@@ -30,7 +31,7 @@ class MainGameSystem(coroutineContext: CoroutineContext): GameSystem(coroutineCo
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
       while (now - last >= NANOSECONDS_PER_UPDATE) {
-        dispatchAndWait(Update(MILLISECONDS_PER_UPDATE, Cause.of(this), Context()))
+        dispatchAndWait(Update(SECONDS_PER_UPDATE, Cause.of(this), Context()))
         last += NANOSECONDS_PER_UPDATE
       }
 

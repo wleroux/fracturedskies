@@ -1,6 +1,6 @@
 package com.fracturedskies.engine.math
 
-data class Quaternion4(val w: Float, val x: Float, val y: Float, val z: Float) {
+data class Quaternion4(var w: Float, var x: Float, var y: Float, var z: Float) {
   companion object {
     operator fun invoke(axis: Vector3, angle: Float): Quaternion4 {
       val s = Math.sin((angle / 2).toDouble()).toFloat()
@@ -8,15 +8,11 @@ data class Quaternion4(val w: Float, val x: Float, val y: Float, val z: Float) {
       val x = axis.x * s
       val y = axis.y * s
       val z = axis.z * s
-      val magnitude = Math.pow((w * w + x * x + y * y + z * z).toDouble(), 0.5).toFloat()
-      return Quaternion4(
-        w / magnitude,
-        x / magnitude,
-        y / magnitude,
-        z / magnitude
-      )
+      return Quaternion4(w, x, y, z).normalize()
     }
   }
+
+  private val magnitude get() = Math.sqrt((w * w + x * x + y * y + z * z).toDouble()).toFloat()
 
   fun conjugate(): Quaternion4 {
     return Quaternion4(w, -x, -y, -z)
@@ -24,10 +20,36 @@ data class Quaternion4(val w: Float, val x: Float, val y: Float, val z: Float) {
 
   operator fun times(o: Quaternion4): Quaternion4 {
     return Quaternion4(
-      w * o.w - x * o.x - y * o.y - z * o.z,
-      w * o.x + x * o.w - y * o.z + z * o.y,
-      w * o.y + x * o.z + y * o.w - z * o.x,
-      w * o.z - x * o.y + y * o.x + z * o.w
+            w * o.w - x * o.x - y * o.y - z * o.z,
+            w * o.x + x * o.w - y * o.z + z * o.y,
+            w * o.y + x * o.z + y * o.w - z * o.x,
+            w * o.z - x * o.y + y * o.x + z * o.w
+    )
+  }
+
+  operator fun timesAssign(o: Quaternion4) {
+    set(
+            w * o.w - x * o.x - y * o.y - z * o.z,
+            w * o.x + x * o.w - y * o.z + z * o.y,
+            w * o.y + x * o.z + y * o.w - z * o.x,
+            w * o.z - x * o.y + y * o.x + z * o.w
+    )
+  }
+
+  operator fun timesAssign(s: Float) {
+    val halfAngle = Math.acos(w.toDouble()).toFloat()
+    val sin = Math.sin(halfAngle.toDouble()).toFloat()
+    val ax = x / sin
+    val ay = y / sin
+    val az = z / sin
+
+    val newHalfAngle = halfAngle * s
+    val newSin = Math.sin(newHalfAngle.toDouble()).toFloat()
+    set(
+            Math.cos(newHalfAngle.toDouble()).toFloat(),
+            ax * newSin,
+            ay * newSin,
+            az * newSin
     )
   }
 
@@ -39,5 +61,19 @@ data class Quaternion4(val w: Float, val x: Float, val y: Float, val z: Float) {
               Math.abs(z - other.z) <= 0.00001f
       else -> false
     }
+  }
+
+  private fun set(w: Float, x: Float, y: Float, z: Float): Quaternion4 {
+    this.w = w
+    this.x = x
+    this.y = y
+    this.z = z
+    return this
+  }
+
+  fun normalize(): Quaternion4 {
+    val m = magnitude
+    set(w / m, x / m, y / m, z / m)
+    return this
   }
 }
