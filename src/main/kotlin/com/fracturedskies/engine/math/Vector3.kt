@@ -3,6 +3,9 @@ package com.fracturedskies.engine.math
 import java.lang.Math.sqrt
 
 data class Vector3(var x: Float, var y: Float, var z: Float) {
+  val magnitude: Float
+    get() = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+
   companion object {
     val AXIS_X = Vector3(1f, 0f, 0f)
     val AXIS_NEG_X = Vector3(-1f, 0f, 0f)
@@ -10,16 +13,32 @@ data class Vector3(var x: Float, var y: Float, var z: Float) {
     val AXIS_NEG_Y = Vector3(0f, -1f, 0f)
     val AXIS_Z = Vector3(0f, 0f, 1f)
     val AXIS_NEG_Z = Vector3(0f, 0f, -1f)
+    val ZERO = Vector3(0f, 0f, 0f)
+
+    operator fun invoke(v: Vector4): Vector3 {
+      return Vector3(v.x, v.y, v.z)
+    }
   }
 
+  override fun equals(other: Any?): Boolean {
+    return when (other) {
+      is Vector3 -> Math.abs(x - other.x) <= 0.00001f &&
+              Math.abs(y - other.y) <= 0.00001f &&
+              Math.abs(z - other.z) <= 0.00001f
+      else -> false
+    }
+  }
+
+  operator fun plus(o: Vector3) = Vector3(this.x + o.x, this.y + o.y, this.z + o.z)
+  operator fun minus(o: Vector3) = Vector3(this.x - o.x, this.y - o.y, this.z - o.z)
   operator fun times(mat4: Matrix4): Vector3 {
     return Vector3(
-      x * mat4.m00 + y * mat4.m01 + z * mat4.m02 + mat4.m03,
-      x * mat4.m10 + y * mat4.m11 + z * mat4.m12 + mat4.m13,
-      x * mat4.m20 + y * mat4.m21 + z * mat4.m22 + mat4.m23
+            x * mat4.m00 + y * mat4.m01 + z * mat4.m02 + mat4.m03,
+            x * mat4.m10 + y * mat4.m11 + z * mat4.m12 + mat4.m13,
+            x * mat4.m20 + y * mat4.m21 + z * mat4.m22 + mat4.m23
     )
   }
-
+  operator fun times(s: Float) = Vector3(this.x * s, this.y * s, this.z * s)
   operator fun times(q: Quaternion4): Vector3 {
     val x2 = q.x * 2f
     val y2 = q.y * 2f
@@ -35,35 +54,10 @@ data class Vector3(var x: Float, var y: Float, var z: Float) {
     val zw2 = q.w * z2
 
     return Vector3(
-      (1f - (yy2 + zz2)) * x + (xy2 - zw2) * y + (xz2 + yw2) * z,
-      (xy2 + zw2) * x + (1f - (xx2 + zz2)) * y + (yz2 - xw2) * z,
-      (xz2 - yw2) * x + (yz2 + xw2) * y + (1f - (xx2 + yy2)) * z
+            (1f - (yy2 + zz2)) * x + (xy2 - zw2) * y + (xz2 + yw2) * z,
+            (xy2 + zw2) * x + (1f - (xx2 + zz2)) * y + (yz2 - xw2) * z,
+            (xz2 - yw2) * x + (yz2 + xw2) * y + (1f - (xx2 + yy2)) * z
     )
   }
-
-  override fun equals(other: Any?): Boolean {
-    return when (other) {
-      is Vector3 -> Math.abs(x - other.x) <= 0.00001f &&
-              Math.abs(y - other.y) <= 0.00001f &&
-              Math.abs(z - other.z) <= 0.00001f
-      else -> false
-    }
-  }
-
-  operator fun plusAssign(o: Vector3) {
-    this.x += o.x
-    this.y += o.y
-    this.z += o.z
-  }
-
-  operator fun timesAssign(s: Float) {
-    this.x *= s
-    this.y *= s
-    this.z *= s
-  }
-
-  val magnitude: Float
-    get() = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
-
-  operator fun plus(o: Vector3) = Vector3(this.x + o.x, this.y + o.y, this.z + o.z)
+  fun normalize() = times(1f / magnitude)
 }

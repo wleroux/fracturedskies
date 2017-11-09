@@ -9,7 +9,7 @@ import org.lwjgl.BufferUtils.createFloatBuffer
 import org.lwjgl.BufferUtils.createIntBuffer
 
 class WorldMeshGenerator {
-  fun generateMesh(world: World, xRange: IntRange, yRange: IntRange, zRange: IntRange): Mesh {
+  fun generateMesh(world: World, xRange: IntRange, yRange: IntRange, zRange: IntRange): ()->Mesh {
     var verticesBuffer = createFloatBuffer(
             9 * 4 * 6 * xRange.count() * zRange.count()
     )
@@ -171,11 +171,11 @@ class WorldMeshGenerator {
     val indices = IntArray(indicesBuffer.remaining())
     indicesBuffer.get(indices)
 
-    return Mesh(vertices, indices, listOf(
+    return {Mesh(vertices, indices, listOf(
             Mesh.Attribute.POSITION,
             Mesh.Attribute.TEXCOORD,
             Mesh.Attribute.NORMAL
-    ))
+    ))}
   }
 
   private fun isEmpty(world: World, location: Vector3i): Boolean {

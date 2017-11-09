@@ -39,10 +39,10 @@ class Controller {
   }
 
   val rotation = Quaternion4(Vector3.AXIS_X, (PI / 3f).toFloat())
-  val view = Vector3(64f, 300f, -30f)
+  var view = Vector3(64f, 300f, -30f)
   private fun process(update: Update) {
     val movementRotation = rotation.copy(x = 0f, z = 0f).normalize()
-    val delta = Vector3(0f, 0f, 0f)
+    var delta = Vector3(0f, 0f, 0f)
     val forward = keyPressed.contains(GLFW_KEY_UP) or keyPressed.contains(GLFW_KEY_W)
     val backward = keyPressed.contains(GLFW_KEY_DOWN) or keyPressed.contains(GLFW_KEY_S)
     if (forward xor backward) {

@@ -1,7 +1,9 @@
 package com.fracturedskies.game
 
+import com.fracturedskies.engine.math.Vector3i
+
 class World(val width: Int, val height: Int, val depth: Int, init: (Int, Int, Int) -> Block) {
-  private val blocks = Array<Block>(width * height * depth) { index ->
+  private val blocks = Array(width * height * depth) { index ->
     val x = index % width
     val y = (index - x) / width % height
     val z = (((index - x) / width) - y) / height
@@ -9,6 +11,7 @@ class World(val width: Int, val height: Int, val depth: Int, init: (Int, Int, In
     init(x, y, z)
   }
 
+  operator fun get(position: Vector3i) = get(position.x, position.y, position.z)
   operator fun get(x: Int, y: Int, z: Int): Block {
     val index = (z * width * height) + (y * width) + x
     return blocks[index]
