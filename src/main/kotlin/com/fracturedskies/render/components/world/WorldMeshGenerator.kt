@@ -4,7 +4,7 @@ import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.math.within
 import com.fracturedskies.game.BlockType
 import com.fracturedskies.game.World
-import com.fracturedskies.render.mesh.Mesh
+import com.fracturedskies.render.shaders.Mesh
 import org.lwjgl.BufferUtils.createFloatBuffer
 import org.lwjgl.BufferUtils.createIntBuffer
 

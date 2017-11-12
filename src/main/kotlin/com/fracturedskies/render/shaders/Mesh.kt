@@ -1,11 +1,10 @@
-package com.fracturedskies.render.mesh
+package com.fracturedskies.render.shaders
 
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.glEnableVertexAttribArray
 import org.lwjgl.opengl.GL20.glVertexAttribPointer
-import org.lwjgl.opengl.GL30.glBindVertexArray
-import org.lwjgl.opengl.GL30.glGenVertexArrays
+import org.lwjgl.opengl.GL30.*
 
 data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes: List<Attribute>) {
   data class Attribute(val label: String, val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
@@ -28,12 +27,14 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
   }
 
   val vao = glGenVertexArrays()
+  private val vbo: Int
+  private val ebo: Int
   val indexCount = indices.size
 
   init {
     glBindVertexArray(vao)
 
-    val vbo = glGenBuffers()
+    vbo = glGenBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, vbo)
     glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
 
@@ -47,10 +48,16 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
       offset += elements * elementSize
     }
 
-    val ebo = glGenBuffers()
+    ebo = glGenBuffers()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW)
 
     glBindVertexArray(0)
+  }
+
+  fun close() {
+    glDeleteBuffers(vbo)
+    glDeleteBuffers(ebo)
+    glDeleteVertexArrays(vao)
   }
 }

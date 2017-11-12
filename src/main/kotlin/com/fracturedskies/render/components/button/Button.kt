@@ -12,9 +12,9 @@ import com.fracturedskies.render.components.BorderImage.Companion.borderImage
 import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.events.Hover
 import com.fracturedskies.render.events.Unhover
-import com.fracturedskies.render.mesh.Material
-import com.fracturedskies.render.mesh.TextureArray
-import com.fracturedskies.render.mesh.standard.StandardShaderProgram
+import com.fracturedskies.render.shaders.Material
+import com.fracturedskies.render.shaders.TextureArray
+import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW
 
 class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false) {

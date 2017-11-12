@@ -1,4 +1,4 @@
-package com.fracturedskies.render.mesh
+package com.fracturedskies.render.shaders
 
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL12.*

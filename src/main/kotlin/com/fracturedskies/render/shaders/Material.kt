@@ -1,4 +1,4 @@
-package com.fracturedskies.render.mesh
+package com.fracturedskies.render.shaders
 
 import com.fracturedskies.engine.collections.Context
 

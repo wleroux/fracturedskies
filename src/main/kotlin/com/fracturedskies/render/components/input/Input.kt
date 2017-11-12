@@ -16,9 +16,9 @@ import com.fracturedskies.render.components.layout.Layout.Companion.layout
 import com.fracturedskies.render.events.CharMods
 import com.fracturedskies.render.events.Focus
 import com.fracturedskies.render.events.Unfocus
-import com.fracturedskies.render.mesh.Material
-import com.fracturedskies.render.mesh.TextureArray
-import com.fracturedskies.render.mesh.standard.StandardShaderProgram
+import com.fracturedskies.render.shaders.Material
+import com.fracturedskies.render.shaders.TextureArray
+import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW
 
 class Input(attributes: Context) : AbstractComponent<Input.InputState>(attributes, InputState(attributes[INITIAL_VALUE] ?: "")) {

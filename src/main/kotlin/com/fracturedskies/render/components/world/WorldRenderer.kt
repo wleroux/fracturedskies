@@ -24,14 +24,16 @@ import com.fracturedskies.game.rayCast
 import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.events.Key
 import com.fracturedskies.render.events.Unfocus
-import com.fracturedskies.render.mesh.Material
-import com.fracturedskies.render.mesh.Mesh
-import com.fracturedskies.render.mesh.TextureArray
-import com.fracturedskies.render.mesh.standard.StandardShaderProgram
+import com.fracturedskies.render.shaders.*
+import com.fracturedskies.render.shaders.noop.NoopProgram
+import com.fracturedskies.render.shaders.noop.NoopProgram.Companion.ALBEDO
+import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL11.glViewport
+import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0
+import org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
@@ -128,8 +130,42 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               StandardShaderProgram.VIEW to Matrix4(controller.view, controller.rotation).invert(),
               StandardShaderProgram.PROJECTION to Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
       )
+
+      // Render Texture
+      val renderedTexture = Texture("renderedTexture", null, bounds.width, bounds.height)
+      val framebuffer = Framebuffer()
+      val depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
+      framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer)
+      framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture)
+      framebuffer.drawBuffers(GL_COLOR_ATTACHMENT0)
+      framebuffer.bind {
+        glViewport(0, 0, bounds.width, bounds.height)
+        glClear(GL_DEPTH_BUFFER_BIT)
+        material.render(variables, mesh)
+      }
+
+      // Render to window instead!
       glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
-      material.render(variables, mesh)
+      val program = NoopProgram()
+      val renderedTextureMesh = Mesh(floatArrayOf(
+              -1f,  1f, 0f,  0f, 1f, 0f,
+              1f,  1f, 0f,  1f, 1f, 0f,
+              1f, -1f, 0f,  1f, 0f, 0f,
+              -1f, -1f, 0f,  0f, 0f, 0f
+      ), intArrayOf(
+              0, 1, 2,
+              2, 3, 0
+      ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD));
+
+      Material(program, Context()).render(Context(
+              ALBEDO to renderedTexture
+      ), renderedTextureMesh)
+
+      framebuffer.close()
+      depthRenderbuffer.close()
+      renderedTexture.close()
+      renderedTextureMesh.close()
+      program.close()
     }
   }
 }

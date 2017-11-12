@@ -1,10 +1,10 @@
-package com.fracturedskies.render.mesh.text
+package com.fracturedskies.render.shaders.text
 
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.mesh.Mesh
-import com.fracturedskies.render.mesh.ShaderProgram
+import com.fracturedskies.render.shaders.Mesh
+import com.fracturedskies.render.shaders.ShaderProgram
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL20
 

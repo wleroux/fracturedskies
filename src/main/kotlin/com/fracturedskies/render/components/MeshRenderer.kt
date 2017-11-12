@@ -5,8 +5,8 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.render.mesh.Material
-import com.fracturedskies.render.mesh.Mesh
+import com.fracturedskies.render.shaders.Material
+import com.fracturedskies.render.shaders.Mesh
 import org.lwjgl.opengl.GL11
 
 class MeshRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {

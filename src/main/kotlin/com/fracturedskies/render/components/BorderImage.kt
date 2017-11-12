@@ -6,9 +6,9 @@ import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.mesh.Material
-import com.fracturedskies.render.mesh.Mesh
-import com.fracturedskies.render.mesh.standard.StandardShaderProgram
+import com.fracturedskies.render.shaders.Material
+import com.fracturedskies.render.shaders.Mesh
+import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
 
