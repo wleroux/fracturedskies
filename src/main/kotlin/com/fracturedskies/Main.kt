@@ -7,6 +7,7 @@ import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
 import com.fracturedskies.engine.messages.MessageBus.dispatchAndWait
 import com.fracturedskies.game.WorldGeneratorSystem
+import com.fracturedskies.game.workers.Delegator
 import com.fracturedskies.render.RenderGameSystem
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.cancelChildren
@@ -62,6 +63,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   register(mainGameSystem)
   register(RenderGameSystem())
   register(WorldGeneratorSystem(coroutineContext + CommonPool))
+  register(Delegator())
 
   // Run game
   mainGameSystem.run(coroutineContext+CommonPool)

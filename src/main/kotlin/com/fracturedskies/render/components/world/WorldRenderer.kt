@@ -17,10 +17,14 @@ import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.game.BlockType
-import com.fracturedskies.game.World
+import com.fracturedskies.game.Game
 import com.fracturedskies.game.messages.NewGameRequested
+import com.fracturedskies.game.messages.QueueWork
+import com.fracturedskies.game.messages.UpdateBlock
 import com.fracturedskies.game.messages.WorldGenerated
 import com.fracturedskies.game.rayCast
+import com.fracturedskies.game.workers.UpdateBlockWork
+import com.fracturedskies.game.workers.WorkType
 import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.events.Key
 import com.fracturedskies.render.events.Unfocus
@@ -77,18 +81,16 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val blockRay = rayCast(world!!, rayStart3, direction)
-    blockRay.filter { it.block.type != BlockType.AIR }.forEach {
-      it.block.type = BlockType.AIR
-    }
+    val blockRay = rayCast(game.world!!, rayStart3, direction)
     runBlocking {
-      MessageBus.dispatch(WorldGenerated(world!!, Cause.of(this), Context()))
+      blockRay.filter { it.block.type != BlockType.AIR }.forEach {
+        MessageBus.dispatch(QueueWork(UpdateBlockWork(it.position.x, it.position.y, it.position.z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
+      }
     }
   })
 
   lateinit private var material: Material
-  lateinit private var variables: Context
-  private var world: World? = null
+  private var game = Game()
   private var worldMesh: Mesh? = null
   lateinit private var listener: MessageChannel
   private var renderMeshJob: Job? = null
@@ -100,13 +102,14 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     )
 
     listener = register(MessageChannel(UI_CONTEXT) { message ->
+      game(message)
       when (message) {
-        is WorldGenerated -> {
-          world = message.world
+        is UpdateBlock, is WorldGenerated -> {
+          val world = game.world!!
           renderMeshJob?.cancel()
           renderMeshJob = launch {
             val worldMeshGenerator = WorldMeshGenerator()
-                    .generateMesh(message.world, 0 until message.world.width, 0 until message.world.height, 0 until message.world.depth)
+                    .generateMesh(world, 0 until world.width, 0 until world.height, 0 until world.depth)
             launch(coroutineContext + UI_CONTEXT) {
               worldMesh = worldMeshGenerator()
             }
@@ -141,36 +144,36 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
   override fun render(bounds: Bounds) {
     super.render(bounds)
-    val mesh = worldMesh
-    if (mesh != null) {
-      variables = Context(
-              StandardShaderProgram.MODEL to Matrix4(Vector3(0f, 0f, 0f)),
-              StandardShaderProgram.VIEW to Matrix4(controller.view, controller.rotation).invert(),
-              StandardShaderProgram.PROJECTION to Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
-      )
+    val variables = Context(
+            StandardShaderProgram.MODEL to Matrix4(Vector3(0f, 0f, 0f)),
+            StandardShaderProgram.VIEW to Matrix4(controller.view, controller.rotation).invert(),
+            StandardShaderProgram.PROJECTION to Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
+    )
 
-      // Render Texture
-      val renderedTexture = Texture("renderedTexture", null, bounds.width, bounds.height)
-      val depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
-      framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer)
-      framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture)
-      framebuffer.bind {
-        glViewport(0, 0, bounds.width, bounds.height)
-        glClear(GL_DEPTH_BUFFER_BIT)
+    // Render Texture
+    val renderedTexture = Texture("renderedTexture", null, bounds.width, bounds.height)
+    val depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
+    framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer)
+    framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture)
+    framebuffer.bind {
+      glViewport(0, 0, bounds.width, bounds.height)
+      glClear(GL_DEPTH_BUFFER_BIT)
+      val mesh = worldMesh
+      if (mesh != null) {
         material.render(variables, mesh)
       }
-
-      // Render to window instead!
-      glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
-      val program = NoopProgram()
-
-      Material(program, Context()).render(Context(
-              ALBEDO to renderedTexture
-      ), renderedTextureMesh)
-
-      depthRenderbuffer.close()
-      renderedTexture.close()
-      program.close()
     }
+
+    // Render to window instead!
+    glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
+    val program = NoopProgram()
+
+    Material(program, Context()).render(Context(
+            ALBEDO to renderedTexture
+    ), renderedTextureMesh)
+
+    depthRenderbuffer.close()
+    renderedTexture.close()
+    program.close()
   }
 }
