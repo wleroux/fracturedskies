@@ -28,6 +28,7 @@ import com.fracturedskies.render.shaders.*
 import com.fracturedskies.render.shaders.noop.NoopProgram
 import com.fracturedskies.render.shaders.noop.NoopProgram.Companion.ALBEDO
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.GLFW
@@ -90,21 +91,23 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var world: World? = null
   private var worldMesh: Mesh? = null
   lateinit private var listener: MessageChannel
+  private var renderMeshJob: Job? = null
 
   override fun willMount() = runBlocking {
     material = Material(
             StandardShaderProgram(),
-            Context(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("com/fracturedskies/render/tileset.png", this.javaClass.classLoader), 16, 16, 3))
+            Context(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("tileset.png", this@WorldRenderer.javaClass), 16, 16, 3))
     )
 
     listener = register(MessageChannel(UI_CONTEXT) { message ->
       when (message) {
         is WorldGenerated -> {
           world = message.world
-          launch {
+          renderMeshJob?.cancel()
+          renderMeshJob = launch {
             val worldMeshGenerator = WorldMeshGenerator()
                     .generateMesh(message.world, 0 until message.world.width, 0 until message.world.height, 0 until message.world.depth)
-            launch (UI_CONTEXT) {
+            launch(coroutineContext + UI_CONTEXT) {
               worldMesh = worldMeshGenerator()
             }
           }
@@ -114,7 +117,22 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     controller.register()
 
     MessageBus.dispatch(NewGameRequested(Cause.of(this), Context()))
+
+    framebuffer = Framebuffer()
+    framebuffer.drawBuffers(GL_COLOR_ATTACHMENT0)
+    renderedTextureMesh = Mesh(floatArrayOf(
+            -1f,  1f, 0f,  0f, 1f, 0f,
+            1f,  1f, 0f,  1f, 1f, 0f,
+            1f, -1f, 0f,  1f, 0f, 0f,
+            -1f, -1f, 0f,  0f, 0f, 0f
+    ), intArrayOf(
+            0, 1, 2,
+            2, 3, 0
+    ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD));
+
   }
+  lateinit var renderedTextureMesh: Mesh
+  lateinit var framebuffer: Framebuffer
 
   override fun willUnmount() {
     unregister(listener)
@@ -133,11 +151,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
       // Render Texture
       val renderedTexture = Texture("renderedTexture", null, bounds.width, bounds.height)
-      val framebuffer = Framebuffer()
       val depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
       framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer)
       framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture)
-      framebuffer.drawBuffers(GL_COLOR_ATTACHMENT0)
       framebuffer.bind {
         glViewport(0, 0, bounds.width, bounds.height)
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -147,24 +163,13 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       // Render to window instead!
       glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
       val program = NoopProgram()
-      val renderedTextureMesh = Mesh(floatArrayOf(
-              -1f,  1f, 0f,  0f, 1f, 0f,
-              1f,  1f, 0f,  1f, 1f, 0f,
-              1f, -1f, 0f,  1f, 0f, 0f,
-              -1f, -1f, 0f,  0f, 0f, 0f
-      ), intArrayOf(
-              0, 1, 2,
-              2, 3, 0
-      ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD));
 
       Material(program, Context()).render(Context(
               ALBEDO to renderedTexture
       ), renderedTextureMesh)
 
-      framebuffer.close()
       depthRenderbuffer.close()
       renderedTexture.close()
-      renderedTextureMesh.close()
       program.close()
     }
   }

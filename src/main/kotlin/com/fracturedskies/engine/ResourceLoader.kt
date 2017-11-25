@@ -4,8 +4,8 @@ import org.lwjgl.BufferUtils
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 
-fun loadByteBuffer(name: String, classLoader: ClassLoader): ByteBuffer {
-  classLoader.getResourceAsStream(name).use { imageStream ->
+fun loadByteBuffer(name: String, context: Class<*>): ByteBuffer {
+  context.getResourceAsStream(name).use { imageStream ->
     requireNotNull(imageStream)
     Channels.newChannel(imageStream).use { channel ->
       var buffer = BufferUtils.createByteBuffer(8)
