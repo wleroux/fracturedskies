@@ -1,7 +1,5 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.math.within
 import com.fracturedskies.game.BlockType
 import com.fracturedskies.game.World
 import com.fracturedskies.render.shaders.Mesh
@@ -21,7 +19,6 @@ class WorldMeshGenerator {
     for (iy in yRange) {
       for (ix in xRange) {
         for (iz in zRange) {
-          val location = Vector3i(ix, iy, iz)
           val block = world[ix, iy, iz]
           val type = block.type
           if (type == BlockType.AIR) {
@@ -33,8 +30,7 @@ class WorldMeshGenerator {
           val zOffset = iz.toFloat()
 
           // north
-          val north = location + Vector3i.AXIS_NEG_Z
-          if (isEmpty(world, north)) {
+          if (isEmpty(world, ix, iy, iz - 1)) {
             val tileIndex = type.front
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -53,8 +49,7 @@ class WorldMeshGenerator {
 
 
           // up
-          val up = location + Vector3i.AXIS_Y
-          if (isEmpty(world, up)) {
+          if (isEmpty(world, ix, iy + 1, iz)) {
             val tileIndex = type.top
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -72,8 +67,7 @@ class WorldMeshGenerator {
           }
 
           // west
-          val west = location + Vector3i.AXIS_NEG_X
-          if (isEmpty(world, west)) {
+          if (isEmpty(world, ix - 1, iy, iz)) {
             val tileIndex = type.left
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -91,8 +85,7 @@ class WorldMeshGenerator {
           }
 
           // east
-          val east = location + Vector3i.AXIS_X
-          if (isEmpty(world, east)) {
+          if (isEmpty(world, ix + 1, iy, iz)) {
             val tileIndex = type.right
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -110,8 +103,7 @@ class WorldMeshGenerator {
           }
 
           // down
-          val down = location + Vector3i.AXIS_NEG_Y
-          if (isEmpty(world, down)) {
+          if (isEmpty(world, ix, iy - 1, iz)) {
             val tileIndex = type.bottom
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -129,8 +121,7 @@ class WorldMeshGenerator {
           }
 
           // south
-          val south = location + Vector3i.AXIS_Z
-          if (isEmpty(world, south)) {
+          if (isEmpty(world, ix, iy, iz + 1)) {
             val tileIndex = type.back
             // @formatter:off
             verticesBuffer.put(floatArrayOf(
@@ -178,9 +169,9 @@ class WorldMeshGenerator {
     ))}
   }
 
-  private fun isEmpty(world: World, location: Vector3i): Boolean {
-    return if (location within world) {
-      val block = world[location.x, location.y, location.z]
+  private fun isEmpty(world: World, x: Int, y: Int, z: Int): Boolean {
+    return if (world.has(x, y, z)) {
+      val block = world[x, y, z]
       block.type == BlockType.AIR
     } else {
       true

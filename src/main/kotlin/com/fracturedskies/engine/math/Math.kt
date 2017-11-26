@@ -7,12 +7,10 @@ fun map(value: Float, original: ClosedRange<Float>, target: ClosedRange<Float>):
   return lerp(alpha, target)
 }
 
-fun lerp(alpha: Float, target: ClosedRange<Float>): Float {
-  return when {
-    alpha < 0f -> target.start
-    alpha > 1f -> target.endInclusive
-    else -> target.start + alpha * (target.endInclusive - target.start)
-  }
+fun lerp(alpha: Float, target: ClosedRange<Float>): Float = when {
+  alpha < 0f -> target.start
+  alpha > 1f -> target.endInclusive
+  else -> target.start + alpha * (target.endInclusive - target.start)
 }
 
 /**

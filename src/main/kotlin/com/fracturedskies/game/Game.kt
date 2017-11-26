@@ -1,22 +1,32 @@
 package com.fracturedskies.game
 
 import com.fracturedskies.engine.messages.Message
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.WorldGenerated
+import com.fracturedskies.engine.messages.MessageChannel
+import com.fracturedskies.game.messages.*
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
-class Game {
+class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private val handler: suspend Game.(Message) -> Unit = {}) {
   var world: World? = null
+  val globalWork = mutableListOf<Work>()
 
-  operator fun invoke(message: Message) {
+  val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
+      is QueueWork -> {
+        globalWork.add(message.work)
+      }
+      is WorkAssignedToWorker -> {
+        globalWork.remove(message.work)
+      }
       is WorldGenerated -> {
         world = World(message.world.width, message.world.height, message.world.depth) { x, y, z ->
-          Block(message.world[x, y, z].type)
-        }
+          message.world[x, y, z]
+       }
       }
       is UpdateBlock -> {
         world!![message.x, message.y, message.z].type = message.type
       }
     }
+    handler(message)
   }
 }

@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.Contexts.UI_CONTEXT
+import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.AbstractComponent
 import com.fracturedskies.engine.jeact.Bounds
@@ -18,13 +18,9 @@ import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.game.BlockType
 import com.fracturedskies.game.Game
-import com.fracturedskies.game.messages.NewGameRequested
-import com.fracturedskies.game.messages.QueueWork
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.WorldGenerated
-import com.fracturedskies.game.rayCast
-import com.fracturedskies.game.workers.UpdateBlockWork
-import com.fracturedskies.game.workers.WorkType
+import com.fracturedskies.game.World
+import com.fracturedskies.game.messages.*
+import com.fracturedskies.game.raycast
 import com.fracturedskies.render.events.Click
 import com.fracturedskies.render.events.Key
 import com.fracturedskies.render.events.Unfocus
@@ -81,19 +77,71 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val blockRay = rayCast(game.world!!, rayStart3, direction)
+    val blockRay = raycast(game.world!!, rayStart3, direction)
     runBlocking {
       blockRay.filter { it.block.type != BlockType.AIR }.forEach {
-        MessageBus.dispatch(QueueWork(UpdateBlockWork(it.position.x, it.position.y, it.position.z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
+        MessageBus.send(QueueWork(UpdateBlockWork(it.position.x, it.position.y, it.position.z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
       }
     }
   })
 
   lateinit private var material: Material
-  private var game = Game()
-  private var worldMesh: Mesh? = null
+  private var game = Game(coroutineContext = UI_CONTEXT) { message ->
+    when (message) {
+      is UpdateBlock -> {
+        val world = this.world!!
+        val xChunk = message.x / 16
+        val yChunk = message.y / 16
+        val zChunk = message.z / 16
+        updateChunk(world, Triple(xChunk, yChunk, zChunk))
+        if (message.x != 0 && message.x % 16 == 0)
+          updateChunk(world, Triple(xChunk - 1, yChunk, zChunk))
+        if (message.x + 1 != world.width && (message.x + 1) % 16 == 0)
+          updateChunk(world, Triple(xChunk + 1, yChunk, zChunk))
+        if (message.y != 0 && message.y % 16 == 0)
+          updateChunk(world, Triple(xChunk, yChunk - 1, zChunk))
+        if (message.y + 1 != world.height && (message.y + 1) % 16 == 0)
+          updateChunk(world, Triple(xChunk, yChunk + 1, zChunk))
+        if (message.z != 0 && message.z % 16 == 0)
+          updateChunk(world, Triple(xChunk, yChunk, zChunk - 1))
+        if (message.z + 1 != world.depth && (message.z + 1) % 16 == 0)
+          updateChunk(world, Triple(xChunk, yChunk, zChunk + 1))
+      }
+      is WorldGenerated -> {
+        val world = this.world!!
+        val xChunks = world.width / 16
+        val yChunks = world.height / 16
+        val zChunks = world.depth / 16
+        (0 until xChunks).forEach { xChunk ->
+          (0 until yChunks).forEach { yChunk ->
+            (0 until zChunks).forEach { zChunk ->
+              updateChunk(world, Triple(xChunk, yChunk, zChunk))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun updateChunk(world: World, chunk: Triple<Int, Int, Int>) {
+    renderMeshJob[chunk]?.cancel()
+    renderMeshJob[chunk] = launch {
+      val meshGenerator = WorldMeshGenerator().generateMesh(world,
+              (chunk.first * 16) until ((chunk.first + 1) * 16),
+              (chunk.second * 16) until ((chunk.second + 1) * 16),
+              (chunk.third * 16) until ((chunk.third + 1) * 16))
+      launch(coroutineContext + UI_CONTEXT) {
+        if (isActive) {
+          worldMesh[chunk]?.close()
+          worldMesh[chunk] = meshGenerator()
+        }
+      }
+    }
+  }
+
+  private var worldMesh = mutableMapOf<Triple<Int, Int, Int>, Mesh>()
   lateinit private var listener: MessageChannel
-  private var renderMeshJob: Job? = null
+  private var renderMeshJob = mutableMapOf<Triple<Int, Int, Int>, Job>()
 
   override fun willMount() = runBlocking {
     material = Material(
@@ -101,25 +149,10 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             Context(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("tileset.png", this@WorldRenderer.javaClass), 16, 16, 3))
     )
 
-    listener = register(MessageChannel(UI_CONTEXT) { message ->
-      game(message)
-      when (message) {
-        is UpdateBlock, is WorldGenerated -> {
-          val world = game.world!!
-          renderMeshJob?.cancel()
-          renderMeshJob = launch {
-            val worldMeshGenerator = WorldMeshGenerator()
-                    .generateMesh(world, 0 until world.width, 0 until world.height, 0 until world.depth)
-            launch(coroutineContext + UI_CONTEXT) {
-              worldMesh = worldMeshGenerator()
-            }
-          }
-        }
-      }
-    })
+    listener = register(game.channel)
     controller.register()
 
-    MessageBus.dispatch(NewGameRequested(Cause.of(this), Context()))
+    MessageBus.send(NewGameRequested(Cause.of(this), Context()))
 
     framebuffer = Framebuffer()
     framebuffer.drawBuffers(GL_COLOR_ATTACHMENT0)
@@ -158,8 +191,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     framebuffer.bind {
       glViewport(0, 0, bounds.width, bounds.height)
       glClear(GL_DEPTH_BUFFER_BIT)
-      val mesh = worldMesh
-      if (mesh != null) {
+      worldMesh.forEach { _, mesh ->
         material.render(variables, mesh)
       }
     }

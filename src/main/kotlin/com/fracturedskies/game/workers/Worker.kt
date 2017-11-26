@@ -1,18 +1,27 @@
 package com.fracturedskies.game.workers
 
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.MessageBus.send
+import com.fracturedskies.game.messages.UpdateBlock
+import com.fracturedskies.game.messages.UpdateBlockWork
+import com.fracturedskies.game.messages.Work
+import com.fracturedskies.game.messages.WorkType
 import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
 
 class Worker {
   val personalWork = mutableListOf<Work>()
-  var currentWork: Work? = null
+  private var currentWork: Work? = null
 
   fun receive(work: Work) {
     currentWork = work
 
     async {
-      delay(1000L)
-      work.invoke()
+      when (work) {
+        is UpdateBlockWork -> {
+          send(UpdateBlock(work.x, work.y, work.z, work.blockType, Cause.of(this), Context()))
+        }
+      }
       currentWork = null
     }
   }

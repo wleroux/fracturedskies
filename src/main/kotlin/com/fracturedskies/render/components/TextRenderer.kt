@@ -40,6 +40,7 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
 
   override fun preferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text)
   override fun preferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)
+  var mesh: Mesh? = null
 
   override fun toNode() = nodes {
     val colorBuffer = BufferUtils.createByteBuffer(4)
@@ -63,7 +64,8 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
       indices[(quad * 6) + 5] = (quad * 4) + 0
     }
     val material = Material(TextShaderProgram(), Context())
-    val mesh = Mesh(
+    mesh?.close()
+    mesh = Mesh(
             vertices,
             indices,
             listOf(Mesh.Attribute.POSITION, Mesh.Attribute.COLOR)
@@ -72,7 +74,7 @@ class TextRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Un
     val textHeight = stb_easy_font_height(text)
     val projection = Matrix4.orthogonal(0f, textWidth.toFloat(), textHeight.toFloat(), 0f, -1f, 1000f)
 
-    meshRenderer(mesh, material, Context(
+    meshRenderer(mesh!!, material, Context(
             PROJECTION to projection
     ))
   }

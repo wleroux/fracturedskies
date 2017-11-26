@@ -5,7 +5,7 @@ import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.math.within
 import kotlin.coroutines.experimental.buildSequence
 
-fun rayCast(world: World, origin: Vector3, direction: Vector3) = buildSequence {
+fun raycast(world: World, origin: Vector3, direction: Vector3) = buildSequence {
   val normals = arrayOf(
           Vector3(-direction.x, 0f, 0f).normalize(),
           Vector3(0f, -direction.y, 0f).normalize(),
@@ -69,5 +69,18 @@ private fun nextPlane(current: Float, direction: Float, minValue: Float, maxValu
     direction > 0f -> Math.min(floor + 1, maxValue)
     current != floor -> Math.max(minValue, Math.min(floor, maxValue))
     else -> Math.max(minValue, floor - 1)
+  }
+}
+
+data class BlockRaycastHit(val block: Block, val position: Vector3i, val direction: Vector3, val intersection: Vector3, val normal: Vector3) {
+  val faces: List<Vector3i> get() {
+    val faces = mutableListOf<Vector3i>()
+    if (this.normal.x != 0f)
+      faces.add(if (this.normal.x > 0) Vector3i.AXIS_X else Vector3i.AXIS_NEG_X)
+    if (this.normal.y != 0f)
+      faces.add(if (this.normal.y > 0) Vector3i.AXIS_Y else Vector3i.AXIS_NEG_Y)
+    if (this.normal.z != 0f)
+      faces.add(if (this.normal.z > 0) Vector3i.AXIS_NEG_Z else Vector3i.AXIS_Z)
+    return faces.toList()
   }
 }

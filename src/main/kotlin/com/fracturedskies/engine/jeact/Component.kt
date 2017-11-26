@@ -57,9 +57,9 @@ interface Component<T> {
       this.attributes = nextAttributes
       this.state = nextState
       this.nextState = null
-      this.children = this.toNode().mapIndexed({ index, vnode ->
+      this.children = this.toNode().mapIndexed({ index, node ->
         val prevChildComponent = this.children.getOrNull(index)
-        vnode.toComponent(prevChildComponent, this)
+        node.toComponent(prevChildComponent, this)
       })
 
       // Unmount discarded toNode

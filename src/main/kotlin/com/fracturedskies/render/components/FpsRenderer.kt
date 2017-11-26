@@ -45,6 +45,6 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   }
   override fun componentFromPoint(point: Point): Component<*>? = null
   override fun toNode() = nodes {
-    textRenderer("FPS: $fps")
+    textRenderer("FPS: $fps, MSPF: ${1000f / fps}")
   }
 }

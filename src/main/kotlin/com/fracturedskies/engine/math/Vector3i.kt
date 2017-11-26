@@ -24,6 +24,4 @@ data class Vector3i(val x: Int, val y: Int, val z: Int) {
   operator fun plus(o: Vector3i): Vector3i = Vector3i(x + o.x, y + o.y, z + o.z)
 }
 
-infix fun Vector3i.within(world: World): Boolean {
-  return x in 0 until world.width && y in 0 until world.height && z in 0 until world.depth
-}
+infix fun Vector3i.within(world: World): Boolean = world.has(x, y, z)

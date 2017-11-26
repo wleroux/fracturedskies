@@ -1,25 +1,22 @@
 package com.fracturedskies.engine.messages
 
+import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.yield
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 object MessageBus {
-  private val messageChannels = mutableListOf<MessageChannel>()
+  private var messageChannels = listOf<MessageChannel>()
   fun register(messageChannel: MessageChannel): MessageChannel {
-    messageChannels.add(messageChannel)
+    messageChannels += messageChannel
     return messageChannel
   }
   fun unregister(messageChannel: MessageChannel) {
-    messageChannels.remove(messageChannel)
+    messageChannels -= messageChannel
   }
-
-  suspend fun <T: Message> dispatch(message: T) {
+  fun <T: Message> send(message: T) = async(EmptyCoroutineContext) {
     messageChannels.forEach { it.send(message) }
-  }
-  suspend fun <T: Message> dispatchAndWait(message: T) {
-    dispatch(message)
-    while (!isIdle()) {
+    while (!messageChannels.all {it.isIdle()}) {
       yield()
     }
   }
-  private fun isIdle() = messageChannels.all {it.isIdle()}
 }

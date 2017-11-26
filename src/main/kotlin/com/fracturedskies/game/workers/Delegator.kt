@@ -1,39 +1,43 @@
 package com.fracturedskies.game.workers
 
-import com.fracturedskies.engine.GameSystem
 import com.fracturedskies.engine.Update
-import com.fracturedskies.engine.messages.Message
-import com.fracturedskies.game.messages.QueueWork
+import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.MessageBus
+import com.fracturedskies.game.Game
+import com.fracturedskies.game.messages.WorkAssignedToWorker
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 
-class Delegator(coroutineContext: CoroutineContext = EmptyCoroutineContext) : GameSystem(coroutineContext) {
-  private val globalWork = mutableListOf<Work>()
-  private val workers = mutableListOf<Worker>()
-
-  init {
-    workers.add(Worker())
-  }
-
-  suspend override fun invoke(message: Message) {
+class Delegator(coroutineContext: CoroutineContext = EmptyCoroutineContext) {
+  val game = Game(coroutineContext) { message ->
     when(message) {
-      is QueueWork -> {
-        globalWork.add(message.work)
+      is WorkAssignedToWorker -> {
+        message.worker.receive(message.work)
+        message.worker.personalWork.remove(message.work)
       }
       is Update -> {
+        var availableGlobalWork = globalWork.toList()
         workers
                 .filter { !it.isBusy() }
                 .forEach {
-                  val availableWork = globalWork + it.personalWork
+                  val availableWork = availableGlobalWork + it.personalWork
                   if (availableWork.isNotEmpty()) {
                     val work = it.prioritize(availableWork).first()
-                    it.receive(work)
 
-                    globalWork.remove(work)
-                    it.personalWork.remove(work)
+                    MessageBus.send(WorkAssignedToWorker(it, work, Cause.of(this), Context()))
+                    availableGlobalWork -= work
                   }
                 }
       }
+    }
+  }
+  val channel get() = game.channel
+
+  private val workers = mutableListOf<Worker>()
+  init {
+    (0..20).forEach {
+      workers.add(Worker())
     }
   }
 }
