@@ -18,6 +18,13 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
   }
 }
 
+tasks.withType<JavaCompile> {
+  doFirst {
+    options.compilerArgs = mutableListOf("--module-path", classpath.asPath)
+    classpath = files()
+  }
+}
+
 application {
   mainClassName = "com.fracturedskies.MainKt"
 }
@@ -35,8 +42,8 @@ val lwjglNatives = when (org.gradle.internal.os.OperatingSystem.current()) {
 }
 
 dependencies {
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.0-rc-39")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.0-rc-39")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.0-rc-84")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.0-rc-84")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19.3")
   implementation("org.lwjgl:lwjgl:$lwjglVersion")
   implementation("org.lwjgl:lwjgl-glfw:$lwjglVersion")
