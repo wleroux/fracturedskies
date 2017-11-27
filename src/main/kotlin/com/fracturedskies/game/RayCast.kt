@@ -80,7 +80,7 @@ data class BlockRaycastHit(val block: Block, val position: Vector3i, val directi
     if (this.normal.y != 0f)
       faces.add(if (this.normal.y > 0) Vector3i.AXIS_Y else Vector3i.AXIS_NEG_Y)
     if (this.normal.z != 0f)
-      faces.add(if (this.normal.z > 0) Vector3i.AXIS_NEG_Z else Vector3i.AXIS_Z)
+      faces.add(if (this.normal.z > 0) Vector3i.AXIS_Z else Vector3i.AXIS_NEG_Z)
     return faces.toList()
   }
 }

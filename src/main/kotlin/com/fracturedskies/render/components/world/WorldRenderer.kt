@@ -10,6 +10,7 @@ import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.engine.math.Vector3
+import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.math.Vector4
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus
@@ -22,6 +23,7 @@ import com.fracturedskies.game.World
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.raycast
 import com.fracturedskies.render.events.Click
+import com.fracturedskies.render.events.Focus
 import com.fracturedskies.render.events.Key
 import com.fracturedskies.render.events.Unfocus
 import com.fracturedskies.render.shaders.*
@@ -35,14 +37,21 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0
 import org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT
+import java.lang.Integer.max
+import java.lang.Integer.min
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
+    private val CHUNK_X_SIZE = 16
+    private val CHUNK_Y_SIZE = 16
+    private val CHUNK_Z_SIZE = 16
     fun Node.Builder<*>.worldRenderer(additionalContext: Context = Context()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
     }
   }
 
+  private var firstBlock: Vector3i? = null
+  private var focused = false
   private val controller = Controller()
   override val handler = EventHandlers(on(Key::class) { key ->
     if (key.action == GLFW.GLFW_PRESS) {
@@ -50,14 +59,20 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     } else if (key.action == GLFW.GLFW_RELEASE){
       controller.release(key.key)
     }
+  }, on(Focus::class) {
+    focused = true
   }, on(Unfocus::class) {
+    focused = false
     controller.clear()
   }, on(Click::class) { event->
-    if (event.action != GLFW.GLFW_PRESS) {
+    if (!focused) {
       return@on
     }
-
+    if (event.action != GLFW.GLFW_PRESS && event.action != GLFW.GLFW_RELEASE) {
+      return@on
+    }
     event.stopPropogation = true
+
     val mx = event.mousePos.x.toFloat()
     val my = event.mousePos.y.toFloat()
     val sw = this.bounds.width.toFloat()
@@ -77,10 +92,51 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val blockRay = raycast(game.world!!, rayStart3, direction)
-    runBlocking {
-      blockRay.filter { it.block.type != BlockType.AIR }.forEach {
-        MessageBus.send(QueueWork(UpdateBlockWork(it.position.x, it.position.y, it.position.z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
+    val selectedBlock = raycast(game.world!!, rayStart3, direction)
+            .filter { it.block.type != BlockType.AIR }
+            .firstOrNull()
+    if (selectedBlock == null) {
+      firstBlock = null
+    } else {
+      when (event.action) {
+        GLFW.GLFW_PRESS -> {
+          firstBlock = if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
+            selectedBlock.position
+          } else {
+            selectedBlock.position + selectedBlock.faces.first()
+          }
+        }
+        GLFW.GLFW_RELEASE -> {
+          if (firstBlock != null) {
+            val secondBlock = if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
+              selectedBlock.position
+            } else {
+              selectedBlock.position + selectedBlock.faces.first()
+            }
+
+            val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
+            val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
+            val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
+            xRange.forEach { x ->
+              zRange.forEach { z ->
+                yRange.forEach { y ->
+                  if (game.world!!.has(x, y, z)) {
+                    if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
+                      if (game.world!![x, y, z].type != BlockType.AIR) {
+                        MessageBus.send(QueueWork(UpdateBlockWork(x, y, z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
+                      }
+                    } else {
+                      if (game.world!![x, y, z].type != BlockType.BLOCK) {
+                        MessageBus.send(QueueWork(UpdateBlockWork(x, y, z, BlockType.BLOCK, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          firstBlock = null
+        }
       }
     }
   })
@@ -90,28 +146,28 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     when (message) {
       is UpdateBlock -> {
         val world = this.world!!
-        val xChunk = message.x / 16
-        val yChunk = message.y / 16
-        val zChunk = message.z / 16
+        val xChunk = message.x / CHUNK_X_SIZE
+        val yChunk = message.y / CHUNK_Y_SIZE
+        val zChunk = message.z / CHUNK_Z_SIZE
         updateChunk(world, Triple(xChunk, yChunk, zChunk))
-        if (message.x != 0 && message.x % 16 == 0)
+        if (message.x != 0 && message.x % CHUNK_X_SIZE == 0)
           updateChunk(world, Triple(xChunk - 1, yChunk, zChunk))
-        if (message.x + 1 != world.width && (message.x + 1) % 16 == 0)
+        if (message.x + 1 != world.width && (message.x + 1) % CHUNK_X_SIZE == 0)
           updateChunk(world, Triple(xChunk + 1, yChunk, zChunk))
-        if (message.y != 0 && message.y % 16 == 0)
+        if (message.y != 0 && message.y % CHUNK_Y_SIZE == 0)
           updateChunk(world, Triple(xChunk, yChunk - 1, zChunk))
-        if (message.y + 1 != world.height && (message.y + 1) % 16 == 0)
+        if (message.y + 1 != world.height && (message.y + 1) % CHUNK_Y_SIZE == 0)
           updateChunk(world, Triple(xChunk, yChunk + 1, zChunk))
-        if (message.z != 0 && message.z % 16 == 0)
+        if (message.z != 0 && message.z % CHUNK_Z_SIZE == 0)
           updateChunk(world, Triple(xChunk, yChunk, zChunk - 1))
-        if (message.z + 1 != world.depth && (message.z + 1) % 16 == 0)
+        if (message.z + 1 != world.depth && (message.z + 1) % CHUNK_Z_SIZE == 0)
           updateChunk(world, Triple(xChunk, yChunk, zChunk + 1))
       }
       is WorldGenerated -> {
         val world = this.world!!
-        val xChunks = world.width / 16
-        val yChunks = world.height / 16
-        val zChunks = world.depth / 16
+        val xChunks = world.width / CHUNK_X_SIZE
+        val yChunks = world.height / CHUNK_Y_SIZE
+        val zChunks = world.depth / CHUNK_Z_SIZE
         (0 until xChunks).forEach { xChunk ->
           (0 until yChunks).forEach { yChunk ->
             (0 until zChunks).forEach { zChunk ->
@@ -127,9 +183,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     renderMeshJob[chunk]?.cancel()
     renderMeshJob[chunk] = launch {
       val meshGenerator = WorldMeshGenerator().generateMesh(world,
-              (chunk.first * 16) until ((chunk.first + 1) * 16),
-              (chunk.second * 16) until ((chunk.second + 1) * 16),
-              (chunk.third * 16) until ((chunk.third + 1) * 16))
+              (chunk.first * CHUNK_X_SIZE) until ((chunk.first + 1) * CHUNK_X_SIZE),
+              (chunk.second * CHUNK_Y_SIZE) until ((chunk.second + 1) * CHUNK_Y_SIZE),
+              (chunk.third * CHUNK_Z_SIZE) until ((chunk.third + 1) * CHUNK_Z_SIZE))
       launch(coroutineContext + UI_CONTEXT) {
         if (isActive) {
           worldMesh[chunk]?.close()
