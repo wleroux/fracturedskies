@@ -65,11 +65,12 @@ class RenderGameSystem(coroutineContext: CoroutineContext) {
     glfwSetMouseButtonCallback(window, this::mouseButtonCallback)
     glfwSetWindowSizeCallback(window, this::windowSizeCallback)
     glfwSetWindowCloseCallback(window, this::windowCloseCallback)
+    glfwSetScrollCallback(window, this::scrollCallback)
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, 1)
     glfwSetWindowPos(window, (videoMode.width() - screenWidth) / 2, (videoMode.height() - screenHeight) / 2)
     glfwMakeContextCurrent(window)
-    glfwSwapInterval(1)
+//    glfwSwapInterval(1)
     GL.createCapabilities()
 
     glfwShowWindow(window)
@@ -148,6 +149,9 @@ class RenderGameSystem(coroutineContext: CoroutineContext) {
         }
       }
     }
+  }
+  @Suppress("UNUSED_PARAMETER") private fun scrollCallback(window: Long, xoffset: Double, yoffset: Double) {
+    focus?.dispatch(Scroll(focus!!, xoffset, yoffset))
   }
 
   @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) {

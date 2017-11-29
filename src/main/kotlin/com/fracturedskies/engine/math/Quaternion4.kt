@@ -27,16 +27,7 @@ data class Quaternion4(var w: Float, var x: Float, var y: Float, var z: Float) {
     )
   }
 
-  operator fun timesAssign(o: Quaternion4) {
-    set(
-            w * o.w - x * o.x - y * o.y - z * o.z,
-            w * o.x + x * o.w - y * o.z + z * o.y,
-            w * o.y + x * o.z + y * o.w - z * o.x,
-            w * o.z - x * o.y + y * o.x + z * o.w
-    )
-  }
-
-  operator fun timesAssign(s: Float) {
+  operator fun times(s: Float): Quaternion4 {
     val halfAngle = Math.acos(w.toDouble()).toFloat()
     val sin = Math.sin(halfAngle.toDouble()).toFloat()
     val ax = x / sin
@@ -45,7 +36,7 @@ data class Quaternion4(var w: Float, var x: Float, var y: Float, var z: Float) {
 
     val newHalfAngle = halfAngle * s
     val newSin = Math.sin(newHalfAngle.toDouble()).toFloat()
-    set(
+    return Quaternion4(
             Math.cos(newHalfAngle.toDouble()).toFloat(),
             ax * newSin,
             ay * newSin,

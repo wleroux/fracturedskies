@@ -2,16 +2,19 @@ package com.fracturedskies.engine.math
 
 import org.lwjgl.stb.STBPerlin
 
+fun <T: Comparable<T>> clamp(value: T, range: ClosedRange<T>) = when {
+  value < range.start -> range.start
+  value > range.endInclusive -> range.endInclusive
+  else -> value
+}
+
 fun map(value: Float, original: ClosedRange<Float>, target: ClosedRange<Float>): Float {
   val alpha = (value - original.start) / (original.endInclusive - original.start)
   return lerp(alpha, target)
 }
 
-fun lerp(alpha: Float, target: ClosedRange<Float>): Float = when {
-  alpha < 0f -> target.start
-  alpha > 1f -> target.endInclusive
-  else -> target.start + alpha * (target.endInclusive - target.start)
-}
+fun lerp(alpha: Float, target: ClosedRange<Float>): Float =
+  target.start + clamp(alpha, 0f..1f) * (target.endInclusive - target.start)
 
 /**
  * Perlin Noise

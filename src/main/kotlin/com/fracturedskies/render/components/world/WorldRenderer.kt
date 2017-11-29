@@ -8,10 +8,7 @@ import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
 import com.fracturedskies.engine.loadByteBuffer
-import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.engine.math.Vector3
-import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.math.Vector4
+import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus
 import com.fracturedskies.engine.messages.MessageBus.register
@@ -22,10 +19,7 @@ import com.fracturedskies.game.Game
 import com.fracturedskies.game.World
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.raycast
-import com.fracturedskies.render.events.Click
-import com.fracturedskies.render.events.Focus
-import com.fracturedskies.render.events.Key
-import com.fracturedskies.render.events.Unfocus
+import com.fracturedskies.render.events.*
 import com.fracturedskies.render.shaders.*
 import com.fracturedskies.render.shaders.noop.NoopProgram
 import com.fracturedskies.render.shaders.noop.NoopProgram.Companion.ALBEDO
@@ -64,7 +58,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   }, on(Unfocus::class) {
     focused = false
     controller.clear()
-  }, on(Click::class) { event->
+  }, on(Scroll::class) { event ->
+    controller.scroll(event.xOffset, event.yOffset)
+  },on(Click::class) { event->
     if (!focused) {
       return@on
     }
@@ -233,6 +229,20 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
   override fun render(bounds: Bounds) {
     super.render(bounds)
+
+    val world = game.world
+
+    controller.viewCenter.y = if (world != null) {
+      val viewHeight = heightAt(world, controller.view.x.toInt(), controller.view.z.toInt()).toFloat()
+      val viewCenterHeight = heightAt(world, controller.viewCenter.x.toInt(), controller.viewCenter.z.toInt()).toFloat()
+      val minimumHeight = viewHeight + 5f
+      val desiredHeight = viewCenterHeight + controller.viewOffset.y
+
+      Math.max(minimumHeight, desiredHeight) - controller.viewOffset.y
+    } else {
+      0f
+    }
+
     val variables = Context(
             StandardShaderProgram.MODEL to Matrix4(Vector3(0f, 0f, 0f)),
             StandardShaderProgram.VIEW to Matrix4(controller.view, controller.rotation).invert(),
@@ -263,5 +273,14 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     depthRenderbuffer.close()
     renderedTexture.close()
     program.close()
+  }
+
+  private fun heightAt(world: World, x: Int, z: Int): Int {
+    val clampedX = clamp(x, 0 until world.width)
+    val clampedZ = clamp(z, 0 until world.depth)
+    return (0 until world.height)
+            .reversed()
+            .firstOrNull { world[clampedX, it, clampedZ].type != BlockType.AIR }
+            ?: 0
   }
 }
