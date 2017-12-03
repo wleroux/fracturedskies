@@ -17,8 +17,8 @@ void main()
     vec3 albedo = vec3(Color.rgb / 255);
 
     // Ambient Occlusion
-    vec3 inside = vec3(0.05);
-    vec3 outside = vec3(0.0);
+    vec3 inside = vec3(0.2);
+    vec3 outside = vec3(0.1);
     vec3 ambient = mix(outside, inside, Occlusion);
 
     // Directional Lighting

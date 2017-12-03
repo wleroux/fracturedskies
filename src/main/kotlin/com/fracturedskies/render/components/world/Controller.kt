@@ -9,6 +9,7 @@ import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
 import org.lwjgl.glfw.GLFW.*
 import java.lang.Math.PI
+import kotlin.math.roundToInt
 
 class Controller {
   companion object {
@@ -36,9 +37,14 @@ class Controller {
   }
 
   private var zoomLevel: Float = 30f
+  var slice: Int = 0
 
   fun scroll(xOffset: Double, yOffset: Double) {
-    zoomLevel = clamp(zoomLevel + 5f * yOffset.toFloat(), 5f..100f)
+    if (keyPressed.contains(GLFW_KEY_LEFT_CONTROL)) {
+      slice += clamp(yOffset.roundToInt(), -1..1)
+    } else {
+      zoomLevel = clamp(zoomLevel + 5f * yOffset.toFloat(), 5f..100f)
+    }
   }
   fun register() {
     MessageBus.register(channel)

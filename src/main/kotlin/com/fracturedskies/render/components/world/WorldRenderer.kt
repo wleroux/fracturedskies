@@ -32,9 +32,9 @@ import java.lang.Integer.min
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
-    val CHUNK_X_SIZE = 32
-    val CHUNK_Y_SIZE = 128
-    val CHUNK_Z_SIZE = 32
+    val CHUNK_X_SIZE = 128
+    val CHUNK_Y_SIZE = 1
+    val CHUNK_Z_SIZE = 128
     val CHUNKS = Vector3i(CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE)
     fun Node.Builder<*>.worldRenderer(additionalContext: Context = Context()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
@@ -44,6 +44,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var firstBlock: Vector3i? = null
   private var focused = false
   private val controller = Controller()
+  private val sliceHeight: Int
+    get() = (game.world?.height ?: 0) - clamp(controller.slice, 0 until (game.world?.height ?: 0))
+
   override val handler = EventHandlers(on(Key::class) { key ->
     if (key.action == GLFW.GLFW_PRESS) {
       controller.press(key.key)
@@ -86,6 +89,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val direction = (rayEnd3 - rayStart3).normalize()
 
     val selectedBlock = raycast(game.world!!, rayStart3, direction)
+            .filter { it.position.y < sliceHeight }
             .filter { it.block.type != BlockType.AIR }
             .firstOrNull()
     if (selectedBlock == null) {
@@ -152,7 +156,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       }
       is LightUpdated -> {
         message.updates
-                .map { (pos, _) -> pos / CHUNKS }
+                .map { (pos, _) -> pos}
+                .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
+                .map { pos -> pos / CHUNKS }
                 .distinct()
                 .forEach { updateChunk(world!!, it) }
       }
@@ -175,12 +181,20 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private fun updateChunk(world: World, chunk: Vector3i) {
     renderMeshJob[chunk]?.cancel()
     renderMeshJob[chunk] = launch {
-      val meshGenerator = generateWorldMesh(world,
+      val meshGenerator = generateWorldMesh(world, false,
               (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
               (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
               (chunk.z * CHUNK_Z_SIZE) until ((chunk.z + 1) * CHUNK_Z_SIZE))
+      val sliceMeshGenerator = generateWorldMesh(world, true,
+              (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
+              (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
+              (chunk.z * CHUNK_Z_SIZE) until ((chunk.z + 1) * CHUNK_Z_SIZE))
+
       launch(coroutineContext + UI_CONTEXT) {
         if (isActive) {
+          sliceMesh[chunk]?.close()
+          sliceMesh[chunk] = sliceMeshGenerator()
+
           worldMesh[chunk]?.close()
           worldMesh[chunk] = meshGenerator()
         }
@@ -188,6 +202,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   }
 
+  private var sliceMesh = mutableMapOf<Vector3i, Mesh>()
   private var worldMesh = mutableMapOf<Vector3i, Mesh>()
   lateinit private var listener: MessageChannel
   private var renderMeshJob = mutableMapOf<Vector3i, Job>()
@@ -210,8 +225,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val world = game.world
 
     controller.viewCenter.y = if (world != null) {
-      val viewHeight = heightAt(world, controller.view.x.toInt(), controller.view.z.toInt()).toFloat()
-      val viewCenterHeight = heightAt(world, controller.viewCenter.x.toInt(), controller.viewCenter.z.toInt()).toFloat()
+      val yRange = (0 until sliceHeight)
+      val viewHeight = heightAt(world, controller.view.x.toInt(), controller.view.z.toInt(), yRange).toFloat()
+      val viewCenterHeight = heightAt(world, controller.viewCenter.x.toInt(), controller.viewCenter.z.toInt(), yRange).toFloat()
       val minimumHeight = viewHeight + 5f
       val desiredHeight = viewCenterHeight + controller.viewOffset.y
 
@@ -236,16 +252,23 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       view(requireNotNull(variables[StandardShaderProgram.VIEW]))
       projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
-      worldMesh.forEach { _, mesh ->
-        draw(mesh)
+      worldMesh.forEach { pos, mesh ->
+        if (pos.y < sliceHeight) {
+          draw(mesh)
+        }
+      }
+      sliceMesh.forEach { pos, mesh ->
+        if (pos.y == sliceHeight - 1) {
+          draw(mesh)
+        }
       }
     }
   }
 
-  private fun heightAt(world: World, x: Int, z: Int): Int {
+  private fun heightAt(world: World, x: Int, z: Int, yRange: IntRange): Int {
     val clampedX = clamp(x, 0 until world.width)
     val clampedZ = clamp(z, 0 until world.depth)
-    return (0 until world.height)
+    return yRange
             .reversed()
             .firstOrNull { world[clampedX, it, clampedZ].type != BlockType.AIR }
             ?: 0

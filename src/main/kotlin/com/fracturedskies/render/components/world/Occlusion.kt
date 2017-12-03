@@ -28,5 +28,8 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
       occlusions.addAll(Occlusion.values().filter({ it.opaque(world, pos, u, v) }))
       return occlusions
     }
+
+    val none = EnumSet.noneOf(Occlusion::class.java)
+    val all = EnumSet.allOf(Occlusion::class.java)
   }
 }
