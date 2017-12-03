@@ -1,6 +1,7 @@
 package com.fracturedskies.render.shaders
 
-import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.GL_FLOAT
+import org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.glEnableVertexAttribArray
 import org.lwjgl.opengl.GL20.glVertexAttribPointer
@@ -16,11 +17,13 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
       private val TEXCOORD_LOCATION = 1
       private val NORMAL_LOCATION = 2
       private val COLOR_LOCATION = 3
+      private val OCCLUSION_LOCATION = 4
 
-      val POSITION = Mesh.Attribute("POSITION", POSITION_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
-      val TEXCOORD = Mesh.Attribute("TEXCOORD", TEXCOORD_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
-      val NORMAL = Mesh.Attribute("NORMAL", NORMAL_LOCATION, GL11.GL_FLOAT, 3, java.lang.Float.BYTES)
-      val COLOR = Mesh.Attribute("COLOR", COLOR_LOCATION, GL11.GL_UNSIGNED_BYTE, 4, java.lang.Byte.BYTES)
+      val POSITION = Mesh.Attribute("POSITION", POSITION_LOCATION, GL_FLOAT, 3, java.lang.Float.BYTES)
+      val TEXCOORD = Mesh.Attribute("TEXCOORD", TEXCOORD_LOCATION, GL_FLOAT, 3, java.lang.Float.BYTES)
+      val NORMAL = Mesh.Attribute("NORMAL", NORMAL_LOCATION, GL_FLOAT, 3, java.lang.Float.BYTES)
+      val COLOR = Mesh.Attribute("COLOR", COLOR_LOCATION, GL_UNSIGNED_BYTE, 4, java.lang.Byte.BYTES)
+      val OCCLUSION = Mesh.Attribute("OCCLUSION", OCCLUSION_LOCATION, GL_FLOAT, 1, java.lang.Float.BYTES)
     }
 
     override fun toString(): String = label

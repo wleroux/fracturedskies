@@ -63,7 +63,7 @@ abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: S
     glBindTexture(GL_TEXTURE_2D, texture.id)
   }
 
-  protected fun draw(mesh: Mesh) {
+  fun draw(mesh: Mesh) {
     glBindVertexArray(mesh.vao)
     glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0)
   }

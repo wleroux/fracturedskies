@@ -5,8 +5,7 @@ import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.ShaderProgram
-import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL20.glUseProgram
 
 class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.vert").readText(), this::class.java.getResource("color.frag").readText()) {
   companion object {
@@ -27,15 +26,31 @@ class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.ver
 
   override fun render(properties: Context, variables: Context, mesh: Mesh) {
     // Shader Configuration
-    GL20.glUseProgram(id)
-    GL11.glEnable(GL11.GL_DEPTH_TEST)
+    bind {
+      model(requireNotNull(variables[MODEL]))
+      view(requireNotNull(variables[VIEW]))
+      projection(requireNotNull(variables[PROJECTION]))
 
-    // Variables
-    uniform(MODEL_LOCATION, requireNotNull(variables[MODEL]))
-    uniform(VIEW_LOCATION, requireNotNull(variables[VIEW]))
-    uniform(PROJECTION_LOCATION, requireNotNull(variables[PROJECTION]))
+      // Render
+      draw(mesh)
+    }
+  }
 
-    // Render
-    draw(mesh)
+  inline fun bind(block: ColorShaderProgram.()->Unit) {
+    glUseProgram(id)
+    this.block()
+    glUseProgram(0)
+  }
+
+  fun model(model: Matrix4) {
+    uniform(MODEL_LOCATION, model)
+  }
+
+  fun view(view: Matrix4) {
+    uniform(VIEW_LOCATION, view)
+  }
+
+  fun projection(projection: Matrix4) {
+    uniform(PROJECTION_LOCATION, projection)
   }
 }

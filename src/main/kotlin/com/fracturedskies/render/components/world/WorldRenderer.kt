@@ -19,18 +19,14 @@ import com.fracturedskies.game.World
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.raycast
 import com.fracturedskies.render.events.*
-import com.fracturedskies.render.shaders.*
+import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
-import com.fracturedskies.render.shaders.noop.NoopProgram
-import com.fracturedskies.render.shaders.noop.NoopProgram.Companion.ALBEDO
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0
-import org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT
 import java.lang.Integer.max
 import java.lang.Integer.min
 
@@ -137,7 +133,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   })
 
-  lateinit private var material: Material
+  lateinit private var program: ColorShaderProgram
   private var game = Game(coroutineContext = UI_CONTEXT) { message ->
     when (message) {
       is UpdateBlock -> {
@@ -196,40 +192,16 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var renderMeshJob = mutableMapOf<Triple<Int, Int, Int>, Job>()
 
   override fun willMount() = runBlocking<Unit> {
-    material = Material(ColorShaderProgram(), Context())
+    program = ColorShaderProgram()
     listener = register(game.channel)
     controller.register()
-
     MessageBus.send(NewGameRequested(Cause.of(this), Context()))
-
-    framebuffer = Framebuffer()
-    framebuffer.drawBuffers(GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0)
-    renderedTextureMesh = Mesh(floatArrayOf(
-            -1f,  1f, 0f,  0f, 1f, 0f,
-            1f,  1f, 0f,  1f, 1f, 0f,
-            1f, -1f, 0f,  1f, 0f, 0f,
-            -1f, -1f, 0f,  0f, 0f, 0f
-    ), intArrayOf(
-            0, 1, 2,
-            2, 3, 0
-    ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD));
-
-    val program = NoopProgram()
-    noopMaterial = Material(program, Context())
-
   }
-  lateinit var noopMaterial: Material
-  lateinit var renderedTextureMesh: Mesh
-  lateinit var framebuffer: Framebuffer
 
   override fun willUnmount() {
     unregister(listener)
     controller.unregister()
   }
-
-  private var previousBounds: Bounds? = null
-  private var renderedTexture: Texture? = null
-  private var depthRenderbuffer: Renderbuffer? = null
 
   override fun render(bounds: Bounds) {
     super.render(bounds)
@@ -254,30 +226,19 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     )
 
     // Render Texture
-    if (bounds != previousBounds) {
-      previousBounds = bounds
-      renderedTexture?.close()
-      depthRenderbuffer?.close()
+    glViewport(0, 0, bounds.width, bounds.height)
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+    glEnable(GL_DEPTH_TEST)
 
-      renderedTexture = Texture(bounds.width, bounds.height)
-      depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
-      framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer!!)
-      framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture!!)
-    }
-
-    framebuffer.bind {
-      glViewport(0, 0, bounds.width, bounds.height)
-      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+    // Draw World
+    program.bind {
+      model(requireNotNull(variables[StandardShaderProgram.MODEL]))
+      view(requireNotNull(variables[StandardShaderProgram.VIEW]))
+      projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
       worldMesh.forEach { _, mesh ->
-        material.render(variables, mesh)
+        draw(mesh)
       }
     }
-
-    // Render to window instead!
-    glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
-    noopMaterial.render(Context(
-            ALBEDO to renderedTexture!!
-    ), renderedTextureMesh)
   }
 
   private fun heightAt(world: World, x: Int, z: Int): Int {

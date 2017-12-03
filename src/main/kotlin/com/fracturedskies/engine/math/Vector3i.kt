@@ -21,7 +21,8 @@ data class Vector3i(val x: Int, val y: Int, val z: Int) {
     }
   }
 
-  operator fun plus(o: Vector3i): Vector3i = Vector3i(x + o.x, y + o.y, z + o.z)
+  operator fun plus(o: Vector3i) = Vector3i(x + o.x, y + o.y, z + o.z)
+  operator fun minus(o: Vector3i) = Vector3i(x - o.x, y - o.y, z - o.z)
 }
 
 infix fun Vector3i.within(world: World): Boolean = world.has(x, y, z)

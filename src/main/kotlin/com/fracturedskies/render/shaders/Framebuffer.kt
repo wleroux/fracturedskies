@@ -26,7 +26,7 @@ class Framebuffer {
     }
   }
 
-  fun bind(block: ()->Unit) {
+  inline fun bind(block: ()->Unit) {
     glBindFramebuffer(GL_FRAMEBUFFER, id)
     try {
       block()

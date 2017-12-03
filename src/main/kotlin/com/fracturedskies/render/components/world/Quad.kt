@@ -1,7 +1,8 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.engine.math.Color4
-import org.lwjgl.BufferUtils
+import com.fracturedskies.engine.math.Vector3i
+import java.util.*
 
 /**
  * Builds a mesh by constructing Quads.
@@ -11,8 +12,25 @@ data class Quad(
         private val y: Float, private val dwy: Float, private val dhy: Float,
         private val z: Float, private val dwz: Float, private val dhz: Float,
         private val nx: Float, private val ny: Float, private val nz: Float,
-        private var color: Color4
+        private val color: Color4,
+        val topLeftOcclusion: Float, val topRightOcclusion: Float,
+        val bottomRightOcclusion: Float, val bottomLeftOcclusion: Float
 ) {
+  companion object {
+    operator fun invoke(pos: IntArray, du: IntArray, dv: IntArray, normal: Vector3i, color: Color4, occlusions: EnumSet<Occlusion>): Quad {
+      return Quad(
+              pos[0].toFloat(), du[0].toFloat(), dv[0].toFloat(),
+              pos[1].toFloat(), du[1].toFloat(), dv[1].toFloat(),
+              pos[2].toFloat(), du[2].toFloat(), dv[2].toFloat(),
+              normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat(),
+              color,
+              VertexCorner.TOP_LEFT.occlusionLevel(occlusions),
+              VertexCorner.TOP_RIGHT.occlusionLevel(occlusions),
+              VertexCorner.BOTTOM_RIGHT.occlusionLevel(occlusions),
+              VertexCorner.BOTTOM_LEFT.occlusionLevel(occlusions)
+      )
+    }
+  }
 
   fun indices(offset: Int): IntArray {
     return intArrayOf(
@@ -22,19 +40,30 @@ data class Quad(
   }
 
   fun vertices(): FloatArray {
-    val colorBuffer = BufferUtils.createByteBuffer(4)
-    colorBuffer.put(color.red.toByte())
-    colorBuffer.put(color.green.toByte())
-    colorBuffer.put(color.blue.toByte())
-    colorBuffer.put(color.alpha.toByte())
-    colorBuffer.flip()
-    val colorAsFloat = colorBuffer.asFloatBuffer().get(0)
-
+    val colorAsFloat = color.toFloat()
     return floatArrayOf(
-            x +        0f, y +        0f, z +        0f, colorAsFloat, nx, ny, nz,
-            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, nx, ny, nz,
-            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, nx, ny, nz,
-            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, nx, ny, nz
+            x +        0f, y +        0f, z +        0f, colorAsFloat, topLeftOcclusion, nx, ny, nz,
+            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, topRightOcclusion, nx, ny, nz,
+            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, bottomRightOcclusion, nx, ny, nz,
+            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, bottomLeftOcclusion, nx, ny, nz
     )
   }
+
+  fun reverse() = Quad(
+          x + dwx, -dwx, dhx,
+          y + dwy, -dwy, dhy,
+          z + dwz, -dwz, dhz,
+          -nx, -ny, -nz,
+          color,
+          topRightOcclusion, topLeftOcclusion, bottomLeftOcclusion, bottomRightOcclusion
+  )
+
+  fun rotate() = Quad(
+          x + dwx, dhx, -dwx,
+          y + dwy, dhy, -dwy,
+          z + dwz, dhz, -dwz,
+          nx, ny, nz,
+          color,
+          topRightOcclusion, bottomRightOcclusion, bottomLeftOcclusion, topLeftOcclusion
+  )
 }

@@ -7,4 +7,8 @@ enum class BlockType(val color: Color4) {
   AIR(Color4.BLACK),
   GRASS(Color4.GREEN),
   BLOCK(Color4.BROWN);
+
+  val opaque: Boolean get() {
+    return this != AIR
+  }
 }
