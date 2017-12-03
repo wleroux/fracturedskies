@@ -1,9 +1,8 @@
 repositories {
-  maven("http://dl.bintray.com/kotlin/kotlin-eap-1.2")
   maven("https://oss.sonatype.org/content/repositories/snapshots/")
 }
 plugins {
-  kotlin("jvm") version "1.2.0-rc-84"
+  kotlin("jvm") version "1.2.0"
   idea
   application
 }
@@ -42,8 +41,8 @@ val lwjglNatives = when (org.gradle.internal.os.OperatingSystem.current()) {
 }
 
 dependencies {
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.0-rc-84")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.0-rc-84")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.0")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.2.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19.3")
   implementation("org.lwjgl:lwjgl:$lwjglVersion")
   implementation("org.lwjgl:lwjgl-glfw:$lwjglVersion")
