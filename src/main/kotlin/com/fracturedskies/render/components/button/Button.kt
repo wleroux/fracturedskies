@@ -39,10 +39,10 @@ class Button(attributes: Context) : AbstractComponent<Boolean>(attributes, false
   lateinit private var hoverMaterial: Material
   override fun willMount() {
     hoverMaterial = Material(StandardShaderProgram(), Context(
-            StandardShaderProgram.ALBEDO to TextureArray("button_hover.png", loadByteBuffer("button_hover.png", this@Button.javaClass), 4, 4, 9)
+            StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("button_hover.png", this@Button.javaClass))
     ))
     defaultMaterial = Material(StandardShaderProgram(), Context(
-            StandardShaderProgram.ALBEDO to TextureArray("button_default.png", loadByteBuffer("button_default.png", this@Button.javaClass), 4, 4, 9)
+            StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("button_default.png", this@Button.javaClass))
     ))
   }
 

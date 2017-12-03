@@ -6,8 +6,20 @@ import com.fracturedskies.engine.math.map
 
 class WorldGenerator(private val width: Int, private val height: Int, private val depth: Int, private val seed: Int): (Int, Int, Int) -> Block {
   fun generate(): World {
-    return World(width, height, depth, this)
+    val world = World(width, height, depth, this)
+
+    (0 until width).forEach {x ->
+      (0 until depth).forEach {z ->
+        val y = highestBlock(world, x, z)
+        world[x, y, z].type = BlockType.GRASS
+      }
+    }
+
+    return world
   }
+
+  private fun highestBlock(world: World, x: Int, z: Int) =
+    (0 until world.height).reversed().firstOrNull { world[x, it, z].type != BlockType.AIR } ?: 0
 
   override operator fun invoke(x: Int, y: Int, z: Int): Block {
     return if (isBlock(x.toFloat(), y.toFloat(), z.toFloat())) {

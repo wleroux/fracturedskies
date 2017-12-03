@@ -51,7 +51,7 @@ class Input(attributes: Context) : AbstractComponent<Input.InputState>(attribute
   lateinit private var material: Material
   override fun willMount() {
     material = Material(StandardShaderProgram(), Context(
-            StandardShaderProgram.ALBEDO to TextureArray("input_default.png", loadByteBuffer("com/fracturedskies/render/components/input/input_default.png", this@Input.javaClass), 4, 4, 9)
+            StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("com/fracturedskies/render/components/input/input_default.png", this@Input.javaClass))
     ))
   }
 

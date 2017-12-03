@@ -70,7 +70,6 @@ class RenderGameSystem(coroutineContext: CoroutineContext) {
     glfwSetInputMode(window, GLFW_STICKY_KEYS, 1)
     glfwSetWindowPos(window, (videoMode.width() - screenWidth) / 2, (videoMode.height() - screenHeight) / 2)
     glfwMakeContextCurrent(window)
-//    glfwSwapInterval(1)
     GL.createCapabilities()
 
     glfwShowWindow(window)

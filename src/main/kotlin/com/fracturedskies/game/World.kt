@@ -27,6 +27,6 @@ class World(val width: Int, val height: Int, val depth: Int, init: (Int, Int, In
   }
 
   override fun toString(): String {
-    return blocks.joinToString()
+    return "WORLD"
   }
 }

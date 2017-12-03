@@ -5,16 +5,16 @@ import org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE
 import org.lwjgl.stb.STBImage
 import java.nio.ByteBuffer
 
-class Texture(private val label: String, rawImageBuffer: ByteBuffer?, width: Int, height: Int) {
+class Texture(width: Int, height: Int, rawImageBuffer: ByteBuffer? = null, internalFormat: Int = GL_RGBA16, format: Int = GL_RGBA, type: Int = GL_UNSIGNED_BYTE ) {
   val id = glGenTextures()
   init {
     glBindTexture(GL_TEXTURE_2D, id)
 
     if (rawImageBuffer != null) {
       val glImageBuffer = STBImage.stbi_load_from_memory(rawImageBuffer, intArrayOf(width), intArrayOf(height), intArrayOf(4), 4)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, glImageBuffer)
+      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, glImageBuffer)
     } else {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0)
+      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, 0)
     }
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -29,5 +29,5 @@ class Texture(private val label: String, rawImageBuffer: ByteBuffer?, width: Int
     glDeleteTextures(id)
   }
 
-  override fun toString(): String = label
+  override fun toString() = String.format("Texture[$id]")
 }

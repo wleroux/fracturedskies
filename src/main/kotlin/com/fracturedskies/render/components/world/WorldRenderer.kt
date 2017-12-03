@@ -7,7 +7,6 @@ import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
-import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus
@@ -21,6 +20,7 @@ import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.raycast
 import com.fracturedskies.render.events.*
 import com.fracturedskies.render.shaders.*
+import com.fracturedskies.render.shaders.color.ColorShaderProgram
 import com.fracturedskies.render.shaders.noop.NoopProgram
 import com.fracturedskies.render.shaders.noop.NoopProgram.Companion.ALBEDO
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
@@ -36,9 +36,9 @@ import java.lang.Integer.min
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
-    private val CHUNK_X_SIZE = 16
-    private val CHUNK_Y_SIZE = 16
-    private val CHUNK_Z_SIZE = 16
+    val CHUNK_X_SIZE = 32
+    val CHUNK_Y_SIZE = 128
+    val CHUNK_Z_SIZE = 32
     fun Node.Builder<*>.worldRenderer(additionalContext: Context = Context()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
     }
@@ -178,7 +178,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private fun updateChunk(world: World, chunk: Triple<Int, Int, Int>) {
     renderMeshJob[chunk]?.cancel()
     renderMeshJob[chunk] = launch {
-      val meshGenerator = WorldMeshGenerator().generateMesh(world,
+      val meshGenerator = generateWorldMesh(world,
               (chunk.first * CHUNK_X_SIZE) until ((chunk.first + 1) * CHUNK_X_SIZE),
               (chunk.second * CHUNK_Y_SIZE) until ((chunk.second + 1) * CHUNK_Y_SIZE),
               (chunk.third * CHUNK_Z_SIZE) until ((chunk.third + 1) * CHUNK_Z_SIZE))
@@ -195,19 +195,15 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   lateinit private var listener: MessageChannel
   private var renderMeshJob = mutableMapOf<Triple<Int, Int, Int>, Job>()
 
-  override fun willMount() = runBlocking {
-    material = Material(
-            StandardShaderProgram(),
-            Context(StandardShaderProgram.ALBEDO to TextureArray("tileset.png", loadByteBuffer("tileset.png", this@WorldRenderer.javaClass), 16, 16, 3))
-    )
-
+  override fun willMount() = runBlocking<Unit> {
+    material = Material(ColorShaderProgram(), Context())
     listener = register(game.channel)
     controller.register()
 
     MessageBus.send(NewGameRequested(Cause.of(this), Context()))
 
     framebuffer = Framebuffer()
-    framebuffer.drawBuffers(GL_COLOR_ATTACHMENT0)
+    framebuffer.drawBuffers(GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0)
     renderedTextureMesh = Mesh(floatArrayOf(
             -1f,  1f, 0f,  0f, 1f, 0f,
             1f,  1f, 0f,  1f, 1f, 0f,
@@ -218,7 +214,11 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             2, 3, 0
     ), listOf(Mesh.Attribute.POSITION, Mesh.Attribute.TEXCOORD));
 
+    val program = NoopProgram()
+    noopMaterial = Material(program, Context())
+
   }
+  lateinit var noopMaterial: Material
   lateinit var renderedTextureMesh: Mesh
   lateinit var framebuffer: Framebuffer
 
@@ -226,6 +226,10 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     unregister(listener)
     controller.unregister()
   }
+
+  private var previousBounds: Bounds? = null
+  private var renderedTexture: Texture? = null
+  private var depthRenderbuffer: Renderbuffer? = null
 
   override fun render(bounds: Bounds) {
     super.render(bounds)
@@ -250,13 +254,20 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     )
 
     // Render Texture
-    val renderedTexture = Texture("renderedTexture", null, bounds.width, bounds.height)
-    val depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
-    framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer)
-    framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture)
+    if (bounds != previousBounds) {
+      previousBounds = bounds
+      renderedTexture?.close()
+      depthRenderbuffer?.close()
+
+      renderedTexture = Texture(bounds.width, bounds.height)
+      depthRenderbuffer = Renderbuffer(bounds.width, bounds.height, GL_DEPTH_COMPONENT)
+      framebuffer.renderbuffer(GL_DEPTH_ATTACHMENT, depthRenderbuffer!!)
+      framebuffer.texture(GL_COLOR_ATTACHMENT0, renderedTexture!!)
+    }
+
     framebuffer.bind {
       glViewport(0, 0, bounds.width, bounds.height)
-      glClear(GL_DEPTH_BUFFER_BIT)
+      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
       worldMesh.forEach { _, mesh ->
         material.render(variables, mesh)
       }
@@ -264,15 +275,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
     // Render to window instead!
     glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
-    val program = NoopProgram()
-
-    Material(program, Context()).render(Context(
-            ALBEDO to renderedTexture
+    noopMaterial.render(Context(
+            ALBEDO to renderedTexture!!
     ), renderedTextureMesh)
-
-    depthRenderbuffer.close()
-    renderedTexture.close()
-    program.close()
   }
 
   private fun heightAt(world: World, x: Int, z: Int): Int {
