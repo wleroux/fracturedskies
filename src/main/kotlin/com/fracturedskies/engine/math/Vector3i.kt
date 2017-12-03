@@ -2,7 +2,7 @@ package com.fracturedskies.engine.math
 
 import com.fracturedskies.game.World
 
-data class Vector3i(val x: Int, val y: Int, val z: Int) {
+data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   companion object {
     val AXIS_X = Vector3i(1, 0, 0)
     val AXIS_NEG_X = Vector3i(-1, 0, 0)
@@ -12,6 +12,29 @@ data class Vector3i(val x: Int, val y: Int, val z: Int) {
     val AXIS_NEG_Z = Vector3i(0, 0, -1)
     val NEIGHBOURS = listOf(AXIS_X, AXIS_Y, AXIS_Z, AXIS_NEG_X, AXIS_NEG_Y, AXIS_NEG_Z)
     val ADDITIVE_UNIT = Vector3i(0, 0, 0)
+    val X_PLANE_NEIGHBORS = listOf(AXIS_X, AXIS_NEG_X)
+    val Y_PLANE_NEIGHBORS = listOf(AXIS_Y, AXIS_NEG_Y)
+    val Z_PLANE_NEIGHBORS = listOf(AXIS_Z, AXIS_NEG_Z)
+    val XY_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Y_PLANE_NEIGHBORS
+    val XZ_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Z_PLANE_NEIGHBORS
+
+    private val CACHE_X_SIZE = 128
+    private val CACHE_Y_SIZE = 258
+    private val CACHE_Z_SIZE = 128
+    private val cache = Array(CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE, { it -> Vector3i(
+            it % CACHE_X_SIZE,
+            (it / CACHE_X_SIZE) % CACHE_Y_SIZE,
+            (it / CACHE_X_SIZE / CACHE_Y_SIZE) % CACHE_Z_SIZE
+    )})
+
+    operator fun invoke(x: Int, y: Int, z: Int): Vector3i {
+      return if (x >= 0 && x < CACHE_X_SIZE && y >= 0 && y < CACHE_Y_SIZE && z >= 0 && z < CACHE_Z_SIZE) {
+        val index = z * CACHE_Y_SIZE * CACHE_X_SIZE + y * CACHE_X_SIZE + x
+        cache[index]
+      } else {
+        Vector3i(x, y, z)
+      }
+    }
   }
 
   override fun equals(other: Any?): Boolean {

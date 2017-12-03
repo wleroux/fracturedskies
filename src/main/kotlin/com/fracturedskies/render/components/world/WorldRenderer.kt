@@ -18,6 +18,7 @@ import com.fracturedskies.game.Game
 import com.fracturedskies.game.World
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.raycast
+import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import com.fracturedskies.render.events.*
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
@@ -90,46 +91,87 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
     val selectedBlock = raycast(game.world!!, rayStart3, direction)
             .filter { it.position.y < sliceHeight }
-            .filter { it.block.type != BlockType.AIR }
+            .filterNot { it.block.type == BlockType.AIR }
             .firstOrNull()
     if (selectedBlock == null) {
       firstBlock = null
     } else {
       when (event.action) {
         GLFW.GLFW_PRESS -> {
-          firstBlock = if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            selectedBlock.position
-          } else {
-            selectedBlock.position + selectedBlock.faces.first()
+          // Add Blocks or Add Water
+          if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            firstBlock = selectedBlock.position + selectedBlock.faces.first()
+          }
+          // Add Water or Remove Blocks
+          else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            firstBlock = selectedBlock.position
           }
         }
         GLFW.GLFW_RELEASE -> {
           if (firstBlock != null) {
-            val secondBlock = if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
-              selectedBlock.position
-            } else {
-              selectedBlock.position + selectedBlock.faces.first()
+            // Add Blocks
+            var secondBlock: Vector3i? = null
+            if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+              secondBlock = selectedBlock.position + selectedBlock.faces.first()
+            }
+            // Add Water or Remove Blocks
+            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+              secondBlock = selectedBlock.position
             }
 
-            val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
+            val xRange = min(firstBlock!!.x, secondBlock!!.x)..max(firstBlock!!.x, secondBlock.x)
             val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
             val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
-            xRange.forEach { x ->
-              zRange.forEach { z ->
-                yRange.forEach { y ->
-                  if (game.world!!.has(x, y, z)) {
-                    if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
-                      if (game.world!![x, y, z].type != BlockType.AIR) {
-                        MessageBus.send(QueueWork(UpdateBlockWork(x, y, z, BlockType.AIR, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
-                      }
-                    } else {
-                      if (game.world!![x, y, z].type != BlockType.BLOCK) {
-                        MessageBus.send(QueueWork(UpdateBlockWork(x, y, z, BlockType.BLOCK, WorkType.CONSTRUCTION, 0), Cause.of(this), Context()))
-                      }
-                    }
+
+            // Add Blocks
+            if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+              val updates = xRange.flatMap { x ->
+                zRange.flatMap { z ->
+                  yRange.flatMap { y ->
+                    if (game.world!!.has(x, y, z) && !game.world!![x, y, z].type.opaque)
+                      listOf(Vector3i(x, y, z) to BlockType.BLOCK)
+                    else listOf()
                   }
                 }
-              }
+              }.toMap()
+              MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
+            }
+            // Remove Blocks
+            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+              val updates = xRange.flatMap { x ->
+                zRange.flatMap { z ->
+                  yRange.flatMap { y ->
+                    if (game.world!!.has(x, y, z) && game.world!![x, y, z].type.opaque)
+                      listOf(Vector3i(x, y, z) to BlockType.AIR)
+                    else listOf()
+                  }
+                }
+              }.toMap()
+              MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
+            }
+            // Add Water
+            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+              val updates = xRange.flatMap { x ->
+                zRange.flatMap { z ->
+                  yRange.flatMap { y ->
+                    if (game.world!!.has(x, y, z) && !game.world!![x, y, z].type.opaque) {
+                      if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
+                        val waterLevel = game.world!![x, y, z].waterLevel
+                        if (waterLevel > 0.toByte()) {
+                          listOf(Vector3i(x, y, z) to waterLevel.dec())
+                        } else listOf()
+                      } else {
+                        val waterLevel = game.world!![x, y, z].waterLevel
+                        if (waterLevel < MAX_WATER_LEVEL) {
+                          listOf(Vector3i(x, y, z) to MAX_WATER_LEVEL)
+                        } else listOf()
+                      }
+                    } else listOf()
+                  }
+                }
+              }.toMap()
+
+              MessageBus.send(UpdateBlockWater(updates, Cause.of(this), Context()))
             }
           }
           firstBlock = null
@@ -144,7 +186,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       is UpdateBlock -> {
         val world = this.world!!
         (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
-                .map { message.pos + it }
+                .flatMap { message.updates.map { (pos, _) -> pos + it } }
                 .map { it / CHUNKS }
                 .filter {
                   it.x in (0 until world.width / CHUNK_X_SIZE) &&
@@ -152,7 +194,20 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                           it.z in (0 until world.depth / CHUNK_Z_SIZE)
                 }
                 .distinct()
-                .forEach { updateChunk(world, it)}
+                .forEach { updateBlockMesh(world, it)}
+      }
+      is UpdateBlockWater -> {
+        val world = this.world!!
+        (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
+                .flatMap { message.updates.map { (pos, _) -> pos + it } }
+                .map { it / CHUNKS }
+                .filter {
+                  it.x in (0 until world.width / CHUNK_X_SIZE) &&
+                          it.y in (0 until world.height / CHUNK_Y_SIZE) &&
+                          it.z in (0 until world.depth / CHUNK_Z_SIZE)
+                }
+                .distinct()
+                .forEach { updateWaterMesh(world, it)}
       }
       is LightUpdated -> {
         message.updates
@@ -160,7 +215,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
                 .map { pos -> pos / CHUNKS }
                 .distinct()
-                .forEach { updateChunk(world!!, it) }
+                .forEach { updateBlockMesh(world!!, it) }
       }
       is WorldGenerated -> {
         val world = this.world!!
@@ -170,7 +225,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
         (0 until xChunks).forEach { xChunk ->
           (0 until yChunks).forEach { yChunk ->
             (0 until zChunks).forEach { zChunk ->
-              updateChunk(world, Vector3i(xChunk, yChunk, zChunk))
+              updateBlockMesh(world, Vector3i(xChunk, yChunk, zChunk))
             }
           }
         }
@@ -178,9 +233,12 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   }
 
-  private fun updateChunk(world: World, chunk: Vector3i) {
-    renderMeshJob[chunk]?.cancel()
-    renderMeshJob[chunk] = launch {
+  private var blockMesh = mutableMapOf<Vector3i, Mesh>()
+  private var blockSliceMesh = mutableMapOf<Vector3i, Mesh>()
+  private var renderBlockMeshJob = mutableMapOf<Vector3i, Job>()
+  private fun updateBlockMesh(world: World, chunk: Vector3i) {
+    renderBlockMeshJob[chunk]?.cancel()
+    renderBlockMeshJob[chunk] = launch {
       val meshGenerator = generateWorldMesh(world, false,
               (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
               (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
@@ -192,20 +250,44 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
       launch(coroutineContext + UI_CONTEXT) {
         if (isActive) {
-          sliceMesh[chunk]?.close()
-          sliceMesh[chunk] = sliceMeshGenerator()
+          blockSliceMesh[chunk]?.close()
+          blockSliceMesh[chunk] = sliceMeshGenerator()
 
-          worldMesh[chunk]?.close()
-          worldMesh[chunk] = meshGenerator()
+          blockMesh[chunk]?.close()
+          blockMesh[chunk] = meshGenerator()
         }
       }
     }
   }
 
-  private var sliceMesh = mutableMapOf<Vector3i, Mesh>()
-  private var worldMesh = mutableMapOf<Vector3i, Mesh>()
+  private var waterMesh = mutableMapOf<Vector3i, Mesh>()
+  private var waterSliceMesh = mutableMapOf<Vector3i, Mesh>()
+  private var renderWaterMeshJob = mutableMapOf<Vector3i, Job>()
+  private fun updateWaterMesh(world: World, chunk: Vector3i) {
+    renderWaterMeshJob[chunk]?.cancel()
+    renderWaterMeshJob[chunk] = launch {
+      val waterMeshGenerator = generateWaterMesh(world, false,
+              (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
+              (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
+              (chunk.z * CHUNK_Z_SIZE) until ((chunk.z + 1) * CHUNK_Z_SIZE))
+      val waterSliceMeshGenerator = generateWaterMesh(world, true,
+              (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
+              (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
+              (chunk.z * CHUNK_Z_SIZE) until ((chunk.z + 1) * CHUNK_Z_SIZE))
+
+      launch(coroutineContext + UI_CONTEXT) {
+        if (isActive) {
+          waterSliceMesh[chunk]?.close()
+          waterSliceMesh[chunk] = waterSliceMeshGenerator()
+
+          waterMesh[chunk]?.close()
+          waterMesh[chunk] = waterMeshGenerator()
+        }
+      }
+    }
+  }
+
   lateinit private var listener: MessageChannel
-  private var renderMeshJob = mutableMapOf<Vector3i, Job>()
 
   override fun willMount() = runBlocking<Unit> {
     program = ColorShaderProgram()
@@ -252,16 +334,10 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       view(requireNotNull(variables[StandardShaderProgram.VIEW]))
       projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
-      worldMesh.forEach { pos, mesh ->
-        if (pos.y < sliceHeight) {
-          draw(mesh)
-        }
-      }
-      sliceMesh.forEach { pos, mesh ->
-        if (pos.y == sliceHeight - 1) {
-          draw(mesh)
-        }
-      }
+      blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
+      blockSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
+      waterMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
+      waterSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
     }
   }
 

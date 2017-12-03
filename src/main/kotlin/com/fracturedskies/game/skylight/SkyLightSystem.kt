@@ -51,8 +51,14 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
         send(LightUpdated(lightUpdates, Cause.of(message.cause, this), message.context))
       }
       is UpdateBlock -> {
-        skylight.opaque[message.pos] = message.type.opaque
-        val lightUpdates = updateSkylight(message.pos)
+        val lightUpdates = message.updates.map { (pos, type) ->
+          skylight.opaque[pos] = type.opaque
+          updateSkylight(pos)
+        }.fold(mutableMapOf<Vector3i, Int>()) { acc, value ->
+          acc.putAll(value)
+          acc
+        }
+
         if (lightUpdates.isNotEmpty()) {
           send(LightUpdated(lightUpdates, Cause.of(message.cause, this), message.context))
         }

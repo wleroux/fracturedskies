@@ -6,8 +6,9 @@ import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.game.Game
-import com.fracturedskies.game.skylight.SkyLightSystem
 import com.fracturedskies.game.WorldGeneratorSystem
+import com.fracturedskies.game.skylight.SkyLightSystem
+import com.fracturedskies.game.water.WaterSystem
 import com.fracturedskies.game.workers.Delegator
 import com.fracturedskies.render.RenderGameSystem
 import kotlinx.coroutines.experimental.CommonPool
@@ -39,9 +40,9 @@ class MainGameSystem(coroutineContext: CoroutineContext) {
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
-      while (now - last >= NANOSECONDS_PER_UPDATE) {
+      if (now - last >= NANOSECONDS_PER_UPDATE) {
         send(Update(SECONDS_PER_UPDATE, Cause.of(this), Context())).await()
-        last += NANOSECONDS_PER_UPDATE
+        last = now
       }
 
       val alpha = (now - last).toFloat() / NANOSECONDS_PER_UPDATE.toFloat()
@@ -65,6 +66,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   register(WorldGeneratorSystem(coroutineContext + CommonPool).channel)
   register(Delegator(coroutineContext).channel)
   register(SkyLightSystem(coroutineContext).channel)
+  register(WaterSystem(coroutineContext).channel)
 
   // Run game
   mainGameSystem.run(coroutineContext+CommonPool)

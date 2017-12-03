@@ -39,7 +39,7 @@ class Controller {
   private var zoomLevel: Float = 30f
   var slice: Int = 0
 
-  fun scroll(xOffset: Double, yOffset: Double) {
+  @Suppress("UNUSED_PARAMETER") fun scroll(xOffset: Double, yOffset: Double) {
     if (keyPressed.contains(GLFW_KEY_LEFT_CONTROL)) {
       slice += clamp(yOffset.roundToInt(), -1..1)
     } else {

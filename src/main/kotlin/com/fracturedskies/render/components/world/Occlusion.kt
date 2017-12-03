@@ -15,11 +15,7 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
   BOTTOM_RIGHT({pos, u, v -> (pos + v + u)});
   fun opaque(world: World, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
     val target = offset(pos, u, v)
-    return if (world.has(target.x, target.y, target.z)) {
-      world[target.x, target.y, target.z].type.opaque
-    } else {
-      false
-    }
+    return if (world.has(target)) world[target].type.opaque else false
   }
 
   companion object {

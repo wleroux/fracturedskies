@@ -9,6 +9,7 @@ data class Color4(val red: Int, val green: Int, val blue: Int, val alpha: Int) {
     val BROWN = Color4(178, 161, 130, 255)
     val DARK_BROWN = Color4(114, 110, 105, 255)
     val BLACK = Color4(0, 0, 0, 255)
+    val WATER = Color4(138, 172, 206, 200)
   }
 
   fun toFloat(): Float {

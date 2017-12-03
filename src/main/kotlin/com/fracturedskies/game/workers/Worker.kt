@@ -1,13 +1,9 @@
 package com.fracturedskies.game.workers
 
 import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.UpdateBlockWork
-import com.fracturedskies.game.messages.Work
-import com.fracturedskies.game.messages.WorkType
+import com.fracturedskies.game.messages.*
 import kotlinx.coroutines.experimental.async
 
 class Worker {
@@ -20,7 +16,10 @@ class Worker {
     async {
       when (work) {
         is UpdateBlockWork -> {
-          send(UpdateBlock(Vector3i(work.x, work.y, work.z), work.blockType, Cause.of(this), Context()))
+          send(UpdateBlock(mapOf(work.pos to work.blockType), Cause.of(this), Context()))
+        }
+        is UpdateBlockWaterWork -> {
+          send(UpdateBlockWater(mutableMapOf(work.pos to work.waterLevel), Cause.of(this), Context()))
         }
       }
       currentWork = null

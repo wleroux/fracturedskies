@@ -1,7 +1,7 @@
 #version 450 core
 out vec4 color;
 
-in vec3 Color;
+in vec4 Color;
 in vec3 Normal;
 in float Occlusion;
 in float SkyLightLevel;
@@ -34,6 +34,6 @@ void main()
     color = vec4(vec3(gamma(
       ambient * albedo +
       (overheadLight + light) * albedo
-      )), 1
+      )), (Color.a / 255)
     );
 }
