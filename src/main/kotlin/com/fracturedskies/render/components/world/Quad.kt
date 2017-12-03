@@ -2,6 +2,7 @@ package com.fracturedskies.render.components.world
 
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.render.shaders.Mesh
 import java.util.*
 
 /**
@@ -12,17 +13,19 @@ data class Quad(
         private val y: Float, private val dwy: Float, private val dhy: Float,
         private val z: Float, private val dwz: Float, private val dhz: Float,
         private val nx: Float, private val ny: Float, private val nz: Float,
+        private val skyLight: Int,
         private val color: Color4,
         val topLeftOcclusion: Float, val topRightOcclusion: Float,
         val bottomRightOcclusion: Float, val bottomLeftOcclusion: Float
 ) {
   companion object {
-    operator fun invoke(pos: IntArray, du: IntArray, dv: IntArray, normal: Vector3i, color: Color4, occlusions: EnumSet<Occlusion>): Quad {
+    operator fun invoke(pos: IntArray, du: IntArray, dv: IntArray, normal: Vector3i, skyLight: Int, color: Color4, occlusions: EnumSet<Occlusion>): Quad {
       return Quad(
               pos[0].toFloat(), du[0].toFloat(), dv[0].toFloat(),
               pos[1].toFloat(), du[1].toFloat(), dv[1].toFloat(),
               pos[2].toFloat(), du[2].toFloat(), dv[2].toFloat(),
               normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat(),
+              skyLight,
               color,
               VertexCorner.TOP_LEFT.occlusionLevel(occlusions),
               VertexCorner.TOP_RIGHT.occlusionLevel(occlusions),
@@ -30,6 +33,7 @@ data class Quad(
               VertexCorner.BOTTOM_LEFT.occlusionLevel(occlusions)
       )
     }
+    val Attributes = listOf(Mesh.Attribute.POSITION, Mesh.Attribute.COLOR, Mesh.Attribute.SKY_LIGHT_LEVEL, Mesh.Attribute.OCCLUSION, Mesh.Attribute.NORMAL)
   }
 
   fun indices(offset: Int): IntArray {
@@ -42,10 +46,10 @@ data class Quad(
   fun vertices(): FloatArray {
     val colorAsFloat = color.toFloat()
     return floatArrayOf(
-            x +        0f, y +        0f, z +        0f, colorAsFloat, topLeftOcclusion, nx, ny, nz,
-            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, topRightOcclusion, nx, ny, nz,
-            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, bottomRightOcclusion, nx, ny, nz,
-            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, bottomLeftOcclusion, nx, ny, nz
+            x +        0f, y +        0f, z +        0f, colorAsFloat, skyLight.toFloat(), topLeftOcclusion, nx, ny, nz,
+            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, skyLight.toFloat(), topRightOcclusion, nx, ny, nz,
+            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, skyLight.toFloat(), bottomRightOcclusion, nx, ny, nz,
+            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, skyLight.toFloat(), bottomLeftOcclusion, nx, ny, nz
     )
   }
 
@@ -54,6 +58,7 @@ data class Quad(
           y + dwy, -dwy, dhy,
           z + dwz, -dwz, dhz,
           -nx, -ny, -nz,
+          skyLight,
           color,
           topRightOcclusion, topLeftOcclusion, bottomLeftOcclusion, bottomRightOcclusion
   )
@@ -63,6 +68,7 @@ data class Quad(
           y + dwy, dhy, -dwy,
           z + dwz, dhz, -dwz,
           nx, ny, nz,
+          skyLight,
           color,
           topRightOcclusion, bottomRightOcclusion, bottomLeftOcclusion, topLeftOcclusion
   )

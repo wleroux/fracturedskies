@@ -21,10 +21,15 @@ class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private v
       is WorldGenerated -> {
         world = World(message.world.width, message.world.height, message.world.depth) { x, y, z ->
           message.world[x, y, z]
-       }
+        }
       }
       is UpdateBlock -> {
-        world!![message.x, message.y, message.z].type = message.type
+        world!![message.pos].type = message.type
+      }
+      is LightUpdated -> {
+        message.updates.forEach { pos, level ->
+          world!![pos].skyLight = level
+        }
       }
     }
     handler(message)

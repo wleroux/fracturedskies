@@ -1,6 +1,7 @@
 package com.fracturedskies.game.workers
 
 import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.game.messages.UpdateBlock
@@ -19,7 +20,7 @@ class Worker {
     async {
       when (work) {
         is UpdateBlockWork -> {
-          send(UpdateBlock(work.x, work.y, work.z, work.blockType, Cause.of(this), Context()))
+          send(UpdateBlock(Vector3i(work.x, work.y, work.z), work.blockType, Cause.of(this), Context()))
         }
       }
       currentWork = null

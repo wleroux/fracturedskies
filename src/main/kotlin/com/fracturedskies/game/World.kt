@@ -11,6 +11,7 @@ class World(val width: Int, val height: Int, val depth: Int, init: (Int, Int, In
     init(x, y, z)
   }
 
+  fun has(position: Vector3i) = has(position.x, position.y, position.z)
   fun has(x: Int, y: Int, z: Int) = x in 0 until width && y in 0 until height && z in 0 until depth
   operator fun get(position: Vector3i) = get(position.x, position.y, position.z)
   operator fun get(x: Int, y: Int, z: Int): Block {

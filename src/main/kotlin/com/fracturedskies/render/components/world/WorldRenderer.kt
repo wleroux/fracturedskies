@@ -35,6 +35,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val CHUNK_X_SIZE = 32
     val CHUNK_Y_SIZE = 128
     val CHUNK_Z_SIZE = 32
+    val CHUNKS = Vector3i(CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE)
     fun Node.Builder<*>.worldRenderer(additionalContext: Context = Context()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
     }
@@ -138,22 +139,22 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     when (message) {
       is UpdateBlock -> {
         val world = this.world!!
-        val xChunk = message.x / CHUNK_X_SIZE
-        val yChunk = message.y / CHUNK_Y_SIZE
-        val zChunk = message.z / CHUNK_Z_SIZE
-        updateChunk(world, Triple(xChunk, yChunk, zChunk))
-        if (message.x != 0 && message.x % CHUNK_X_SIZE == 0)
-          updateChunk(world, Triple(xChunk - 1, yChunk, zChunk))
-        if (message.x + 1 != world.width && (message.x + 1) % CHUNK_X_SIZE == 0)
-          updateChunk(world, Triple(xChunk + 1, yChunk, zChunk))
-        if (message.y != 0 && message.y % CHUNK_Y_SIZE == 0)
-          updateChunk(world, Triple(xChunk, yChunk - 1, zChunk))
-        if (message.y + 1 != world.height && (message.y + 1) % CHUNK_Y_SIZE == 0)
-          updateChunk(world, Triple(xChunk, yChunk + 1, zChunk))
-        if (message.z != 0 && message.z % CHUNK_Z_SIZE == 0)
-          updateChunk(world, Triple(xChunk, yChunk, zChunk - 1))
-        if (message.z + 1 != world.depth && (message.z + 1) % CHUNK_Z_SIZE == 0)
-          updateChunk(world, Triple(xChunk, yChunk, zChunk + 1))
+        (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
+                .map { message.pos + it }
+                .map { it / CHUNKS }
+                .filter {
+                  it.x in (0 until world.width / CHUNK_X_SIZE) &&
+                          it.y in (0 until world.height / CHUNK_Y_SIZE) &&
+                          it.z in (0 until world.depth / CHUNK_Z_SIZE)
+                }
+                .distinct()
+                .forEach { updateChunk(world, it)}
+      }
+      is LightUpdated -> {
+        message.updates
+                .map { (pos, _) -> pos / CHUNKS }
+                .distinct()
+                .forEach { updateChunk(world!!, it) }
       }
       is WorldGenerated -> {
         val world = this.world!!
@@ -163,7 +164,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
         (0 until xChunks).forEach { xChunk ->
           (0 until yChunks).forEach { yChunk ->
             (0 until zChunks).forEach { zChunk ->
-              updateChunk(world, Triple(xChunk, yChunk, zChunk))
+              updateChunk(world, Vector3i(xChunk, yChunk, zChunk))
             }
           }
         }
@@ -171,13 +172,13 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   }
 
-  private fun updateChunk(world: World, chunk: Triple<Int, Int, Int>) {
+  private fun updateChunk(world: World, chunk: Vector3i) {
     renderMeshJob[chunk]?.cancel()
     renderMeshJob[chunk] = launch {
       val meshGenerator = generateWorldMesh(world,
-              (chunk.first * CHUNK_X_SIZE) until ((chunk.first + 1) * CHUNK_X_SIZE),
-              (chunk.second * CHUNK_Y_SIZE) until ((chunk.second + 1) * CHUNK_Y_SIZE),
-              (chunk.third * CHUNK_Z_SIZE) until ((chunk.third + 1) * CHUNK_Z_SIZE))
+              (chunk.x * CHUNK_X_SIZE) until ((chunk.x + 1) * CHUNK_X_SIZE),
+              (chunk.y * CHUNK_Y_SIZE) until ((chunk.y + 1) * CHUNK_Y_SIZE),
+              (chunk.z * CHUNK_Z_SIZE) until ((chunk.z + 1) * CHUNK_Z_SIZE))
       launch(coroutineContext + UI_CONTEXT) {
         if (isActive) {
           worldMesh[chunk]?.close()
@@ -187,9 +188,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   }
 
-  private var worldMesh = mutableMapOf<Triple<Int, Int, Int>, Mesh>()
+  private var worldMesh = mutableMapOf<Vector3i, Mesh>()
   lateinit private var listener: MessageChannel
-  private var renderMeshJob = mutableMapOf<Triple<Int, Int, Int>, Job>()
+  private var renderMeshJob = mutableMapOf<Vector3i, Job>()
 
   override fun willMount() = runBlocking<Unit> {
     program = ColorShaderProgram()

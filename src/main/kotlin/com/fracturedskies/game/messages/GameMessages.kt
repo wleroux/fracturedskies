@@ -1,6 +1,7 @@
 package com.fracturedskies.game.messages
 
 import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.Message
 import com.fracturedskies.game.BlockType
@@ -13,5 +14,6 @@ data class NewGameRequested(override val cause: Cause, override val context: Con
 data class QueueWork(val work: Work, override val cause: Cause, override val context: Context): Message
 data class WorkAssignedToWorker(val worker: Worker, val work: Work, override val cause: Cause, override val context: Context): Message
 
-data class UpdateBlock(val x: Int, val y: Int, val z: Int, val type: BlockType, override val cause: Cause, override val context: Context): Message
+data class UpdateBlock(val pos: Vector3i, val type: BlockType, override val cause: Cause, override val context: Context): Message
 
+data class LightUpdated(val updates: Map<Vector3i, Int>, override val cause: Cause, override val context: Context): Message

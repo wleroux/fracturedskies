@@ -1,6 +1,7 @@
 package com.fracturedskies.engine.messages
 
 import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 
@@ -13,10 +14,12 @@ object MessageBus {
   fun unregister(messageChannel: MessageChannel) {
     messageChannels -= messageChannel
   }
-  fun <T: Message> send(message: T) = async(EmptyCoroutineContext) {
+  fun <T: Message> send(message: T) = runBlocking {
     messageChannels.forEach { it.send(message) }
-    while (!messageChannels.all {it.isIdle()}) {
-      yield()
+    async(EmptyCoroutineContext) {
+      while (!messageChannels.all { it.isIdle() }) {
+        yield()
+      }
     }
   }
 }

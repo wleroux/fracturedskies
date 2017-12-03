@@ -2,7 +2,7 @@ package com.fracturedskies.render.components.world
 
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.game.BlockType
+import com.fracturedskies.game.Block
 import com.fracturedskies.game.World
 import com.fracturedskies.render.shaders.Mesh
 import org.lwjgl.BufferUtils
@@ -74,7 +74,7 @@ fun generateWorldMesh(
             du[u] = width
             val dv = intArrayOf(0, 0, 0)
             dv[v] = height
-            var quad = Quad(pos, du, dv, vectors[d], data.color, data.occlusion)
+            var quad = Quad(pos, du, dv, vectors[d], data.skyLight, data.color, data.occlusion)
             if (data.reversed)
               quad = quad.reverse()
             if (quad.topLeftOcclusion + quad.bottomRightOcclusion < quad.topRightOcclusion + quad.bottomLeftOcclusion)
@@ -99,7 +99,8 @@ fun generateWorldMesh(
   }
 
   // Generate Mesh
-  val verticesBuffer = BufferUtils.createFloatBuffer(8 * 4 * quads.size)
+  val attributeSize = Quad.Attributes.fold(0, { acc, attr -> acc + attr.elements * attr.elementSize}) / java.lang.Float.BYTES
+  val verticesBuffer = BufferUtils.createFloatBuffer(attributeSize * 4 * quads.size)
   val indicesBuffer = BufferUtils.createIntBuffer(6 * quads.size)
 
   var indexCount = 0
@@ -117,30 +118,26 @@ fun generateWorldMesh(
   val indices = IntArray(indicesBuffer.remaining())
   indicesBuffer.get(indices)
 
-  return {Mesh(vertices, indices, listOf(
-          Mesh.Attribute.POSITION,
-          Mesh.Attribute.COLOR,
-          Mesh.Attribute.OCCLUSION,
-          Mesh.Attribute.NORMAL
-  ))}
+  return {Mesh(vertices, indices, Quad.Attributes)}
 }
 
 
-private fun getType(world: World, pos: Vector3i): BlockType {
+private fun getBlock(world: World, pos: Vector3i): Block? {
   return if (world.has(pos.x, pos.y, pos.z)) {
-    world[pos.x, pos.y, pos.z].type
+    world[pos.x, pos.y, pos.z]
   } else {
-    BlockType.AIR
+    null
   }
 }
+private fun isOpaque(block: Block?) = block?.type?.opaque ?: false
 
-private data class Data(val color: Color4, val reversed: Boolean, val occlusion: EnumSet<Occlusion> )
+private data class Data(val color: Color4, val skyLight: Int, val reversed: Boolean, val occlusion: EnumSet<Occlusion> )
 private fun getData(world: World, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
-  val currentBlock = getType(world, pos)
-  val nextBlock = getType(world, pos + d)
+  val currentBlock = getBlock(world, pos)
+  val nextBlock = getBlock(world, pos + d)
   return when {
-    currentBlock.opaque && !nextBlock.opaque -> Data(currentBlock.color, false, Occlusion.of(world, pos + d, u, v))
-    nextBlock.opaque && !currentBlock.opaque -> Data(nextBlock.color, true, Occlusion.of(world, pos, u, v))
+    isOpaque(currentBlock) && !isOpaque(nextBlock) -> Data(currentBlock!!.type.color, nextBlock?.skyLight ?: 0, false, Occlusion.of(world, pos + d, u, v))
+    isOpaque(nextBlock) && !isOpaque(currentBlock) -> Data(nextBlock!!.type.color, currentBlock?.skyLight ?: 0, true, Occlusion.of(world, pos, u, v))
     else -> null
   }
 }
