@@ -1,30 +1,19 @@
 package com.fracturedskies.game
 
+import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.Vector3i
 
-class World(val width: Int, val height: Int, val depth: Int, init: (Int, Int, Int) -> Block) {
-  private val blocks = Array(width * height * depth) { index ->
-    val x = index % width
-    val y = (index - x) / width % height
-    val z = (((index - x) / width) - y) / height
-
-    init(x, y, z)
-  }
-
+class World(val dimension: Dimension, init: (Vector3i) -> Block) {
+  private val blocks = Array(dimension.size) { index -> init(dimension(index)) }
   fun has(position: Vector3i) = has(position.x, position.y, position.z)
-  fun has(x: Int, y: Int, z: Int) = x in 0 until width && y in 0 until height && z in 0 until depth
+  fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   operator fun get(position: Vector3i) = get(position.x, position.y, position.z)
-  operator fun get(x: Int, y: Int, z: Int): Block {
-    val index = (z * width * height) + (y * width) + x
-    return blocks[index]
-  }
+  operator fun get(x: Int, y: Int, z: Int) = blocks[dimension(x, y, z)]
 
   operator fun set(x: Int, y: Int, z: Int, value: Block) {
-    if (!has(x, y, z)) {
-      throw IllegalArgumentException("Cannot access coordinate [$x, $y, $z] in a world of size [$width, $height, $depth]")
-    }
-    val index = ((z * height) + y) * width + x
-    blocks[index] = value
+    if (!has(x, y, z))
+      throw IllegalArgumentException("Cannot access coordinate [$x, $y, $z] in a world of size $dimension")
+    blocks[dimension(x, y, z)] = value
   }
 
   override fun toString(): String {

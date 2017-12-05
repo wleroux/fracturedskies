@@ -21,7 +21,7 @@ class WaterPathFinder(private val water: WaterMap){
     val targetWaterPotential = waterPotential(initialPos) + 2
 
     val cameFrom = HashMap<Vector3i, Vector3i?>()
-    cameFrom.put(initialPos, null)
+    cameFrom[initialPos] = null
 
     val unvisitedCells = PriorityQueue<JumpNode>(waterPotentialComparator.reversed())
     unvisitedCells.add(JumpNode(initialPos, NEIGHBOURS))
@@ -44,7 +44,7 @@ class WaterPathFinder(private val water: WaterMap){
 
       for (successor in successors(sourceNode, targetWaterPotential)) {
         if (!cameFrom.containsKey(successor.pos)) {
-          cameFrom.put(successor.pos, sourceNode.pos)
+          cameFrom[successor.pos] = sourceNode.pos
           unvisitedCells.add(successor)
         }
       }

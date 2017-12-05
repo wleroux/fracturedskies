@@ -28,7 +28,7 @@ class MainGameSystem(coroutineContext: CoroutineContext) {
   val channel get() = game.channel
 
   companion object {
-    private val MILLISECONDS_PER_UPDATE: Long = 50
+    private val MILLISECONDS_PER_UPDATE: Long = 16
     private val NANOSECONDS_PER_UPDATE: Long = NANOSECONDS.convert(MILLISECONDS_PER_UPDATE, MILLISECONDS)
     private val SECONDS_PER_UPDATE: Float = MILLISECONDS_PER_UPDATE.toFloat() / 1000f
   }

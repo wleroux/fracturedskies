@@ -1,5 +1,6 @@
 package com.fracturedskies.game.water
 
+import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.Vector3i
 import org.junit.Assert.*
 import org.junit.Test
@@ -11,7 +12,7 @@ class SeaFormationTest {
   private val xRange = (0 until 10)
   private val yRange = (0 until 10)
   private val zRange = (0 until 10)
-  private val water = WaterMap(10, 10, 10)
+  private val water = WaterMap(Dimension(10, 10, 10))
 
   @Test
   fun itStartsWithNoSeas() {

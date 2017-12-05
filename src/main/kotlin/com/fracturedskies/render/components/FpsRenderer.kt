@@ -1,6 +1,7 @@
 package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.Render
+import com.fracturedskies.engine.Update
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.messages.MessageBus.register
@@ -9,7 +10,7 @@ import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.render.components.TextRenderer.Companion.textRenderer
 import java.util.concurrent.TimeUnit
 
-class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
+class FpsRenderer(attributes: Context) : AbstractComponent<FpsRenderer.FpsData>(attributes, FpsData(0, 0)) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
     fun Node.Builder<*>.fpsRenderer() {
@@ -17,24 +18,43 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
     }
   }
   /* State */
+  data class FpsData(val fps: Int, val ups: Int)
   var fps
-    get() = nextState ?: state
-    set(value) { nextState = value }
+    get() = nextState?.fps ?: state.fps
+    set(value) { nextState = FpsData(value, ups) }
+  var ups
+    get() = nextState?.ups ?: state.ups
+    set(value) { nextState = FpsData(fps, value) }
 
   lateinit private var fpsCounter: MessageChannel
   override fun willMount() {
     super.willMount()
-    var last = System.nanoTime()
-    var ticks = 0
+    var lastFps = System.nanoTime()
+    var fpsTicks = 0
+
+    var lastUps = System.nanoTime()
+    var upsTicks = 0
     fpsCounter = register(MessageChannel { message ->
-      if (message is Render) {
-        val now = System.nanoTime()
-        if (now - last >= ONE_SECOND_IN_NANOSECONDS) {
-          fps = ticks
-          ticks = 0
-          last = now
-        } else {
-          ticks++
+      when (message) {
+        is Render -> {
+          val now = System.nanoTime()
+          if (now - lastFps >= ONE_SECOND_IN_NANOSECONDS) {
+            fps = fpsTicks
+            fpsTicks = 0
+            lastFps = now
+          } else {
+            fpsTicks++
+          }
+        }
+        is Update -> {
+          val now = System.nanoTime()
+          if (now - lastUps >= ONE_SECOND_IN_NANOSECONDS) {
+            ups = upsTicks
+            upsTicks = 0
+            lastUps = now
+          } else {
+            upsTicks++
+          }
         }
       }
     })
@@ -45,6 +65,6 @@ class FpsRenderer(attributes: Context) : AbstractComponent<Int>(attributes, 0) {
   }
   override fun componentFromPoint(point: Point): Component<*>? = null
   override fun toNode() = nodes {
-    textRenderer("FPS: $fps, MSPF: ${1000f / fps}")
+    textRenderer("FPS: $fps, MSPF: ${1000f / fps}; UPS: $ups, MSPF: ${1000f / ups}")
   }
 }

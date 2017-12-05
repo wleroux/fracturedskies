@@ -25,11 +25,11 @@ class WaterSystem(coroutineContext: CoroutineContext) {
     when (message) {
       is WorldGenerated -> {
         val world = message.world
-        water = WaterMap(world.width, world.height, world.depth)
+        water = WaterMap(world.dimension)
         pathFinder = WaterPathFinder(water)
-        (0 until world.height).forEach { y ->
-          (0 until world.width).forEach { x->
-            (0 until world.depth).forEach {z ->
+        (0 until water.dimension.height).forEach { y ->
+          (0 until water.dimension.width).forEach { x->
+            (0 until water.dimension.depth).forEach {z ->
               water.setOpaque(Vector3i(x, y, z), world[x, y, z].type.opaque)
             }
           }
@@ -71,7 +71,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
       val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
       for (pos in evaporation) {
         water.setLevel(pos, 0)
-        waterLevelUpdates.put(pos, 0)
+        waterLevelUpdates[pos] = 0
       }
       waterLevelUpdates
     } else {
@@ -81,6 +81,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
 
   private suspend fun flow(): Map<Vector3i, Byte> {
     water.maxFlowOut.clear()
+    val originalWaterLevel = mutableMapOf<Vector3i, Byte>()
     val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
     val disturbedSeas = water.seas.filter { it.disturbed }
     disturbedSeas.forEach { it.disturbed = false }
@@ -109,10 +110,16 @@ class WaterSystem(coroutineContext: CoroutineContext) {
             water.maxFlowOut[path[i]]--
 
           val sourceLocation = path[0]
-          water.setLevel(sourceLocation, water.getLevel(sourceLocation).dec())
-          water.setLevel(targetLocation, water.getLevel(targetLocation).inc())
-          waterLevelUpdates.put(sourceLocation, water.getLevel(sourceLocation))
-          waterLevelUpdates.put(targetLocation, water.getLevel(targetLocation))
+          val sourceWaterLevel = water.getLevel(sourceLocation)
+
+          originalWaterLevel.putIfAbsent(sourceLocation, sourceWaterLevel)
+          originalWaterLevel.putIfAbsent(targetLocation, targetWaterLevel)
+          val newSourceWaterLevel = sourceWaterLevel.dec()
+          val newTargetWaterLevel = targetWaterLevel.inc()
+          water.setLevel(sourceLocation, newSourceWaterLevel)
+          water.setLevel(targetLocation, newTargetWaterLevel)
+          waterLevelUpdates[sourceLocation] = newSourceWaterLevel
+          waterLevelUpdates[targetLocation] = newTargetWaterLevel
 
           candidates.remove(sourceLocation)
           candidates.add(sourceLocation)
@@ -125,7 +132,8 @@ class WaterSystem(coroutineContext: CoroutineContext) {
     // Split seas that have settled
     disturbedSeas.filterNot { it.disturbed }.forEach { water.splitSea(it) }
 
-    return waterLevelUpdates
+    // Only update water levels for actual change (rather than pass-through changes)
+    return waterLevelUpdates.filter { (pos, waterLevel) -> originalWaterLevel[pos] != waterLevel }
   }
 
   private val waterPotentialComparator = Comparator.comparingInt(ToIntFunction<Vector3i> { pathFinder.waterPotential(it) })

@@ -46,7 +46,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var focused = false
   private val controller = Controller()
   private val sliceHeight: Int
-    get() = (game.world?.height ?: 0) - clamp(controller.slice, 0 until (game.world?.height ?: 0))
+    get() = (game.world?.dimension?.height ?: 0) - clamp(controller.slice, 0 until (game.world?.dimension?.height ?: 0))
 
   override val handler = EventHandlers(on(Key::class) { key ->
     if (key.action == GLFW.GLFW_PRESS) {
@@ -189,9 +189,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 .flatMap { message.updates.map { (pos, _) -> pos + it } }
                 .map { it / CHUNKS }
                 .filter {
-                  it.x in (0 until world.width / CHUNK_X_SIZE) &&
-                          it.y in (0 until world.height / CHUNK_Y_SIZE) &&
-                          it.z in (0 until world.depth / CHUNK_Z_SIZE)
+                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                          it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                          it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
                 }
                 .distinct()
                 .forEach { updateBlockMesh(world, it)}
@@ -202,9 +202,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 .flatMap { message.updates.map { (pos, _) -> pos + it } }
                 .map { it / CHUNKS }
                 .filter {
-                  it.x in (0 until world.width / CHUNK_X_SIZE) &&
-                          it.y in (0 until world.height / CHUNK_Y_SIZE) &&
-                          it.z in (0 until world.depth / CHUNK_Z_SIZE)
+                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                          it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                          it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
                 }
                 .distinct()
                 .forEach { updateWaterMesh(world, it)}
@@ -219,9 +219,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       }
       is WorldGenerated -> {
         val world = this.world!!
-        val xChunks = world.width / CHUNK_X_SIZE
-        val yChunks = world.height / CHUNK_Y_SIZE
-        val zChunks = world.depth / CHUNK_Z_SIZE
+        val xChunks = world.dimension.width / CHUNK_X_SIZE
+        val yChunks = world.dimension.height / CHUNK_Y_SIZE
+        val zChunks = world.dimension.depth / CHUNK_Z_SIZE
         (0 until xChunks).forEach { xChunk ->
           (0 until yChunks).forEach { yChunk ->
             (0 until zChunks).forEach { zChunk ->
@@ -342,8 +342,8 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   }
 
   private fun heightAt(world: World, x: Int, z: Int, yRange: IntRange): Int {
-    val clampedX = clamp(x, 0 until world.width)
-    val clampedZ = clamp(z, 0 until world.depth)
+    val clampedX = clamp(x, 0 until world.dimension.width)
+    val clampedZ = clamp(z, 0 until world.dimension.depth)
     return yRange
             .reversed()
             .firstOrNull { world[clampedX, it, clampedZ].type != BlockType.AIR }

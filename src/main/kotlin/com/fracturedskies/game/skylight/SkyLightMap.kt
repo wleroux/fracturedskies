@@ -5,8 +5,7 @@ import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.collections.IntMap
 import com.fracturedskies.engine.math.Vector3i
 
-class SkyLightMap(val width: Int, val height: Int, val depth: Int) {
-  private val dimension = Dimension(width, height, depth)
+class SkyLightMap(val dimension: Dimension) {
   val level = IntMap(dimension)
   val opaque = BooleanMap(dimension)
 

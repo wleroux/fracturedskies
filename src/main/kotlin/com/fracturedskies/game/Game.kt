@@ -19,9 +19,7 @@ class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private v
         globalWork.remove(message.work)
       }
       is WorldGenerated -> {
-        world = World(message.world.width, message.world.height, message.world.depth) { x, y, z ->
-          message.world[x, y, z]
-        }
+        world = World(message.world.dimension) { message.world[it] }
       }
       is UpdateBlock -> {
         message.updates.forEach { pos, type ->

@@ -21,10 +21,10 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
     when (message) {
       is WorldGenerated -> {
         val world = message.world
-        skylight = SkyLightMap(world.width, world.height, world.depth)
-        (0 until skylight.width).forEach { x ->
-          (0 until skylight.depth).forEach { z ->
-            (0 until skylight.height).forEach { y ->
+        skylight = SkyLightMap(world.dimension)
+        (0 until skylight.dimension.width).forEach { x ->
+          (0 until skylight.dimension.depth).forEach { z ->
+            (0 until skylight.dimension.height).forEach { y ->
               skylight.opaque[x, y, z] = world[x, y, z].type.opaque
             }
           }
@@ -33,13 +33,13 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
         // All surface opaque have max skylight level
         val lightUpdates = mutableMapOf<Vector3i, Int>()
         val lightPropagation = LinkedList<Vector3i>()
-        (0 until skylight.width).forEach { x ->
-          (0 until skylight.depth).forEach { z ->
-            val highestOpaqueBlock = (0 until skylight.height).reversed().firstOrNull {
+        (0 until skylight.dimension.width).forEach { x ->
+          (0 until skylight.dimension.depth).forEach { z ->
+            val highestOpaqueBlock = (0 until skylight.dimension.height).reversed().firstOrNull {
               skylight.opaque[x, it, z]
             } ?: 0
 
-            ((highestOpaqueBlock + 1) until skylight.height).forEach { y ->
+            ((highestOpaqueBlock + 1) until skylight.dimension.height).forEach { y ->
               val lightPos = Vector3i(x, y, z)
               lightUpdates.put(lightPos, MAX_SKYLIGHT_LEVEL)
               lightPropagation.add(lightPos)
@@ -78,7 +78,7 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
         if (skylight.has(neighborPos)) {
           val propagateLightValue = if (skylight.level[blockPos] == MAX_SKYLIGHT_LEVEL && neighborVector == Vector3i.AXIS_NEG_Y) {
             MAX_SKYLIGHT_LEVEL
-          } else if (neighborPos.y + 1 == skylight.height) {
+          } else if (neighborPos.y + 1 == skylight.dimension.height) {
             MAX_SKYLIGHT_LEVEL
           } else {
             skylight.level[blockPos] - 1
@@ -112,7 +112,7 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
         val blockPos = skyunlightPos.pollFirst()
         if (skylight.level[blockPos] == 0 || skylight.opaque[blockPos])
           continue
-        val lit = (blockPos.y == skylight.height - 1) || Vector3i.NEIGHBOURS
+        val lit = (blockPos.y == skylight.dimension.height - 1) || Vector3i.NEIGHBOURS
                 .filter { skylight.has(blockPos + it) }
                 .any {
                   if (it == Vector3i.AXIS_Y &&
@@ -140,7 +140,7 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
       lightUpdates.putAll(propagateLight(skylightPos))
       return lightUpdates
     } else {
-      val skyLightLevel = if (initialPos.y + 1 == skylight.height) MAX_SKYLIGHT_LEVEL else 0
+      val skyLightLevel = if (initialPos.y + 1 == skylight.dimension.height) MAX_SKYLIGHT_LEVEL else 0
       lightUpdates.put(initialPos, skyLightLevel)
       skylight.level[initialPos] = skyLightLevel
       val skylightPos = LinkedList(Vector3i.NEIGHBOURS

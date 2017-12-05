@@ -7,14 +7,13 @@ import com.fracturedskies.engine.collections.ObjectMap
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
-class WaterMap(val width: Int, val height: Int, val depth: Int) {
-  private val dimension = Dimension(width, height, depth)
+class WaterMap(val dimension: Dimension) {
   val maxFlowOut = ByteMap(dimension)
   private val level = ByteMap(dimension)
   private val opaque = BooleanMap(dimension)
   val sea = ObjectMap<Sea>(dimension)
   val seas = mutableSetOf<Sea>()
-  val evaporationCandidates = mutableSetOf<Vector3i>()
+  val evaporationCandidates = hashSetOf<Vector3i>()
 
   fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
   fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
