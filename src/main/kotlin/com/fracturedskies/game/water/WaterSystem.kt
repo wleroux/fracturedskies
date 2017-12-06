@@ -38,8 +38,16 @@ class WaterSystem(coroutineContext: CoroutineContext) {
       }
       is UpdateBlock -> {
         if (started) {
+          val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
           message.updates.forEach { pos, type ->
             water.setOpaque(pos, type.opaque)
+            if (type.opaque && water.getLevel(pos) != 0.toByte()) {
+              water.setLevel(pos, 0)
+              waterLevelUpdates[pos] = 0
+            }
+          }
+          if (waterLevelUpdates.isNotEmpty()) {
+            MessageBus.send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), Context()))
           }
         }
       }
@@ -66,7 +74,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
 
   private fun evaporation(): Map<Vector3i, Byte> {
     val evaporation = water.evaporationCandidates
-            .filter { Math.random() > 0.995 }
+            .filter { Math.random() > 0.99995 }
     return if (evaporation.isNotEmpty()) {
       val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
       for (pos in evaporation) {
