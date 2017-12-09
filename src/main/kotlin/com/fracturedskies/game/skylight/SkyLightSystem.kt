@@ -13,7 +13,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class SkyLightSystem(coroutineContext: CoroutineContext) {
   companion object {
-    val MAX_SKYLIGHT_LEVEL = 16
+    val MAX_SKYLIGHT_LEVEL = 15
   }
 
   lateinit var skylight: SkyLightMap

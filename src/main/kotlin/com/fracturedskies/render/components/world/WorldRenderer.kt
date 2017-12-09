@@ -7,17 +7,15 @@ import com.fracturedskies.engine.jeact.Bounds
 import com.fracturedskies.engine.jeact.Node
 import com.fracturedskies.engine.jeact.event.EventHandlers
 import com.fracturedskies.engine.jeact.event.on
+import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.game.BlockType
-import com.fracturedskies.game.Game
-import com.fracturedskies.game.World
+import com.fracturedskies.game.*
 import com.fracturedskies.game.messages.*
-import com.fracturedskies.game.raycast
 import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import com.fracturedskies.render.events.*
 import com.fracturedskies.render.shaders.Mesh
@@ -30,6 +28,7 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.*
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.math.PI
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
   companion object {
@@ -210,12 +209,21 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 .forEach { updateWaterMesh(world, it)}
       }
       is LightUpdated -> {
+        val world = this.world!!
         message.updates
                 .map { (pos, _) -> pos}
                 .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
                 .map { pos -> pos / CHUNKS }
+                .filter {
+                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                      it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                      it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
+                }
                 .distinct()
-                .forEach { updateBlockMesh(world!!, it) }
+                .forEach {
+                  updateBlockMesh(world, it)
+                  updateWaterMesh(world, it)
+                }
       }
       is WorldGenerated -> {
         val world = this.world!!
@@ -288,9 +296,11 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   }
 
   lateinit private var listener: MessageChannel
-
+  private val skylightDirection = Vector3(0f, -1f, -0.5f).normalize()
+  lateinit private var skylight: LightMap
   override fun willMount() = runBlocking<Unit> {
     program = ColorShaderProgram()
+    skylight = LightMap.load(loadByteBuffer("Lightmap.png", WorldRenderer::class.java), 240)
     listener = register(game.channel)
     controller.register()
     MessageBus.send(NewGameRequested(Cause.of(this), Context()))
@@ -334,6 +344,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       view(requireNotNull(variables[StandardShaderProgram.VIEW]))
       projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
+      lightDirection(skylightDirection * Quaternion4(Vector3.AXIS_Z, game.timeOfDay * 2f * PI.toFloat() ))
+      skyColors(skylight, game.timeOfDay)
+
       blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
       blockSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
       waterMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }

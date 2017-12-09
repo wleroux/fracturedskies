@@ -13,7 +13,7 @@ layout (location = 2) uniform mat4 projection;
 out vec4 Color;
 out vec3 Normal;
 out float Occlusion;
-out float SkyLightLevel;
+flat out int SkyLightLevel;
 
 void main()
 {
@@ -21,5 +21,5 @@ void main()
     Color = color;
     Normal = normal;
     Occlusion = occlusion;
-    SkyLightLevel = skyLightLevel;
+    SkyLightLevel = int(skyLightLevel);
 }

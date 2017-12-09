@@ -17,3 +17,4 @@ data class WorkAssignedToWorker(val worker: Worker, val work: Work, override val
 data class UpdateBlock(val updates: Map<Vector3i, BlockType>, override val cause: Cause, override val context: Context): Message
 data class UpdateBlockWater(val updates: Map<Vector3i, Byte>, override val cause: Cause, override val context: Context): Message
 data class LightUpdated(val updates: Map<Vector3i, Int>, override val cause: Cause, override val context: Context): Message
+data class TimeUpdated(val time: Float, override val cause: Cause, override val context: Context): Message

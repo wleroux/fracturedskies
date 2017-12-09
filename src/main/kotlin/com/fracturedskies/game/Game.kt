@@ -9,6 +9,7 @@ import kotlin.coroutines.experimental.EmptyCoroutineContext
 class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private val handler: suspend Game.(Message) -> Unit = {}) {
   var world: World? = null
   val globalWork = mutableListOf<Work>()
+  var timeOfDay = 0f
 
   val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
@@ -35,6 +36,9 @@ class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private v
         message.updates.forEach { (pos, waterLevel) ->
           world!![pos].waterLevel = waterLevel
         }
+      }
+      is TimeUpdated -> {
+        timeOfDay = message.time
       }
     }
     handler(message)

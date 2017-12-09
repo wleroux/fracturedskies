@@ -21,4 +21,7 @@ data class Color4(val red: Int, val green: Int, val blue: Int, val alpha: Int) {
     colorBuffer.flip()
     return colorBuffer.asFloatBuffer().get(0)
   }
+
+  operator fun div(value: Int) = Color4(red / value, green / value, blue / value, alpha / value)
+  operator fun times(value: Int) = Color4(red * value, green * value, blue * value, alpha * value)
 }
