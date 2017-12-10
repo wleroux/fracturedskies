@@ -48,7 +48,7 @@ fun generateWaterMesh(
                     yOffset + curWaterHeight, 0f, adjWaterHeight - curWaterHeight,
                     zOffset                 , 0f, 0f                             ,
                     0f, -1f, 0f,
-                world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -68,7 +68,7 @@ fun generateWaterMesh(
                     yOffset + curWaterHeight, 0f,  0f,
                     zOffset +             1f, 0f, -1f,
                     0f, 1f, 0f,
-                    world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -85,7 +85,7 @@ fun generateWaterMesh(
                     yOffset + curWaterHeight,  0f,  adjWaterHeight - curWaterHeight,
                     zOffset +             1f, -1f,                               0f,
                     -1f, 0f, 0f,
-                world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -102,7 +102,7 @@ fun generateWaterMesh(
                     yOffset + curWaterHeight, 0f,  adjWaterHeight - curWaterHeight,
                     zOffset                 , 1f,  0f,
                     1f, 0f, 0f,
-                world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -117,7 +117,7 @@ fun generateWaterMesh(
                     yOffset, 0f,  0f,
                     zOffset, 0f,  1f,
                     0f, -1f, 0f,
-                world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -134,7 +134,7 @@ fun generateWaterMesh(
                     yOffset + curWaterHeight,  0f, adjWaterHeight - curWaterHeight,
                     zOffset +             1f,  0f,                              0f,
                     0f, 0f, 1f,
-                world[pos].skyLight, Color4.WATER, 0f, 0f, 0f, 0f
+                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
             ))
           }
         }
@@ -161,13 +161,7 @@ fun generateWaterMesh(
   val indices = IntArray(indicesBuffer.remaining())
   indicesBuffer.get(indices)
 
-  return {Mesh(vertices, indices, listOf(
-          Mesh.Attribute.POSITION,
-          Mesh.Attribute.COLOR,
-          Mesh.Attribute.SKY_LIGHT_LEVEL,
-          Mesh.Attribute.OCCLUSION,
-          Mesh.Attribute.NORMAL
-  ))}
+  return {Mesh(vertices, indices, Quad.Attributes)}
 }
 
 private fun waterHeight(waterLevel: Byte): Float {

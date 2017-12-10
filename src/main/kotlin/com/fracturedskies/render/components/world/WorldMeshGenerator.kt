@@ -75,7 +75,7 @@ fun generateWorldMesh(
             du[u] = width
             val dv = intArrayOf(0, 0, 0)
             dv[v] = height
-            var quad = Quad(pos, du, dv, vectors[d], data.skyLight, data.color, data.occlusion)
+            var quad = Quad(pos, du, dv, vectors[d], data.skyLight, data.blockLight, data.color, data.occlusion)
             if (data.reversed)
               quad = quad.reverse()
             if (quad.topLeftOcclusion + quad.bottomRightOcclusion < quad.topRightOcclusion + quad.bottomLeftOcclusion)
@@ -132,14 +132,14 @@ private fun getBlock(world: World, pos: Vector3i): Block? {
 }
 private fun isOpaque(block: Block?) = block?.type?.opaque ?: false
 
-private data class Data(val color: Color4, val skyLight: Int, val reversed: Boolean, val occlusion: EnumSet<Occlusion> )
+private data class Data(val color: Color4, val skyLight: Int, val blockLight: Int, val reversed: Boolean, val occlusion: EnumSet<Occlusion> )
 private fun getData(world: World, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
   val currentBlock = getBlock(world, pos)
   val nextBlock = getBlock(world, pos + d)
   return when {
-    !sliceMesh && isOpaque(currentBlock) && !isOpaque(nextBlock) -> Data(currentBlock!!.type.color, nextBlock?.skyLight ?: 0, false, Occlusion.of(world, pos + d, u, v))
-    !sliceMesh && isOpaque(nextBlock) && !isOpaque(currentBlock) -> Data(nextBlock!!.type.color, currentBlock?.skyLight ?: 0, true, Occlusion.of(world, pos, u, v))
-    sliceMesh && isOpaque(currentBlock) && isOpaque(nextBlock) && d == Vector3i.AXIS_Y -> Data(Color4.DARK_BROWN, 0, false, Occlusion.all)
+    !sliceMesh && isOpaque(currentBlock) && !isOpaque(nextBlock) -> Data(currentBlock!!.type.color, nextBlock?.skyLight ?: 0, nextBlock?.blockLight ?: 0, false, Occlusion.of(world, pos + d, u, v))
+    !sliceMesh && isOpaque(nextBlock) && !isOpaque(currentBlock) -> Data(nextBlock!!.type.color, currentBlock?.skyLight ?: 0, currentBlock?.blockLight ?: 0, true, Occlusion.of(world, pos, u, v))
+    sliceMesh && isOpaque(currentBlock) && isOpaque(nextBlock) && d == Vector3i.AXIS_Y -> Data(Color4.DARK_BROWN, 0, 0, false, Occlusion.all)
     else -> null
   }
 }

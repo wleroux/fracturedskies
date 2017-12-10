@@ -24,9 +24,9 @@ class WorldGenerator(private val width: Int, private val height: Int, private va
 
   override operator fun invoke(pos: Vector3i): Block {
     return if (isBlock(pos.x.toFloat(), pos.y.toFloat(), pos.z.toFloat())) {
-      Block(BlockType.BLOCK, 0, 0)
+      Block(BlockType.BLOCK, 0, 0, 0)
     } else {
-      Block(BlockType.AIR, 0, 0)
+      Block(BlockType.AIR, 0, 0, 0)
     }
   }
 

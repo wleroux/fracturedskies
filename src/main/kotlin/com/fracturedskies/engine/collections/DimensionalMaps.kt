@@ -55,16 +55,16 @@ open class IntMap(private val dimension: Dimension) {
     backend.fill(0)
   }
 }
-open class ObjectMap<K>(private val dimension: Dimension, private val backend: Array<K?>) {
+open class ObjectMap<K>(private val dimension: Dimension, private val backend: Array<K>) {
   companion object {
-    inline operator fun <reified K> invoke(dimension: Dimension): ObjectMap<K> {
-      return ObjectMap(dimension, arrayOfNulls(dimension.size))
+    inline operator fun <reified K> invoke(dimension: Dimension, noinline init: (Int) -> K): ObjectMap<K> {
+      return ObjectMap(dimension, Array(dimension.size, init))
     }
   }
   operator fun get(pos: Vector3i) = get(pos.x, pos.y, pos.z)
   operator fun get(x: Int, y: Int, z: Int) = backend[dimension(x, y, z)]
-  operator fun set(pos: Vector3i, value: K?) = set(pos.x, pos.y, pos.z, value)
-  operator fun set(x: Int, y: Int, z: Int, value: K?) {
+  operator fun set(pos: Vector3i, value: K) = set(pos.x, pos.y, pos.z, value)
+  operator fun set(x: Int, y: Int, z: Int, value: K) {
     backend[dimension(x, y, z)] = value
   }
 }

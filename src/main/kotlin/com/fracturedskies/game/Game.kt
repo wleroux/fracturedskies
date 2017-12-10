@@ -27,9 +27,14 @@ class Game(coroutineContext: CoroutineContext = EmptyCoroutineContext, private v
           world!![pos].type = type
         }
       }
-      is LightUpdated -> {
-        message.updates.forEach { pos, level ->
-          world!![pos].skyLight = level
+      is SkyLightUpdated -> {
+        message.updates.forEach { pos, skyLightLevel ->
+          world!![pos].skyLight = skyLightLevel
+        }
+      }
+      is BlockLightUpdated -> {
+        message.updates.forEach { pos, blockLightLevel ->
+          world!![pos].blockLight = blockLightLevel
         }
       }
       is UpdateBlockWater -> {

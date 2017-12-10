@@ -1,6 +1,6 @@
 package com.fracturedskies.game
 
-class Block(var type: BlockType, var skyLight: Int, var waterLevel: Byte) {
+class Block(var type: BlockType, var skyLight: Int, var blockLight: Int, var waterLevel: Byte) {
   override fun toString(): String {
     return "$type"
   }

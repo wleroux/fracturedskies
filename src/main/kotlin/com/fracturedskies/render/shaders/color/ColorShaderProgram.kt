@@ -4,7 +4,7 @@ import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.collections.Key
 import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.engine.math.Vector3
-import com.fracturedskies.game.LightMap
+import com.fracturedskies.game.LightLevels
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.ShaderProgram
 import org.lwjgl.opengl.GL20.glUniform3f
@@ -29,6 +29,7 @@ class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.ver
 
     private val LIGHT_DIRECTION_LOCATION = 3
     private val SKY_COLORS_LOCATION = 4
+    private val BLOCK_COLORS_LOCATION = 20
   }
 
   override fun render(properties: Context, variables: Context, mesh: Mesh) {
@@ -61,8 +62,12 @@ class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.ver
     uniform(PROJECTION_LOCATION, projection)
   }
 
-  fun skyColors(skyLightMap: LightMap, timeOfDay: Float) {
-    glUniform4uiv(SKY_COLORS_LOCATION, skyLightMap.getColorBuffer(timeOfDay))
+  fun skyColors(skyLightLevels: LightLevels, timeOfDay: Float) {
+    glUniform4uiv(SKY_COLORS_LOCATION, skyLightLevels.getColorBuffer(timeOfDay))
+  }
+
+  fun blockColors(blockLightLevels: LightLevels) {
+    glUniform4uiv(BLOCK_COLORS_LOCATION, blockLightLevels.getColorBuffer(0.5f))
   }
 
   fun lightDirection(dir: Vector3) {

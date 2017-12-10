@@ -19,6 +19,7 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
       private val COLOR_LOCATION = 3
       private val OCCLUSION_LOCATION = 4
       private val SKY_LIGHT_LEVEL_LOCATION = 5
+      private val BLOCK_LIGHT_LEVEL_LOCATION = 6
 
       val POSITION = Mesh.Attribute("POSITION", POSITION_LOCATION, GL_FLOAT, 3, java.lang.Float.BYTES)
       val TEXCOORD = Mesh.Attribute("TEXCOORD", TEXCOORD_LOCATION, GL_FLOAT, 3, java.lang.Float.BYTES)
@@ -26,6 +27,7 @@ data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes:
       val COLOR = Mesh.Attribute("COLOR", COLOR_LOCATION, GL_UNSIGNED_BYTE, 4, java.lang.Byte.BYTES)
       val OCCLUSION = Mesh.Attribute("OCCLUSION", OCCLUSION_LOCATION, GL_FLOAT, 1, java.lang.Float.BYTES)
       val SKY_LIGHT_LEVEL = Mesh.Attribute("SKY_LIGHT_LEVEL", SKY_LIGHT_LEVEL_LOCATION, GL_FLOAT, 1, java.lang.Float.BYTES)
+      val BLOCK_LIGHT_LEVEL = Mesh.Attribute("BLOCK_LIGHT_LEVEL", BLOCK_LIGHT_LEVEL_LOCATION, GL_FLOAT, 1, java.lang.Float.BYTES)
     }
 
     override fun toString(): String = label

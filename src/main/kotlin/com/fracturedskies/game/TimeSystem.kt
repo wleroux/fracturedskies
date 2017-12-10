@@ -11,7 +11,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class TimeSystem(coroutineContext: CoroutineContext) {
   companion object {
-    val TIME_PER_DAY = 240f
+    val TIME_PER_DAY = 1200f
   }
   private var time = TIME_PER_DAY / 2
   val channel = MessageChannel(coroutineContext) { message ->

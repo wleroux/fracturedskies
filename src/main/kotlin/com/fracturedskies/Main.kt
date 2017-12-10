@@ -8,6 +8,7 @@ import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.game.Game
 import com.fracturedskies.game.TimeSystem
 import com.fracturedskies.game.WorldGeneratorSystem
+import com.fracturedskies.game.skylight.BlockLightSystem
 import com.fracturedskies.game.skylight.SkyLightSystem
 import com.fracturedskies.game.water.WaterSystem
 import com.fracturedskies.game.workers.Delegator
@@ -67,6 +68,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   register(WorldGeneratorSystem(coroutineContext + CommonPool).channel)
   register(Delegator(coroutineContext).channel)
   register(SkyLightSystem(coroutineContext).channel)
+  register(BlockLightSystem(coroutineContext).channel)
   register(WaterSystem(coroutineContext).channel)
   register(TimeSystem(coroutineContext).channel)
 

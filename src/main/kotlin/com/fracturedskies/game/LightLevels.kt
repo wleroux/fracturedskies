@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 import java.nio.IntBuffer
 import kotlin.math.floor
 
-class LightMap(private val colorSwatches: Map<Int, List<Color4>>) {
+class LightLevels(private val colorSwatches: Map<Int, List<Color4>>) {
 
   private fun index(timeOfDay: Float) = clamp((timeOfDay * colorSwatches.size).toInt(), 0 until colorSwatches.size )
   operator fun get(timeOfDay: Float) = colorSwatches[index(timeOfDay)]!!
@@ -36,10 +36,10 @@ class LightMap(private val colorSwatches: Map<Int, List<Color4>>) {
 
 
   companion object {
-    fun load(rawImageBuffer: ByteBuffer, timeSegments: Int): LightMap {
-      val imageBuffer = STBImage.stbi_load_from_memory(rawImageBuffer, intArrayOf(timeSegments), intArrayOf(SkyLightSystem.MAX_SKYLIGHT_LEVEL), intArrayOf(3), 4)
-      return LightMap((0 until timeSegments).map { timeOfDay ->
-        val colorSwatch = (0..SkyLightSystem.MAX_SKYLIGHT_LEVEL).map { lightLevel ->
+    fun load(rawImageBuffer: ByteBuffer, timeSegments: Int): LightLevels {
+      val imageBuffer = STBImage.stbi_load_from_memory(rawImageBuffer, intArrayOf(timeSegments), intArrayOf(SkyLightSystem.MAX_LIGHT_LEVEL), intArrayOf(3), 4)
+      return LightLevels((0 until timeSegments).map { timeOfDay ->
+        val colorSwatch = (0..SkyLightSystem.MAX_LIGHT_LEVEL).map { lightLevel ->
           val offset = 4 * (lightLevel * timeSegments + timeOfDay)
           Color4(
               imageBuffer.get(offset + 0).toInt() and 0xFF,

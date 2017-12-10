@@ -128,7 +128,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
                     if (game.world!!.has(x, y, z) && !game.world!![x, y, z].type.opaque)
-                      listOf(Vector3i(x, y, z) to BlockType.BLOCK)
+                      listOf(Vector3i(x, y, z) to (if (controller.isPressed(GLFW.GLFW_KEY_LEFT_SHIFT)) BlockType.LIGHT else BlockType.BLOCK))
                     else listOf()
                   }
                 }
@@ -208,22 +208,39 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 .distinct()
                 .forEach { updateWaterMesh(world, it)}
       }
-      is LightUpdated -> {
+      is SkyLightUpdated -> {
         val world = this.world!!
         message.updates
-                .map { (pos, _) -> pos}
-                .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
-                .map { pos -> pos / CHUNKS }
-                .filter {
-                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
-                      it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
-                      it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
-                }
-                .distinct()
-                .forEach {
-                  updateBlockMesh(world, it)
-                  updateWaterMesh(world, it)
-                }
+            .map { (pos, _) -> pos}
+            .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
+            .map { pos -> pos / CHUNKS }
+            .filter {
+              it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                  it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                  it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
+            }
+            .distinct()
+            .forEach {
+              updateBlockMesh(world, it)
+              updateWaterMesh(world, it)
+            }
+      }
+      is BlockLightUpdated -> {
+        val world = this.world!!
+        message.updates
+            .map { (pos, _) -> pos}
+            .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
+            .map { pos -> pos / CHUNKS }
+            .filter {
+              it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                  it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                  it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
+            }
+            .distinct()
+            .forEach {
+              updateBlockMesh(world, it)
+              updateWaterMesh(world, it)
+            }
       }
       is WorldGenerated -> {
         val world = this.world!!
@@ -296,11 +313,13 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   }
 
   lateinit private var listener: MessageChannel
-  private val skylightDirection = Vector3(0f, -1f, -0.5f).normalize()
-  lateinit private var skylight: LightMap
+  private val skyLightDirection = Vector3(0f, -1f, -0.5f).normalize()
+  lateinit private var skyLightLevels: LightLevels
+  lateinit private var blockLightLevels: LightLevels
   override fun willMount() = runBlocking<Unit> {
     program = ColorShaderProgram()
-    skylight = LightMap.load(loadByteBuffer("Lightmap.png", WorldRenderer::class.java), 240)
+    skyLightLevels = LightLevels.load(loadByteBuffer("SkyLightLevels.png", WorldRenderer::class.java), 240)
+    blockLightLevels = LightLevels.load(loadByteBuffer("BlockLightLevels.png", WorldRenderer::class.java), 16)
     listener = register(game.channel)
     controller.register()
     MessageBus.send(NewGameRequested(Cause.of(this), Context()))
@@ -344,8 +363,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       view(requireNotNull(variables[StandardShaderProgram.VIEW]))
       projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
-      lightDirection(skylightDirection * Quaternion4(Vector3.AXIS_Z, game.timeOfDay * 2f * PI.toFloat() ))
-      skyColors(skylight, game.timeOfDay)
+      lightDirection(skyLightDirection * Quaternion4(Vector3.AXIS_Z, game.timeOfDay * 2f * PI.toFloat() ))
+      skyColors(skyLightLevels, game.timeOfDay)
+      blockColors(blockLightLevels)
 
       blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
       blockSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }

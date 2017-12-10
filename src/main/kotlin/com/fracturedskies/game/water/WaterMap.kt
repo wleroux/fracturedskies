@@ -11,7 +11,7 @@ class WaterMap(val dimension: Dimension) {
   val maxFlowOut = ByteMap(dimension)
   private val level = ByteMap(dimension)
   private val opaque = BooleanMap(dimension)
-  val sea = ObjectMap<Sea>(dimension)
+  val sea = ObjectMap<Sea?>(dimension, {null})
   val seas = mutableSetOf<Sea>()
   val evaporationCandidates = hashSetOf<Vector3i>()
 
