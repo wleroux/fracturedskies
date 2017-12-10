@@ -43,12 +43,18 @@ fun generateWaterMesh(
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_NEG_Y) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_NEG_Y) }
+
             quads.add(Quad(
                     xOffset                 , 1f, 0f                             ,
                     yOffset + curWaterHeight, 0f, adjWaterHeight - curWaterHeight,
                     zOffset                 , 0f, 0f                             ,
                     0f, -1f, 0f,
-                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }
@@ -63,12 +69,17 @@ fun generateWaterMesh(
             false -> curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0.toByte()
           }
           if (drawMesh) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_NEG_Z) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_NEG_Z) }
             quads.add(Quad(
                     xOffset                 , 1f,  0f,
                     yOffset + curWaterHeight, 0f,  0f,
                     zOffset +             1f, 0f, -1f,
                     0f, 1f, 0f,
-                    world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }
@@ -80,12 +91,17 @@ fun generateWaterMesh(
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_NEG_Z, Vector3i.AXIS_NEG_Y) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_NEG_Z, Vector3i.AXIS_NEG_Y) }
             quads.add(Quad(
                     xOffset                 ,  0f,                               0f,
                     yOffset + curWaterHeight,  0f,  adjWaterHeight - curWaterHeight,
                     zOffset +             1f, -1f,                               0f,
                     -1f, 0f, 0f,
-                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }
@@ -97,12 +113,17 @@ fun generateWaterMesh(
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_Z, Vector3i.AXIS_NEG_Y) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_Z, Vector3i.AXIS_NEG_Y) }
             quads.add(Quad(
                     xOffset +             1f, 0f,  0f,
                     yOffset + curWaterHeight, 0f,  adjWaterHeight - curWaterHeight,
                     zOffset                 , 1f,  0f,
                     1f, 0f, 0f,
-                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }
@@ -112,12 +133,18 @@ fun generateWaterMesh(
         if (!sliceMesh && isEmpty(world, downPos)) {
           val adjWaterLevel = if (world.has(downPos)) world[downPos].waterLevel else 0
           if (adjWaterLevel != MAX_WATER_LEVEL) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_Z) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_Z) }
+
             quads.add(Quad(
                     xOffset, 1f,  0f,
                     yOffset, 0f,  0f,
                     zOffset, 0f,  1f,
                     0f, -1f, 0f,
-                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }
@@ -129,12 +156,17 @@ fun generateWaterMesh(
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
+            val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_NEG_X, Vector3i.AXIS_NEG_Y) }
+            val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_NEG_X, Vector3i.AXIS_NEG_Y) }
             quads.add(Quad(
                     xOffset +             1f, -1f,                              0f,
                     yOffset + curWaterHeight,  0f, adjWaterHeight - curWaterHeight,
                     zOffset +             1f,  0f,                              0f,
                     0f, 0f, 1f,
-                world[pos].skyLight, world[pos].blockLight, Color4.WATER, 0f, 0f, 0f, 0f
+                    skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
+                    Color4.WATER,
+                    0f, 0f, 0f, 0f
             ))
           }
         }

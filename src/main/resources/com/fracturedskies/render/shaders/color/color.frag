@@ -4,12 +4,10 @@ out vec4 color;
 in vec4 Color;
 in vec3 Normal;
 in float Occlusion;
-flat in int SkyLightLevel;
-flat in int BlockLightLevel;
+in vec3 BlockLightColor;
+in vec3 SkyLightColor;
 
 layout (location = 3) uniform vec3 lightDir;
-layout (location = 4) uniform uvec4 SkyColors[16];
-layout (location = 20) uniform uvec4 BlockColors[16];
 
 vec3 gamma(vec3 color) {
   return pow(color, vec3(1.0 / 2.0));
@@ -19,12 +17,12 @@ void main() {
     vec3 materialDiffuseColor = pow(vec3(Color.rgb / 255), vec3(2.0));
 
     // Block Lighting
-    vec3 blockLightColor = pow(vec3(BlockColors[BlockLightLevel]) / 255, vec3(2.0));
+    vec3 blockLightColor = BlockLightColor;
     float blockLightPower = (blockLightColor.r + blockLightColor.g + blockLightColor.b) / 3;
     vec3 blockLight = blockLightPower * blockLightColor * materialDiffuseColor;
 
     // Sky Lighting
-    vec3 skyLightColor = pow(vec3(SkyColors[SkyLightLevel]) / 255, vec3(2.0));
+    vec3 skyLightColor = SkyLightColor;
     float skyLightPower = (skyLightColor.r + skyLightColor.g + skyLightColor.b) / 3;
     vec3 skyLight = skyLightPower * skyLightColor * materialDiffuseColor;
 

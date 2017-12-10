@@ -13,19 +13,21 @@ data class Quad(
         private val y: Float, private val dwy: Float, private val dhy: Float,
         private val z: Float, private val dwz: Float, private val dhz: Float,
         private val nx: Float, private val ny: Float, private val nz: Float,
-        private val skyLight: Int, private val blockLight: Int,
+        private val topLeftSkyLight: Float, private val topRightSkyLight: Float, private val bottomRightSkyLight: Float, private val bottomLeftSkyLight: Float,
+        private val topLeftBlockLight: Float, private val topRightBlockLight: Float, private val bottomRightBlockLight: Float, private val bottomLeftBlockLight: Float,
         private val color: Color4,
         val topLeftOcclusion: Float, val topRightOcclusion: Float,
         val bottomRightOcclusion: Float, val bottomLeftOcclusion: Float
 ) {
   companion object {
-    operator fun invoke(pos: IntArray, du: IntArray, dv: IntArray, normal: Vector3i, skyLight: Int, blockLight: Int, color: Color4, occlusions: EnumSet<Occlusion>): Quad {
+    operator fun invoke(pos: IntArray, du: IntArray, dv: IntArray, normal: Vector3i, skyLight: Map<VertexCorner, Float>, blockLight: Map<VertexCorner, Float>, color: Color4, occlusions: EnumSet<Occlusion>): Quad {
       return Quad(
               pos[0].toFloat(), du[0].toFloat(), dv[0].toFloat(),
               pos[1].toFloat(), du[1].toFloat(), dv[1].toFloat(),
               pos[2].toFloat(), du[2].toFloat(), dv[2].toFloat(),
               normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat(),
-              skyLight, blockLight,
+              skyLight.getOrDefault(VertexCorner.TOP_LEFT, 0f), skyLight.getOrDefault(VertexCorner.TOP_RIGHT, 0f), skyLight.getOrDefault(VertexCorner.BOTTOM_RIGHT, 0f), skyLight.getOrDefault(VertexCorner.BOTTOM_LEFT, 0f),
+              blockLight.getOrDefault(VertexCorner.TOP_LEFT, 0f), blockLight.getOrDefault(VertexCorner.TOP_RIGHT, 0f), blockLight.getOrDefault(VertexCorner.BOTTOM_RIGHT, 0f), blockLight.getOrDefault(VertexCorner.BOTTOM_LEFT, 0f),
               color,
               VertexCorner.TOP_LEFT.occlusionLevel(occlusions),
               VertexCorner.TOP_RIGHT.occlusionLevel(occlusions),
@@ -46,10 +48,10 @@ data class Quad(
   fun vertices(): FloatArray {
     val colorAsFloat = color.toFloat()
     return floatArrayOf(
-            x +        0f, y +        0f, z +        0f, colorAsFloat, skyLight.toFloat(), blockLight.toFloat(), topLeftOcclusion, nx, ny, nz,
-            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, skyLight.toFloat(), blockLight.toFloat(), topRightOcclusion, nx, ny, nz,
-            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, skyLight.toFloat(), blockLight.toFloat(), bottomRightOcclusion, nx, ny, nz,
-            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, skyLight.toFloat(), blockLight.toFloat(), bottomLeftOcclusion, nx, ny, nz
+            x +        0f, y +        0f, z +        0f, colorAsFloat, topLeftSkyLight, topLeftBlockLight, topLeftOcclusion, nx, ny, nz,
+            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, topRightSkyLight, topRightBlockLight, topRightOcclusion, nx, ny, nz,
+            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, bottomRightSkyLight, bottomRightBlockLight, bottomRightOcclusion, nx, ny, nz,
+            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, bottomLeftSkyLight, bottomLeftBlockLight, bottomLeftOcclusion, nx, ny, nz
     )
   }
 
@@ -58,7 +60,8 @@ data class Quad(
           y + dwy, -dwy, dhy,
           z + dwz, -dwz, dhz,
           -nx, -ny, -nz,
-          skyLight, blockLight,
+          topRightSkyLight, topLeftSkyLight, bottomLeftSkyLight, bottomRightSkyLight,
+          topRightBlockLight, topLeftBlockLight, bottomLeftBlockLight, bottomRightBlockLight,
           color,
           topRightOcclusion, topLeftOcclusion, bottomLeftOcclusion, bottomRightOcclusion
   )
@@ -68,7 +71,8 @@ data class Quad(
           y + dwy, dhy, -dwy,
           z + dwz, dhz, -dwz,
           nx, ny, nz,
-          skyLight, blockLight,
+          topRightSkyLight, bottomRightSkyLight, bottomLeftSkyLight, topLeftSkyLight,
+          topRightBlockLight, bottomRightBlockLight, bottomLeftBlockLight, topLeftBlockLight,
           color,
           topRightOcclusion, bottomRightOcclusion, bottomLeftOcclusion, topLeftOcclusion
   )

@@ -132,14 +132,37 @@ private fun getBlock(world: World, pos: Vector3i): Block? {
 }
 private fun isOpaque(block: Block?) = block?.type?.opaque ?: false
 
-private data class Data(val color: Color4, val skyLight: Int, val blockLight: Int, val reversed: Boolean, val occlusion: EnumSet<Occlusion> )
+private data class Data(
+    val color: Color4,
+    val skyLight: Map<VertexCorner, Float>,
+    val blockLight: Map<VertexCorner, Float>,
+    val reversed: Boolean,
+    val occlusion: EnumSet<Occlusion>
+)
+
 private fun getData(world: World, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
   val currentBlock = getBlock(world, pos)
   val nextBlock = getBlock(world, pos + d)
+
   return when {
-    !sliceMesh && isOpaque(currentBlock) && !isOpaque(nextBlock) -> Data(currentBlock!!.type.color, nextBlock?.skyLight ?: 0, nextBlock?.blockLight ?: 0, false, Occlusion.of(world, pos + d, u, v))
-    !sliceMesh && isOpaque(nextBlock) && !isOpaque(currentBlock) -> Data(nextBlock!!.type.color, currentBlock?.skyLight ?: 0, currentBlock?.blockLight ?: 0, true, Occlusion.of(world, pos, u, v))
-    sliceMesh && isOpaque(currentBlock) && isOpaque(nextBlock) && d == Vector3i.AXIS_Y -> Data(Color4.DARK_BROWN, 0, 0, false, Occlusion.all)
+    !sliceMesh && isOpaque(currentBlock) && !isOpaque(nextBlock) -> {
+      val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos + d, u, v) }
+      val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos + d, u, v) }
+
+      Data(currentBlock!!.type.color, skyLightLevels, blockLightLevels, false, Occlusion.of(world, pos + d, u, v))
+    }
+    !sliceMesh && isOpaque(nextBlock) && !isOpaque(currentBlock) -> {
+      val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, u, v) }
+      val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, u, v) }
+
+      Data(nextBlock!!.type.color, skyLightLevels, blockLightLevels, true, Occlusion.of(world, pos, u, v))
+    }
+    sliceMesh && isOpaque(currentBlock) && isOpaque(nextBlock) && d == Vector3i.AXIS_Y -> {
+      val skyLightLevels = VertexCorner.values().associate { it to 0f }
+      val blockLightLevels = VertexCorner.values().associate { it to 0f }
+
+      Data(Color4.DARK_BROWN, skyLightLevels, blockLightLevels, false, Occlusion.all)
+    }
     else -> null
   }
 }
