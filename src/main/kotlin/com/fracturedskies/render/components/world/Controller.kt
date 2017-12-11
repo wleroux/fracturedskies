@@ -99,15 +99,6 @@ class Controller {
         delta += Vector3.AXIS_X * movementRotation
       }
     }
-    val lower = isPressed(GLFW_KEY_LEFT_SHIFT) or isPressed(GLFW_KEY_RIGHT_SHIFT)
-    val upper = isPressed(GLFW_KEY_SPACE)
-    if (upper xor lower) {
-      if (upper) {
-        delta += Vector3.AXIS_Y
-      } else if (lower) {
-        delta += Vector3.AXIS_NEG_Y
-      }
-    }
     delta *= update.dt
     delta *= SPEED * zoomLevel
     if (delta.magnitude != 0f) {
