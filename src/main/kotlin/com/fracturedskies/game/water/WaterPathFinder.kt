@@ -78,7 +78,7 @@ class WaterPathFinder(private val water: WaterMap){
     return current.dirs.mapNotNull { jump(current.pos, it, target) }
   }
 
-  private fun jump(current: Vector3i, dir: Vector3i, target: Int): JumpNode? {
+  private tailrec fun jump(current: Vector3i, dir: Vector3i, target: Int): JumpNode? {
     val next = current + dir
     if (isBlocking(next)) return JumpNode(current, listOf())
     if (waterPotential(next) >= target)
