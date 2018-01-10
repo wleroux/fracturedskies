@@ -18,7 +18,7 @@ import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import kotlinx.coroutines.experimental.*
-import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
 import java.lang.Integer.*
 import kotlin.math.PI
@@ -41,9 +41,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     get() = (world?.dimension?.height ?: 0) - clamp(controller.slice, 0 until (world?.dimension?.height ?: 0))
 
   override val handler = EventHandlers(on(Key::class) { key ->
-    if (key.action == GLFW.GLFW_PRESS) {
+    if (key.action == GLFW_PRESS) {
       controller.press(key.key)
-    } else if (key.action == GLFW.GLFW_RELEASE){
+    } else if (key.action == GLFW_RELEASE){
       controller.release(key.key)
     }
   }, on(Focus::class) {
@@ -57,7 +57,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     if (!focused) {
       return@on
     }
-    if (event.action != GLFW.GLFW_PRESS && event.action != GLFW.GLFW_RELEASE) {
+    if (event.action != GLFW_PRESS && event.action != GLFW_RELEASE) {
       return@on
     }
     event.stopPropogation = true
@@ -89,25 +89,25 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       firstBlock = null
     } else {
       when (event.action) {
-        GLFW.GLFW_PRESS -> {
+        GLFW_PRESS -> {
           // Add Blocks or Add Water
-          if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+          if (event.button == GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
             firstBlock = selectedBlock.position + selectedBlock.faces.first()
           }
           // Add Water or Remove Blocks
-          else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+          else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
             firstBlock = selectedBlock.position
           }
         }
-        GLFW.GLFW_RELEASE -> {
+        GLFW_RELEASE -> {
           if (firstBlock != null) {
             // Add Blocks
             var secondBlock: Vector3i? = null
-            if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            if (event.button == GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
               secondBlock = selectedBlock.position + selectedBlock.faces.first()
             }
             // Add Water or Remove Blocks
-            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
               secondBlock = selectedBlock.position
             }
 
@@ -116,20 +116,29 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
 
             // Add Blocks
-            if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-              val updates = xRange.flatMap { x ->
-                zRange.flatMap { z ->
-                  yRange.flatMap { y ->
-                    if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque)
-                      listOf(Vector3i(x, y, z) to (if (controller.isPressed(GLFW.GLFW_KEY_LEFT_SHIFT)) BlockType.LIGHT else BlockType.BLOCK))
-                    else listOf()
-                  }
+            if (event.button == GLFW_MOUSE_BUTTON_LEFT) {
+              if (!controller.isPressed(GLFW_KEY_LEFT_CONTROL)) {
+                val blockType = when {
+                  controller.isPressed(GLFW_KEY_LEFT_SHIFT) -> BlockType.LIGHT
+                  else -> BlockType.BLOCK
                 }
-              }.toMap()
-              MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
+
+                val updates = xRange.flatMap { x ->
+                  zRange.flatMap { z ->
+                    yRange.flatMap { y ->
+                      if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque)
+                        listOf(Vector3i(x, y, z) to blockType)
+                      else listOf()
+                    }
+                  }
+                }.toMap()
+                MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
+              } else {
+                MessageBus.send(AddWorker(Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this), Context()))
+              }
             }
             // Remove Blocks
-            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
@@ -142,12 +151,12 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
             }
             // Add Water
-            else if (event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            else if (event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
                     if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque) {
-                      if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
+                      if (event.button == GLFW_MOUSE_BUTTON_1) {
                         val waterLevel = world!![x, y, z].waterLevel
                         if (waterLevel > 0.toByte()) {
                           listOf(Vector3i(x, y, z) to waterLevel.dec())
@@ -174,7 +183,8 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
   lateinit private var program: ColorShaderProgram
   var world: ObjectMap<Block>? = null
-  var timeOfDay = 0f
+  private var workers = listOf<Worker>()
+  private var timeOfDay = 0f
   private var channel = MessageChannel(coroutineContext = UI_CONTEXT) { message ->
     when (message) {
       is WorldGenerated -> {
@@ -262,6 +272,9 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             }
             .distinct()
             .forEach { updateWaterMesh(world, it) }
+      }
+      is AddWorker -> {
+        workers += Worker(message.pos)
       }
       is TimeUpdated -> {
         timeOfDay = message.time
@@ -380,6 +393,14 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
       blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
       blockSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
+      workers.forEach { worker -> if (worker.pos.y < sliceHeight) {
+        val workerModel = Matrix4(position = worker.pos.toVector3())
+        model(workerModel)
+        val block = world!![worker.pos]
+        val workerMesh = generateWorkerMesh(block.skyLight.toFloat(), block.blockLight.toFloat()).invoke()
+        draw(workerMesh)
+      }}
+      model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       waterMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
       waterSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
     }

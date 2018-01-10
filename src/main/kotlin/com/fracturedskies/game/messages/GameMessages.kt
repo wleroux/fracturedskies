@@ -13,3 +13,5 @@ data class UpdateBlockWater(val updates: Map<Vector3i, Byte>, override val cause
 data class SkyLightUpdated(val updates: Map<Vector3i, Int>, override val cause: Cause, override val context: Context): Message
 data class BlockLightUpdated(val updates: Map<Vector3i, Int>, override val cause: Cause, override val context: Context): Message
 data class TimeUpdated(val time: Float, override val cause: Cause, override val context: Context): Message
+
+data class AddWorker(val pos: Vector3i, override val cause: Cause, override val context: Context): Message

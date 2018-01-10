@@ -47,7 +47,7 @@ fun generateWaterMesh(
                     xOffset                 , 1f, 0f                             ,
                     yOffset + curWaterHeight, 0f, adjWaterHeight - curWaterHeight,
                     zOffset                 , 0f, 0f                             ,
-                    0f, -1f, 0f,
+                    0f, 0f, -1f,
                     skyLightLevels[VertexCorner.TOP_LEFT] ?: 0f, skyLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, skyLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
                     blockLightLevels[VertexCorner.TOP_LEFT] ?: 0f, blockLightLevels[VertexCorner.TOP_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_RIGHT] ?: 0f, blockLightLevels[VertexCorner.BOTTOM_LEFT] ?: 0f,
                     Color4.WATER,

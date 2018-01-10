@@ -59,3 +59,4 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
 }
 
 infix fun <K> Vector3i.within(world: ObjectMap<K>): Boolean = world.has(this)
+fun Vector3i.toVector3() = Vector3(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())
