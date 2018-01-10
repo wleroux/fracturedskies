@@ -2,7 +2,7 @@ repositories {
   maven("https://oss.sonatype.org/content/repositories/snapshots/")
 }
 plugins {
-  kotlin("jvm") version "1.2.0"
+  kotlin("jvm") version "1.2.10"
   idea
   application
 }

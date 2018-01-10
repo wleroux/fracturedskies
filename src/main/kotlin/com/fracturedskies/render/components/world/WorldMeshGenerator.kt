@@ -1,9 +1,8 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.math.Color4
-import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.math.*
 import com.fracturedskies.game.Block
-import com.fracturedskies.game.World
 import com.fracturedskies.render.shaders.Mesh
 import org.lwjgl.BufferUtils
 import java.util.*
@@ -12,9 +11,9 @@ import java.util.*
  * A greedy mesh implementation
  */
 fun generateWorldMesh(
-        world: World,
-        sliceMesh: Boolean,
-        xRange: IntRange, yRange: IntRange, zRange: IntRange
+    world: ObjectMap<Block>,
+    sliceMesh: Boolean,
+    xRange: IntRange, yRange: IntRange, zRange: IntRange
 ): () -> Mesh {
   val ranges = arrayOf(xRange, yRange, zRange)
   val dimensions = arrayOf(xRange.count(), yRange.count(), zRange.count())
@@ -123,12 +122,8 @@ fun generateWorldMesh(
 }
 
 
-private fun getBlock(world: World, pos: Vector3i): Block? {
-  return if (world.has(pos.x, pos.y, pos.z)) {
-    world[pos.x, pos.y, pos.z]
-  } else {
-    null
-  }
+private fun getBlock(world: ObjectMap<Block>, pos: Vector3i): Block? {
+  return if (world.has(pos)) { world[pos] } else { null }
 }
 private fun isOpaque(block: Block?) = block?.type?.opaque ?: false
 
@@ -140,7 +135,7 @@ private data class Data(
     val occlusion: EnumSet<Occlusion>
 )
 
-private fun getData(world: World, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
+private fun getData(world: ObjectMap<Block>, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
   val currentBlock = getBlock(world, pos)
   val nextBlock = getBlock(world, pos + d)
 

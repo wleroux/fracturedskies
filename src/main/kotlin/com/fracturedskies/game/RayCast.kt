@@ -1,11 +1,12 @@
 package com.fracturedskies.game
 
+import com.fracturedskies.engine.collections.ObjectMap
 import com.fracturedskies.engine.math.Vector3
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.math.within
 import kotlin.coroutines.experimental.buildSequence
 
-fun raycast(world: World, origin: Vector3, direction: Vector3) = buildSequence {
+fun raycast(world: ObjectMap<Block>, origin: Vector3, direction: Vector3) = buildSequence {
   val normals = arrayOf(
           Vector3(-direction.x, 0f, 0f).normalize(),
           Vector3(0f, -direction.y, 0f).normalize(),
@@ -14,23 +15,23 @@ fun raycast(world: World, origin: Vector3, direction: Vector3) = buildSequence {
 
   var intersection = origin.copy()
   while (true) {
-    val nextPlaneX = nextPlane(intersection.x, direction.x, 0f, world.dimension.width.toFloat())
+    val nextPlaneX = nextPlane(intersection.x, direction.x, 0f, world.width.toFloat())
     val timeX = if (direction.x != 0f) (nextPlaneX - intersection.x) / direction.x else java.lang.Float.MAX_VALUE
 
-    val nextPlaneY = nextPlane(intersection.y, direction.y, 0f, world.dimension.height.toFloat())
+    val nextPlaneY = nextPlane(intersection.y, direction.y, 0f, world.height.toFloat())
     val timeY = if (direction.y != 0f) (nextPlaneY - intersection.y) / direction.y else java.lang.Float.MAX_VALUE
 
-    val nextPlaneZ = nextPlane(intersection.z, direction.z, 0f, world.dimension.depth.toFloat())
+    val nextPlaneZ = nextPlane(intersection.z, direction.z, 0f, world.depth.toFloat())
     val timeZ = if (direction.z != 0f) (nextPlaneZ - intersection.z) / direction.z else java.lang.Float.MAX_VALUE
 
     var minimumTime = Math.min(Math.min(timeX, timeY), timeZ)
 
     // Force planes that are out-of-bounds to intersected
-    if (0f > intersection.x && direction.x > 0f || intersection.x > world.dimension.width.toFloat() && direction.x < 0f)
+    if (0f > intersection.x && direction.x > 0f || intersection.x > world.width.toFloat() && direction.x < 0f)
       minimumTime = Math.max(minimumTime, timeX)
-    if (0f > intersection.y && direction.z > 0f || intersection.y > world.dimension.height.toFloat() && direction.y < 0f)
+    if (0f > intersection.y && direction.z > 0f || intersection.y > world.height.toFloat() && direction.y < 0f)
       minimumTime = Math.max(minimumTime, timeY)
-    if (0f > intersection.z && direction.z > 0f || intersection.z > world.dimension.depth.toFloat() && direction.z < 0f)
+    if (0f > intersection.z && direction.z > 0f || intersection.z > world.depth.toFloat() && direction.z < 0f)
       minimumTime = Math.max(minimumTime, timeZ)
 
     // Any further amount of time would lead us out-of-bounds

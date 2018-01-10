@@ -3,13 +3,10 @@ package com.fracturedskies.game.water
 import com.fracturedskies.engine.Update
 import com.fracturedskies.engine.collections.Context
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.UpdateBlockWater
-import com.fracturedskies.game.messages.WorldGenerated
+import com.fracturedskies.engine.messages.*
+import com.fracturedskies.game.messages.*
 import java.util.*
+import java.util.Comparator.comparingInt
 import java.util.function.ToIntFunction
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -39,7 +36,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
       is UpdateBlock -> {
         if (started) {
           val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
-          message.updates.forEach { pos, type ->
+          message.updates.forEach { (pos, type) ->
             water.setOpaque(pos, type.opaque)
             if (type.opaque && water.getLevel(pos) != 0.toByte()) {
               water.setLevel(pos, 0)
@@ -144,5 +141,5 @@ class WaterSystem(coroutineContext: CoroutineContext) {
     return waterLevelUpdates.filter { (pos, waterLevel) -> originalWaterLevel[pos] != waterLevel }
   }
 
-  private val waterPotentialComparator = Comparator.comparingInt(ToIntFunction<Vector3i> { pathFinder.waterPotential(it) })
+  private val waterPotentialComparator = comparingInt(ToIntFunction<Vector3i> { pathFinder.waterPotential(it) })
 }

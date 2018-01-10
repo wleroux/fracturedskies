@@ -11,13 +11,13 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class TimeSystem(coroutineContext: CoroutineContext) {
   companion object {
-    val TIME_PER_DAY = 1200f
+    val TIME_PER_DAY = 60f
   }
-  private var time = TIME_PER_DAY / 2
+  private var time = 3 * TIME_PER_DAY / 2
   val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
       is WorldGenerated -> {
-        time = TIME_PER_DAY / 2f
+        time = 3f * TIME_PER_DAY / 2f
       }
       is Update -> {
         time += message.dt

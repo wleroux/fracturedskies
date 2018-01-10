@@ -1,33 +1,26 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.UI_CONTEXT
-import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Bounds
-import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.engine.jeact.event.EventHandlers
-import com.fracturedskies.engine.jeact.event.on
+import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus
+import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.unregister
-import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.game.*
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import com.fracturedskies.render.events.*
+import com.fracturedskies.render.events.Key
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.*
-import java.lang.Integer.max
-import java.lang.Integer.min
+import java.lang.Integer.*
 import kotlin.math.PI
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
@@ -45,7 +38,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var focused = false
   private val controller = Controller()
   private val sliceHeight: Int
-    get() = (game.world?.dimension?.height ?: 0) - clamp(controller.slice, 0 until (game.world?.dimension?.height ?: 0))
+    get() = (world?.dimension?.height ?: 0) - clamp(controller.slice, 0 until (world?.dimension?.height ?: 0))
 
   override val handler = EventHandlers(on(Key::class) { key ->
     if (key.action == GLFW.GLFW_PRESS) {
@@ -88,7 +81,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val selectedBlock = raycast(game.world!!, rayStart3, direction)
+    val selectedBlock = raycast(world!!, rayStart3, direction)
             .filter { it.position.y < sliceHeight }
             .filterNot { it.block.type == BlockType.AIR }
             .firstOrNull()
@@ -127,7 +120,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (game.world!!.has(x, y, z) && !game.world!![x, y, z].type.opaque)
+                    if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque)
                       listOf(Vector3i(x, y, z) to (if (controller.isPressed(GLFW.GLFW_KEY_LEFT_SHIFT)) BlockType.LIGHT else BlockType.BLOCK))
                     else listOf()
                   }
@@ -140,7 +133,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (game.world!!.has(x, y, z) && game.world!![x, y, z].type.opaque)
+                    if (world!!.has(x, y, z) && world!![x, y, z].type.opaque)
                       listOf(Vector3i(x, y, z) to BlockType.AIR)
                     else listOf()
                   }
@@ -153,14 +146,14 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (game.world!!.has(x, y, z) && !game.world!![x, y, z].type.opaque) {
+                    if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque) {
                       if (event.button == GLFW.GLFW_MOUSE_BUTTON_1) {
-                        val waterLevel = game.world!![x, y, z].waterLevel
+                        val waterLevel = world!![x, y, z].waterLevel
                         if (waterLevel > 0.toByte()) {
                           listOf(Vector3i(x, y, z) to waterLevel.dec())
                         } else listOf()
                       } else {
-                        val waterLevel = game.world!![x, y, z].waterLevel
+                        val waterLevel = world!![x, y, z].waterLevel
                         if (waterLevel < MAX_WATER_LEVEL) {
                           listOf(Vector3i(x, y, z) to MAX_WATER_LEVEL)
                         } else listOf()
@@ -180,38 +173,47 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   })
 
   lateinit private var program: ColorShaderProgram
-  private var game = Game(coroutineContext = UI_CONTEXT) { message ->
+  var world: ObjectMap<Block>? = null
+  var timeOfDay = 0f
+  private var channel = MessageChannel(coroutineContext = UI_CONTEXT) { message ->
     when (message) {
+      is WorldGenerated -> {
+        world = ObjectMap(message.world.dimension) { message.world[it] }
+        val world = this.world!!
+        val xChunks = world.dimension.width / CHUNK_X_SIZE
+        val yChunks = world.dimension.height / CHUNK_Y_SIZE
+        val zChunks = world.dimension.depth / CHUNK_Z_SIZE
+        (0 until xChunks).forEach { xChunk ->
+          (0 until yChunks).forEach { yChunk ->
+            (0 until zChunks).forEach { zChunk ->
+              updateBlockMesh(world, Vector3i(xChunk, yChunk, zChunk))
+            }
+          }
+        }
+      }
       is UpdateBlock -> {
         val world = this.world!!
+        message.updates.forEach { pos, type ->
+          world[pos].type = type
+        }
         (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
-                .flatMap { message.updates.map { (pos, _) -> pos + it } }
-                .map { it / CHUNKS }
-                .filter {
-                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
-                          it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
-                          it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
-                }
-                .distinct()
-                .forEach { updateBlockMesh(world, it)}
-      }
-      is UpdateBlockWater -> {
-        val world = this.world!!
-        (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
-                .flatMap { message.updates.map { (pos, _) -> pos + it } }
-                .map { it / CHUNKS }
-                .filter {
-                  it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
-                          it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
-                          it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
-                }
-                .distinct()
-                .forEach { updateWaterMesh(world, it)}
+            .flatMap { message.updates.map { (pos, _) -> pos + it } }
+            .map { it / CHUNKS }
+            .filter {
+              it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                  it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                  it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
+            }
+            .distinct()
+            .forEach { updateBlockMesh(world, it) }
       }
       is SkyLightUpdated -> {
         val world = this.world!!
+        message.updates.forEach { pos, skyLightLevel ->
+          world[pos].skyLight = skyLightLevel
+        }
         message.updates
-            .map { (pos, _) -> pos}
+            .map { (pos, _) -> pos }
             .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
             .map { pos -> pos / CHUNKS }
             .filter {
@@ -227,8 +229,11 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       }
       is BlockLightUpdated -> {
         val world = this.world!!
+        message.updates.forEach { pos, blockLightLevel ->
+          world[pos].blockLight = blockLightLevel
+        }
         message.updates
-            .map { (pos, _) -> pos}
+            .map { (pos, _) -> pos }
             .flatMap { pos -> Vector3i.NEIGHBOURS.map { pos + it } }
             .map { pos -> pos / CHUNKS }
             .filter {
@@ -242,18 +247,24 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               updateWaterMesh(world, it)
             }
       }
-      is WorldGenerated -> {
+      is UpdateBlockWater -> {
         val world = this.world!!
-        val xChunks = world.dimension.width / CHUNK_X_SIZE
-        val yChunks = world.dimension.height / CHUNK_Y_SIZE
-        val zChunks = world.dimension.depth / CHUNK_Z_SIZE
-        (0 until xChunks).forEach { xChunk ->
-          (0 until yChunks).forEach { yChunk ->
-            (0 until zChunks).forEach { zChunk ->
-              updateBlockMesh(world, Vector3i(xChunk, yChunk, zChunk))
-            }
-          }
+        message.updates.forEach { (pos, waterLevel) ->
+          world[pos].waterLevel = waterLevel
         }
+        (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
+            .flatMap { message.updates.map { (pos, _) -> pos + it } }
+            .map { it / CHUNKS }
+            .filter {
+              it.x in (0 until world.dimension.width / CHUNK_X_SIZE) &&
+                  it.y in (0 until world.dimension.height / CHUNK_Y_SIZE) &&
+                  it.z in (0 until world.dimension.depth / CHUNK_Z_SIZE)
+            }
+            .distinct()
+            .forEach { updateWaterMesh(world, it) }
+      }
+      is TimeUpdated -> {
+        timeOfDay = message.time
       }
     }
   }
@@ -261,7 +272,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var blockMesh = mutableMapOf<Vector3i, Mesh>()
   private var blockSliceMesh = mutableMapOf<Vector3i, Mesh>()
   private var renderBlockMeshJob = mutableMapOf<Vector3i, Job>()
-  private fun updateBlockMesh(world: World, chunk: Vector3i) {
+  private fun updateBlockMesh(world: ObjectMap<Block>, chunk: Vector3i) {
     renderBlockMeshJob[chunk]?.cancel()
     renderBlockMeshJob[chunk] = launch {
       val meshGenerator = generateWorldMesh(world, false,
@@ -288,7 +299,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var waterMesh = mutableMapOf<Vector3i, Mesh>()
   private var waterSliceMesh = mutableMapOf<Vector3i, Mesh>()
   private var renderWaterMeshJob = mutableMapOf<Vector3i, Job>()
-  private fun updateWaterMesh(world: World, chunk: Vector3i) {
+  private fun updateWaterMesh(world: ObjectMap<Block>, chunk: Vector3i) {
     renderWaterMeshJob[chunk]?.cancel()
     renderWaterMeshJob[chunk] = launch {
       val waterMeshGenerator = generateWaterMesh(world, false,
@@ -320,7 +331,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     program = ColorShaderProgram()
     skyLightLevels = LightLevels.load(loadByteBuffer("SkyLightLevels.png", WorldRenderer::class.java), 240)
     blockLightLevels = LightLevels.load(loadByteBuffer("BlockLightLevels.png", WorldRenderer::class.java), 16)
-    listener = register(game.channel)
+    listener = register(channel)
     controller.register()
     MessageBus.send(NewGameRequested(Cause.of(this), Context()))
   }
@@ -333,7 +344,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   override fun render(bounds: Bounds) {
     super.render(bounds)
 
-    val world = game.world
+    val world = world
 
     controller.viewCenter.y = if (world != null) {
       val yRange = (0 until sliceHeight)
@@ -363,8 +374,8 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       model(requireNotNull(variables[StandardShaderProgram.MODEL]))
       view(requireNotNull(variables[StandardShaderProgram.VIEW]))
       projection(requireNotNull(variables[StandardShaderProgram.PROJECTION]))
-      lightDirection(skyLightDirection * Quaternion4(Vector3.AXIS_Z, game.timeOfDay * 2f * PI.toFloat() ))
-      skyColors(skyLightLevels, game.timeOfDay)
+      lightDirection(skyLightDirection * Quaternion4(Vector3.AXIS_Z, timeOfDay * 2f * PI.toFloat() ))
+      skyColors(skyLightLevels, timeOfDay)
       blockColors(blockLightLevels)
 
       blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
@@ -374,7 +385,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     }
   }
 
-  private fun heightAt(world: World, x: Int, z: Int, yRange: IntRange): Int {
+  private fun heightAt(world: ObjectMap<Block>, x: Int, z: Int, yRange: IntRange): Int {
     val clampedX = clamp(x, 0 until world.dimension.width)
     val clampedZ = clamp(z, 0 until world.dimension.depth)
     return yRange

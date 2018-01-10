@@ -2,32 +2,24 @@ package com.fracturedskies
 
 import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.game.Game
-import com.fracturedskies.game.TimeSystem
-import com.fracturedskies.game.WorldGeneratorSystem
-import com.fracturedskies.game.skylight.BlockLightSystem
-import com.fracturedskies.game.skylight.SkyLightSystem
+import com.fracturedskies.game.*
+import com.fracturedskies.game.skylight.*
 import com.fracturedskies.game.water.WaterSystem
-import com.fracturedskies.game.workers.Delegator
 import com.fracturedskies.render.RenderGameSystem
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.cancelChildren
-import kotlinx.coroutines.experimental.runBlocking
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.TimeUnit.NANOSECONDS
+import kotlinx.coroutines.experimental.*
+import java.util.concurrent.TimeUnit.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.CoroutineContext
 
 class MainGameSystem(coroutineContext: CoroutineContext) {
-  val game = Game(coroutineContext) { message ->
+  val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
       is RequestShutdown -> shutdownRequested.set(true)
     }
   }
-  val channel get() = game.channel
 
   companion object {
     private val MILLISECONDS_PER_UPDATE: Long = 16
@@ -66,7 +58,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   register(mainGameSystem.channel)
   register(RenderGameSystem(coroutineContext + UI_CONTEXT).channel)
   register(WorldGeneratorSystem(coroutineContext + CommonPool).channel)
-  register(Delegator(coroutineContext).channel)
   register(SkyLightSystem(coroutineContext).channel)
   register(BlockLightSystem(coroutineContext).channel)
   register(WaterSystem(coroutineContext).channel)

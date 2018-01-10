@@ -1,20 +1,17 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.math.Color4
-import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.math.map
-import com.fracturedskies.game.BlockType
-import com.fracturedskies.game.World
+import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.math.*
+import com.fracturedskies.game.*
 import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import com.fracturedskies.render.shaders.Mesh
-import org.lwjgl.BufferUtils.createFloatBuffer
-import org.lwjgl.BufferUtils.createIntBuffer
+import org.lwjgl.BufferUtils.*
 
 
 fun generateWaterMesh(
-        world: World,
-        sliceMesh: Boolean,
-        xRange: IntRange, yRange: IntRange, zRange: IntRange
+    world: ObjectMap<Block>,
+    sliceMesh: Boolean,
+    xRange: IntRange, yRange: IntRange, zRange: IntRange
 ): () -> Mesh {
   val quads = mutableListOf<Quad>()
   for (y in yRange) {
@@ -200,6 +197,6 @@ private fun waterHeight(waterLevel: Byte): Float {
   return map(waterLevel.toFloat(), 0f..MAX_WATER_LEVEL.toFloat(), 0f..1f)
 }
 
-private fun isEmpty(world: World, pos: Vector3i): Boolean {
+private fun isEmpty(world: ObjectMap<Block>, pos: Vector3i): Boolean {
   return if (!world.has(pos)) true else world[pos].type === BlockType.AIR
 }

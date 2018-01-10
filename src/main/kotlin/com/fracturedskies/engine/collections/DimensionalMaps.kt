@@ -55,16 +55,28 @@ open class IntMap(private val dimension: Dimension) {
     backend.fill(0)
   }
 }
-open class ObjectMap<K>(private val dimension: Dimension, private val backend: Array<K>) {
+open class ObjectMap<K>(val dimension: Dimension, private val backend: Array<K>) {
   companion object {
     inline operator fun <reified K> invoke(dimension: Dimension, noinline init: (Int) -> K): ObjectMap<K> {
       return ObjectMap(dimension, Array(dimension.size, init))
     }
   }
-  operator fun get(pos: Vector3i) = get(pos.x, pos.y, pos.z)
-  operator fun get(x: Int, y: Int, z: Int) = backend[dimension(x, y, z)]
-  operator fun set(pos: Vector3i, value: K) = set(pos.x, pos.y, pos.z, value)
-  operator fun set(x: Int, y: Int, z: Int, value: K) {
-    backend[dimension(x, y, z)] = value
+
+  val width get() = dimension.width
+  val height get() = dimension.height
+  val depth get() = dimension.depth
+
+  operator fun get(index: Int) = backend[index]
+  operator fun set(index: Int, value: K) {
+    backend[index] = value
   }
+  fun has(index: Int) = dimension.has(index)
+
+  operator fun get(pos: Vector3i) = get(dimension(pos))
+  operator fun set(pos: Vector3i, value: K) = set(dimension(pos), value)
+  fun has(pos: Vector3i) = dimension.has(pos)
+
+  operator fun get(x: Int, y: Int, z: Int) = get(dimension(x, y, z))
+  operator fun set(x: Int, y: Int, z: Int, value: K) = set(dimension(x, y, z), value)
+  fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
 }
