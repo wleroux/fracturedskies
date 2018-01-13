@@ -3,9 +3,9 @@ package com.fracturedskies.game.messages
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
-import com.fracturedskies.game.*
+import com.fracturedskies.game.BlockType
 
-data class WorldGenerated(val world: ObjectMap<Block>, override val cause: Cause, override val context: Context): Message
+data class WorldGenerated(val world: ObjectMap<BlockType>, override val cause: Cause, override val context: Context): Message
 data class NewGameRequested(override val cause: Cause, override val context: Context): Message
 
 data class UpdateBlock(val updates: Map<Vector3i, BlockType>, override val cause: Cause, override val context: Context): Message

@@ -2,12 +2,9 @@ package com.fracturedskies.game.skylight
 
 import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.game.messages.SkyLightUpdated
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.WorldGenerated
+import com.fracturedskies.game.messages.*
 import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -25,7 +22,7 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
         (0 until light.dimension.width).forEach { x ->
           (0 until light.dimension.depth).forEach { z ->
             (0 until light.dimension.height).forEach { y ->
-              light.type[x, y, z] = world[x, y, z].type
+              light.type[x, y, z] = world[x, y, z]
             }
           }
         }

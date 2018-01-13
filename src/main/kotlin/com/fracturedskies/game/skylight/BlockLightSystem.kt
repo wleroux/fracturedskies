@@ -2,12 +2,9 @@ package com.fracturedskies.game.skylight
 
 import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.game.messages.BlockLightUpdated
-import com.fracturedskies.game.messages.UpdateBlock
-import com.fracturedskies.game.messages.WorldGenerated
+import com.fracturedskies.game.messages.*
 import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -22,7 +19,7 @@ class BlockLightSystem(coroutineContext: CoroutineContext) {
         (0 until light.dimension.width).forEach { x ->
           (0 until light.dimension.depth).forEach { z ->
             (0 until light.dimension.height).forEach { y ->
-              light.type[x, y, z] = world[x, y, z].type
+              light.type[x, y, z] = world[x, y, z]
               if (light.type[x, y, z].blockLight > 0) {
                 litBlocks.add(Vector3i(x, y, z))
               }

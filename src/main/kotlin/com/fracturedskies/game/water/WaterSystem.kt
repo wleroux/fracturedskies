@@ -27,7 +27,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         (0 until water.dimension.height).forEach { y ->
           (0 until water.dimension.width).forEach { x->
             (0 until water.dimension.depth).forEach {z ->
-              water.setOpaque(Vector3i(x, y, z), world[x, y, z].type.opaque)
+              water.setOpaque(Vector3i(x, y, z), world[x, y, z].opaque)
             }
           }
         }
