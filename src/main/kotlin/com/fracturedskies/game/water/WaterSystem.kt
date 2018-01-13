@@ -1,7 +1,7 @@
 package com.fracturedskies.game.water
 
 import com.fracturedskies.engine.Update
-import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.game.messages.*
@@ -10,42 +10,26 @@ import java.util.Comparator.comparingInt
 import java.util.function.ToIntFunction
 import kotlin.coroutines.experimental.CoroutineContext
 
-class WaterSystem(coroutineContext: CoroutineContext) {
+class WaterSystem(coroutineContext: CoroutineContext, dimension: Dimension) {
   companion object {
     val MAX_WATER_LEVEL = 3.toByte()
   }
 
-  private lateinit var pathFinder: WaterPathFinder
-  private var started = false
-  private lateinit var water: WaterMap
+  private val water = WaterMap(dimension)
+  private val pathFinder = WaterPathFinder(water)
   val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
-      is WorldGenerated -> {
-        val world = message.world
-        water = WaterMap(world.dimension)
-        pathFinder = WaterPathFinder(water)
-        (0 until water.dimension.height).forEach { y ->
-          (0 until water.dimension.width).forEach { x->
-            (0 until water.dimension.depth).forEach {z ->
-              water.setOpaque(Vector3i(x, y, z), world[x, y, z].opaque)
-            }
+      is UpdateBlock -> {
+        val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
+        message.updates.forEach { (pos, type) ->
+          water.setOpaque(pos, type.opaque)
+          if (type.opaque && water.getLevel(pos) != 0.toByte()) {
+            water.setLevel(pos, 0)
+            waterLevelUpdates[pos] = 0
           }
         }
-        started = true
-      }
-      is UpdateBlock -> {
-        if (started) {
-          val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
-          message.updates.forEach { (pos, type) ->
-            water.setOpaque(pos, type.opaque)
-            if (type.opaque && water.getLevel(pos) != 0.toByte()) {
-              water.setLevel(pos, 0)
-              waterLevelUpdates[pos] = 0
-            }
-          }
-          if (waterLevelUpdates.isNotEmpty()) {
-            MessageBus.send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), Context()))
-          }
+        if (waterLevelUpdates.isNotEmpty()) {
+          MessageBus.send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), Context()))
         }
       }
       is UpdateBlockWater -> {
@@ -56,14 +40,12 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         }
       }
       is Update -> {
-        if (started) {
-          val flow = flow()
-          val evaporation = evaporation()
+        val flow = flow()
+        val evaporation = evaporation()
 
-          val updates = flow + evaporation
-          if (updates.isNotEmpty()) {
-            MessageBus.send(UpdateBlockWater(updates, Cause.of(this), Context()))
-          }
+        val updates = flow + evaporation
+        if (updates.isNotEmpty()) {
+          MessageBus.send(UpdateBlockWater(updates, Cause.of(this), Context()))
         }
       }
     }

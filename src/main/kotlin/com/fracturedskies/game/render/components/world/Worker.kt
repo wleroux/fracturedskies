@@ -1,4 +1,4 @@
-package com.fracturedskies.game
+package com.fracturedskies.game.render.components.world
 
 import com.fracturedskies.engine.math.Vector3i
 

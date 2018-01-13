@@ -1,15 +1,16 @@
 package com.fracturedskies
 
 import com.fracturedskies.engine.*
-import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.send
+import com.fracturedskies.game.render.RenderGameSystem
 import com.fracturedskies.game.skylight.*
 import com.fracturedskies.game.time.TimeSystem
 import com.fracturedskies.game.water.WaterSystem
+import com.fracturedskies.game.worker.WorkerSystem
 import com.fracturedskies.game.worldgenerator.WorldGeneratorSystem
-import com.fracturedskies.game.render.RenderGameSystem
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.TimeUnit.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -50,6 +51,7 @@ class MainGameSystem(coroutineContext: CoroutineContext) {
 }
 
 lateinit var UI_CONTEXT: CoroutineContext
+val DIMENSION = Dimension(128, 256, 128)
 
 fun main(args: Array<String>) = runBlocking<Unit> {
   UI_CONTEXT = coroutineContext
@@ -58,11 +60,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   val mainGameSystem = MainGameSystem(coroutineContext)
   register(mainGameSystem.channel)
   register(RenderGameSystem(coroutineContext + UI_CONTEXT).channel)
-  register(WorldGeneratorSystem(coroutineContext + CommonPool).channel)
-  register(SkyLightSystem(coroutineContext).channel)
-  register(BlockLightSystem(coroutineContext).channel)
-  register(WaterSystem(coroutineContext).channel)
+  register(WorldGeneratorSystem(coroutineContext + CommonPool, DIMENSION).channel)
+  register(SkyLightSystem(coroutineContext, DIMENSION).channel)
+  register(BlockLightSystem(coroutineContext, DIMENSION).channel)
+  register(WaterSystem(coroutineContext, DIMENSION).channel)
   register(TimeSystem(coroutineContext).channel)
+  register(WorkerSystem(coroutineContext, DIMENSION).channel)
 
   // Run game
   mainGameSystem.run(coroutineContext+CommonPool)

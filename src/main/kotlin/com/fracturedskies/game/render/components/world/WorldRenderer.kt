@@ -1,22 +1,22 @@
 package com.fracturedskies.game.render.components.world
 
-import com.fracturedskies.UI_CONTEXT
+import com.fracturedskies.*
+import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
-import com.fracturedskies.engine.loadByteBuffer
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.unregister
-import com.fracturedskies.game.*
+import com.fracturedskies.game.BlockType
 import com.fracturedskies.game.messages.*
 import com.fracturedskies.game.render.events.*
 import com.fracturedskies.game.render.events.Key
-import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import com.fracturedskies.game.render.shaders.Mesh
 import com.fracturedskies.game.render.shaders.color.ColorShaderProgram
 import com.fracturedskies.game.render.shaders.standard.StandardShaderProgram
+import com.fracturedskies.game.water.WaterSystem.Companion.MAX_WATER_LEVEL
 import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL11.*
@@ -24,6 +24,7 @@ import java.lang.Integer.*
 import kotlin.math.PI
 
 class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, Unit) {
+  val dimension = DIMENSION
   companion object {
     val CHUNK_X_SIZE = 128
     val CHUNK_Y_SIZE = 1
@@ -38,7 +39,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   private var focused = false
   private val controller = com.fracturedskies.game.render.components.world.Controller()
   private val sliceHeight: Int
-    get() = (world?.dimension?.height ?: 0) - clamp(controller.slice, 0 until (world?.dimension?.height ?: 0))
+    get() = world.dimension.height - clamp(controller.slice, 0 until world.dimension.height)
 
   override val handler = EventHandlers(on(Key::class) { key ->
     if (key.action == GLFW_PRESS) {
@@ -81,7 +82,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val selectedBlock = raycast(world!!, rayStart3, direction)
+    val selectedBlock = raycast(world, rayStart3, direction)
             .filter { it.position.y < sliceHeight }
             .filterNot { it.obj.type == BlockType.AIR }
             .firstOrNull()
@@ -126,7 +127,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 val updates = xRange.flatMap { x ->
                   zRange.flatMap { z ->
                     yRange.flatMap { y ->
-                      if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque)
+                      if (world.has(x, y, z) && !world[x, y, z].type.opaque)
                         listOf(Vector3i(x, y, z) to blockType)
                       else listOf()
                     }
@@ -134,7 +135,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
                 }.toMap()
                 MessageBus.send(UpdateBlock(updates, Cause.of(this), Context()))
               } else {
-                MessageBus.send(AddWorker(Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this), Context()))
+                MessageBus.send(SpawnWorker(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this), Context()))
               }
             }
             // Remove Blocks
@@ -142,7 +143,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (world!!.has(x, y, z) && world!![x, y, z].type.opaque)
+                    if (world.has(x, y, z) && world[x, y, z].type.opaque)
                       listOf(Vector3i(x, y, z) to BlockType.AIR)
                     else listOf()
                   }
@@ -155,14 +156,14 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (world!!.has(x, y, z) && !world!![x, y, z].type.opaque) {
+                    if (world.has(x, y, z) && !world[x, y, z].type.opaque) {
                       if (event.button == GLFW_MOUSE_BUTTON_1) {
-                        val waterLevel = world!![x, y, z].waterLevel
+                        val waterLevel = world[x, y, z].waterLevel
                         if (waterLevel > 0.toByte()) {
                           listOf(Vector3i(x, y, z) to waterLevel.dec())
                         } else listOf()
                       } else {
-                        val waterLevel = world!![x, y, z].waterLevel
+                        val waterLevel = world[x, y, z].waterLevel
                         if (waterLevel < MAX_WATER_LEVEL) {
                           listOf(Vector3i(x, y, z) to MAX_WATER_LEVEL)
                         } else listOf()
@@ -182,27 +183,12 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   })
 
   lateinit private var program: ColorShaderProgram
-  var world: ObjectMap<com.fracturedskies.game.render.components.world.Block>? = null
-  private var workers = listOf<Worker>()
+  private val world = ObjectMap(dimension) {Block(BlockType.AIR, 0, 0, 0)}
+  private var workers = mutableMapOf<Id, Worker>()
   private var timeOfDay = 0f
   private var channel = MessageChannel(coroutineContext = UI_CONTEXT) { message ->
     when (message) {
-      is WorldGenerated -> {
-        world = ObjectMap(message.world.dimension) { com.fracturedskies.game.render.components.world.Block(message.world[it], 0, 0, 0) }
-        val world = this.world!!
-        val xChunks = world.dimension.width / CHUNK_X_SIZE
-        val yChunks = world.dimension.height / CHUNK_Y_SIZE
-        val zChunks = world.dimension.depth / CHUNK_Z_SIZE
-        (0 until xChunks).forEach { xChunk ->
-          (0 until yChunks).forEach { yChunk ->
-            (0 until zChunks).forEach { zChunk ->
-              updateBlockMesh(world, Vector3i(xChunk, yChunk, zChunk))
-            }
-          }
-        }
-      }
       is UpdateBlock -> {
-        val world = this.world!!
         message.updates.forEach { pos, type ->
           world[pos].type = type
         }
@@ -218,7 +204,6 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             .forEach { updateBlockMesh(world, it) }
       }
       is SkyLightUpdated -> {
-        val world = this.world!!
         message.updates.forEach { pos, skyLightLevel ->
           world[pos].skyLight = skyLightLevel
         }
@@ -238,7 +223,6 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             }
       }
       is BlockLightUpdated -> {
-        val world = this.world!!
         message.updates.forEach { pos, blockLightLevel ->
           world[pos].blockLight = blockLightLevel
         }
@@ -258,7 +242,6 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             }
       }
       is UpdateBlockWater -> {
-        val world = this.world!!
         message.updates.forEach { (pos, waterLevel) ->
           world[pos].waterLevel = waterLevel
         }
@@ -273,8 +256,13 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
             .distinct()
             .forEach { updateWaterMesh(world, it) }
       }
-      is AddWorker -> {
-        workers += Worker(message.pos)
+      is SpawnWorker -> {
+        workers[message.id] = Worker(message.initialPos)
+      }
+      is MoveWorkers -> {
+        message.movements.forEach { id, nextPos ->
+          workers[id]!!.pos = nextPos
+        }
       }
       is TimeUpdated -> {
         timeOfDay = message.time
@@ -357,9 +345,7 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
   override fun render(bounds: Bounds) {
     super.render(bounds)
 
-    val world = world
-
-    controller.viewCenter.y = if (world != null) {
+    controller.viewCenter.y = run {
       val yRange = (0 until sliceHeight)
       val viewHeight = heightAt(world, controller.view.x.toInt(), controller.view.z.toInt(), yRange).toFloat()
       val viewCenterHeight = heightAt(world, controller.viewCenter.x.toInt(), controller.viewCenter.z.toInt(), yRange).toFloat()
@@ -367,8 +353,6 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
       val desiredHeight = viewCenterHeight + controller.viewOffset.y
 
       Math.max(minimumHeight, desiredHeight) - controller.viewOffset.y
-    } else {
-      0f
     }
 
     val variables = Context(
@@ -393,10 +377,10 @@ class WorldRenderer(attributes: Context) : AbstractComponent<Unit>(attributes, U
 
       blockMesh.forEach { pos, mesh -> if (pos.y < sliceHeight) draw(mesh) }
       blockSliceMesh.forEach { pos, mesh -> if (pos.y == sliceHeight - 1) draw(mesh) }
-      workers.forEach { worker -> if (worker.pos.y < sliceHeight) {
+      workers.forEach { _, worker -> if (worker.pos.y < sliceHeight) {
         val workerModel = Matrix4(position = worker.pos.toVector3())
         model(workerModel)
-        val block = world!![worker.pos]
+        val block = world[worker.pos]
         val workerMesh = generateWorkerMesh(block.skyLight.toFloat(), block.blockLight.toFloat()).invoke()
         draw(workerMesh)
       }}

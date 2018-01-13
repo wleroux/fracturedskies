@@ -1,6 +1,7 @@
 package com.fracturedskies.game.skylight
 
 import com.fracturedskies.UI_CONTEXT
+import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
@@ -8,29 +9,10 @@ import com.fracturedskies.game.messages.*
 import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
-class BlockLightSystem(coroutineContext: CoroutineContext) {
-  lateinit var light: LightMap
+class BlockLightSystem(coroutineContext: CoroutineContext, dimension: Dimension) {
+  private val light = LightMap(dimension)
   val channel = MessageChannel(coroutineContext + UI_CONTEXT) { message ->
     when (message) {
-      is WorldGenerated -> {
-        val world = message.world
-        val litBlocks = LinkedList<Vector3i>()
-        light = LightMap(world.dimension)
-        (0 until light.dimension.width).forEach { x ->
-          (0 until light.dimension.depth).forEach { z ->
-            (0 until light.dimension.height).forEach { y ->
-              light.type[x, y, z] = world[x, y, z]
-              if (light.type[x, y, z].blockLight > 0) {
-                litBlocks.add(Vector3i(x, y, z))
-              }
-            }
-          }
-        }
-
-        // Add adjacent blocks get lit by blocks with lighting
-        val blockLightUpdates = propagateBlockLight(litBlocks)
-        send(BlockLightUpdated(blockLightUpdates, Cause.of(message.cause, this), message.context))
-      }
       is UpdateBlock -> {
         val blockLightUpdates = message.updates.map { (pos, type) ->
           light.type[pos] = type

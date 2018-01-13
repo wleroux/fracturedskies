@@ -1,12 +1,10 @@
 package com.fracturedskies.game.skylight
 
-import com.fracturedskies.engine.collections.Dimension
-import com.fracturedskies.engine.collections.IntMap
-import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.game.BlockType
 
-class LightMap(val dimension: Dimension) {
+class LightMap(private val dimension: Dimension) {
   val level = IntMap(dimension)
   val type = ObjectMap(dimension, {BlockType.AIR})
 
