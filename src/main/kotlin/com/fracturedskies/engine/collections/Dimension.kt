@@ -18,4 +18,6 @@ class Dimension(val width: Int, val height: Int, val depth: Int) {
     val y = (((index - x) / width) - z) / depth
     return Vector3i(x, y, z)
   }
+
+  override fun toString() = "[$width, $height, $depth]"
 }

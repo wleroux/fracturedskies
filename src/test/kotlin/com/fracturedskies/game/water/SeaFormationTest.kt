@@ -1,4 +1,4 @@
-package com.fracturedskies.game.water
+package com.fracturedskies.water
 
 import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.Vector3i

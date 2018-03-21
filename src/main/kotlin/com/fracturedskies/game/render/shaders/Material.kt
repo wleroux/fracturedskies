@@ -1,9 +1,0 @@
-package com.fracturedskies.game.render.shaders
-
-import com.fracturedskies.engine.collections.Context
-
-data class Material(val program: ShaderProgram, private val properties: Context) {
-  fun render(variables: Context, mesh: Mesh) {
-    program.render(properties, variables, mesh)
-  }
-}

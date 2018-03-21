@@ -1,10 +1,12 @@
 package com.fracturedskies.engine.collections
 
 import com.fracturedskies.engine.math.Vector3i
+import org.lwjgl.BufferUtils
+import java.util.*
 
 
 open class BooleanMap(private val dimension: Dimension) {
-  private val backend = BooleanArray(dimension.size)
+  private val backend = BitSet(dimension.size)
   operator fun get(pos: Vector3i) = get(pos.x, pos.y, pos.z)
   operator fun get(x: Int, y: Int, z: Int) = backend[dimension(x, y, z)]
   operator fun set(pos: Vector3i, value: Boolean) = set(pos.x, pos.y, pos.z, value);
@@ -12,7 +14,7 @@ open class BooleanMap(private val dimension: Dimension) {
     backend[dimension.invoke(x, y, z)] = value
   }
   fun clear() {
-    backend.fill(false)
+    backend.clear()
   }
 }
 open class Vector3iSet: Iterable<Vector3i> {
@@ -32,27 +34,27 @@ open class Vector3iSet: Iterable<Vector3i> {
   fun isEmpty() = backend.isEmpty()
 }
 open class ByteMap(private val dimension: Dimension) {
-  private val backend = ByteArray(dimension.size)
+  private val backend = BufferUtils.createByteBuffer(dimension.size)
   operator fun get(pos: Vector3i) = get(pos.x, pos.y, pos.z)
   operator fun get(x: Int, y: Int, z: Int) = backend[dimension(x, y, z)]
   operator fun set(pos: Vector3i, value: Byte) = set(pos.x, pos.y, pos.z, value)
   operator fun set(x: Int, y: Int, z: Int, value: Byte) {
-    backend[dimension(x, y, z)] = value
+    backend.put(dimension(x, y, z), value)
   }
   fun clear() {
-    backend.fill(0.toByte())
+    BufferUtils.zeroBuffer(backend)
   }
 }
 open class IntMap(private val dimension: Dimension) {
-  private val backend = IntArray(dimension.size)
+  private val backend = BufferUtils.createIntBuffer(dimension.size)
   operator fun get(pos: Vector3i) = get(pos.x, pos.y, pos.z)
   operator fun get(x: Int, y: Int, z: Int) = backend[dimension(x, y, z)]
   operator fun set(pos: Vector3i, value: Int) = set(pos.x, pos.y, pos.z, value)
   operator fun set(x: Int, y: Int, z: Int, value: Int) {
-    backend[dimension(x, y, z)] = value
+    backend.put(dimension(x, y, z), value)
   }
   fun clear() {
-    backend.fill(0)
+    BufferUtils.zeroBuffer(backend)
   }
 }
 open class ObjectMap<K>(val dimension: Dimension, private val backend: Array<K>) {

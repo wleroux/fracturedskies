@@ -1,18 +1,16 @@
 package com.fracturedskies.engine.jeact
 
-import com.fracturedskies.engine.collections.Context
-import com.fracturedskies.engine.collections.Key
+import com.fracturedskies.engine.collections.*
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.jvm.reflect
+import kotlin.reflect.jvm.*
 
-data class Node<T> private constructor(val type: (Context) -> Component<T>, val attributes: Context) {
+data class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>, val attributes: MultiTypeMap) {
   companion object {
-    val NODES = Key<List<Node<*>>>("nodes")
-    operator fun <T> invoke(type: (Context) -> Component<T>, context: Context = Context(), block: Builder<T>.() -> Unit = {}) = Builder(type, context).apply(block).build()
+    val NODES = TypedKey<List<Node<*>>>("nodes")
+    operator fun <T> invoke(type: (MultiTypeMap) -> Component<T>, context: MultiTypeMap = MultiTypeMap(), block: Builder<T>.() -> Unit = {}) = Builder(type, context).apply(block).build()
   }
 
-  class Builder<T> internal constructor(private val type: (Context) -> Component<T>, private val context: Context) {
+  class Builder<T> internal constructor(private val type: (MultiTypeMap) -> Component<T>, private val context: MultiTypeMap) {
     val nodes = mutableListOf<Node<*>>()
     fun build(): Node<T> {
       return Node(type, context.with(NODES to nodes))
@@ -46,7 +44,7 @@ data class Node<T> private constructor(val type: (Context) -> Component<T>, val 
   }
 }
 
-class NodeCollector(attributes: Context) : AbstractComponent<Unit>(attributes, Unit)
+class NodeCollector(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit)
 fun nodes(block: Node.Builder<*>.() -> Unit): List<Node<*>> {
-  return requireNotNull(Node(::NodeCollector, Context(), block).attributes[Node.NODES])
+  return requireNotNull(Node(::NodeCollector, MultiTypeMap(), block).attributes[Node.NODES])
 }

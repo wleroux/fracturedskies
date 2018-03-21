@@ -1,10 +1,10 @@
 package com.fracturedskies.engine.messages
 
-import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.collections.MultiTypeMap
 
 interface Message {
   val cause: Cause
-  val context: Context
+  val context: MultiTypeMap
 }
 
 class Cause private constructor(private val objects: List<Any>): Sequence<Any> {

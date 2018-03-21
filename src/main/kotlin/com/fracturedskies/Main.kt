@@ -1,22 +1,18 @@
 package com.fracturedskies
 
-import com.fracturedskies.engine.*
+import com.fracturedskies.engine.ModLoader
+import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.game.render.RenderGameSystem
-import com.fracturedskies.game.skylight.*
-import com.fracturedskies.game.time.TimeSystem
-import com.fracturedskies.game.water.WaterSystem
-import com.fracturedskies.game.worker.WorkerSystem
-import com.fracturedskies.game.worldgenerator.WorldGeneratorSystem
 import kotlinx.coroutines.experimental.*
+import java.util.*
 import java.util.concurrent.TimeUnit.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.CoroutineContext
 
-class MainGameSystem(coroutineContext: CoroutineContext) {
+class MainGameSystem(private val coroutineContext: CoroutineContext) {
   val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
       is RequestShutdown -> shutdownRequested.set(true)
@@ -31,42 +27,38 @@ class MainGameSystem(coroutineContext: CoroutineContext) {
 
   private val shutdownRequested = AtomicBoolean(false)
 
-  suspend fun run(coroutineContext: CoroutineContext) {
-    send(Initialize(Cause.of(this), Context())).await()
+  suspend fun run() {
+    send(Initialize(Cause.of(this), MultiTypeMap())).await()
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
       if (now - last >= NANOSECONDS_PER_UPDATE) {
-        send(Update(SECONDS_PER_UPDATE, Cause.of(this), Context())).await()
+        send(Update(SECONDS_PER_UPDATE, Cause.of(this), MultiTypeMap())).await()
         last = now
       }
 
       val alpha = (now - last).toFloat() / NANOSECONDS_PER_UPDATE.toFloat()
-      send(Render(alpha, Cause.of(this), Context())).await()
+      send(Render(alpha, Cause.of(this), MultiTypeMap())).await()
     }
 
-    send(Shutdown(Cause.of(this), Context())).await()
+    send(Shutdown(Cause.of(this), MultiTypeMap())).await()
     coroutineContext.cancelChildren()
   }
+
+  override fun toString() = this.javaClass.simpleName!!
 }
 
 lateinit var UI_CONTEXT: CoroutineContext
-val DIMENSION = Dimension(128, 256, 128)
+val DIMENSION = Dimension(128, 32, 128)
 
 fun main(args: Array<String>) = runBlocking<Unit> {
   UI_CONTEXT = coroutineContext
 
-  // Subscribe all game systems
-  val mainGameSystem = MainGameSystem(coroutineContext)
+  val modLoaders = ServiceLoader.load(ModLoader::class.java)
+  val mainGameSystem = MainGameSystem(coroutineContext + CommonPool)
   register(mainGameSystem.channel)
-  register(RenderGameSystem(coroutineContext + UI_CONTEXT).channel)
-  register(WorldGeneratorSystem(coroutineContext + CommonPool, DIMENSION).channel)
-  register(SkyLightSystem(coroutineContext, DIMENSION).channel)
-  register(BlockLightSystem(coroutineContext, DIMENSION).channel)
-  register(WaterSystem(coroutineContext, DIMENSION).channel)
-  register(TimeSystem(coroutineContext).channel)
-  register(WorkerSystem(coroutineContext, DIMENSION).channel)
+  modLoaders.forEach { modLoader -> modLoader.initialize(coroutineContext + CommonPool) }
+  modLoaders.forEach { modLoader -> modLoader.start() }
 
-  // Run game
-  mainGameSystem.run(coroutineContext+CommonPool)
+  mainGameSystem.run()
 }

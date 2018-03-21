@@ -1,13 +1,13 @@
 package com.fracturedskies.engine.jeact
 
-import com.fracturedskies.engine.collections.Context
+import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
 import com.fracturedskies.engine.jeact.event.Event
 import com.fracturedskies.engine.jeact.event.EventHandler
 import com.fracturedskies.engine.jeact.event.Phase
 
 interface Component<T> {
-  var attributes: Context
+  var attributes: MultiTypeMap
   var state: T
   var nextState: T?
   val handler: EventHandler
@@ -28,11 +28,11 @@ interface Component<T> {
   fun didMount() = Unit
 
   // Updating
-  fun willReceiveProps(nextAttributes: Context) = Unit
-  fun shouldUpdate(nextAttributes: Context, nextState: T): Boolean =
+  fun willReceiveProps(nextAttributes: MultiTypeMap) = Unit
+  fun shouldUpdate(nextAttributes: MultiTypeMap, nextState: T): Boolean =
           attributes !== nextAttributes || state !== nextState
-  fun willUpdate(nextAttributes: Context, nextState: T) = Unit
-  fun didUpdate(prevAttributes: Context, prevState: T) = Unit
+  fun willUpdate(nextAttributes: MultiTypeMap, nextState: T) = Unit
+  fun didUpdate(prevAttributes: MultiTypeMap, prevState: T) = Unit
 
   // Unmounting
   fun willUnmount() = Unit
@@ -41,7 +41,7 @@ interface Component<T> {
   fun render(bounds: Bounds)
 
   // Lifecycle functions
-  fun update(attributes: Context, forceUpdate: Boolean = false) {
+  fun update(attributes: MultiTypeMap, forceUpdate: Boolean = false) {
     // Update component
     val prevAttributes = this.attributes
     val prevState = this.state
@@ -118,7 +118,7 @@ interface Component<T> {
   }
 }
 
-abstract class AbstractComponent<T>(override var attributes: Context, initialState: T) : Component<T> {
+abstract class AbstractComponent<T>(override var attributes: MultiTypeMap, initialState: T) : Component<T> {
   override var state: T = initialState
   override var nextState: T? = null
   override val handler: EventHandler = {}
@@ -136,7 +136,7 @@ abstract class AbstractComponent<T>(override var attributes: Context, initialSta
   override fun toString(): String = this.javaClass.simpleName
 }
 
-fun <T> mount(type: (Context) -> Component<T>, parent: Component<*>?, attributes: Context): Component<T> {
+fun <T> mount(type: (MultiTypeMap) -> Component<T>, parent: Component<*>?, attributes: MultiTypeMap): Component<T> {
   val component = type(attributes)
 
   component.willMount()
