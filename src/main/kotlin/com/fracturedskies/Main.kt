@@ -49,16 +49,16 @@ class MainGameSystem(private val coroutineContext: CoroutineContext) {
 }
 
 lateinit var UI_CONTEXT: CoroutineContext
-val DIMENSION = Dimension(128, 32, 128)
+val DIMENSION = Dimension(128, 256, 128)
 
 fun main(args: Array<String>) = runBlocking<Unit> {
   UI_CONTEXT = coroutineContext
 
   val modLoaders = ServiceLoader.load(ModLoader::class.java)
-  val mainGameSystem = MainGameSystem(coroutineContext + CommonPool)
-  register(mainGameSystem.channel)
   modLoaders.forEach { modLoader -> modLoader.initialize(coroutineContext + CommonPool) }
   modLoaders.forEach { modLoader -> modLoader.start() }
 
+  val mainGameSystem = MainGameSystem(coroutineContext + CommonPool)
+  register(mainGameSystem.channel)
   mainGameSystem.run()
 }

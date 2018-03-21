@@ -34,7 +34,7 @@ class LightLevels(private val colorSwatches: Map<Int, List<Color4>>) {
 
   companion object {
     fun load(rawImageBuffer: ByteBuffer, timeSegments: Int): LightLevels {
-      val imageBuffer = STBImage.stbi_load_from_memory(rawImageBuffer, intArrayOf(timeSegments), intArrayOf(MAX_LIGHT_LEVEL), intArrayOf(3), 4)
+      val imageBuffer = STBImage.stbi_load_from_memory(rawImageBuffer, intArrayOf(timeSegments), intArrayOf(MAX_LIGHT_LEVEL), intArrayOf(3), 4)!!
       return LightLevels((0 until timeSegments).map { timeOfDay ->
         val colorSwatch = (0..MAX_LIGHT_LEVEL).map { lightLevel ->
           val offset = 4 * (lightLevel * timeSegments + timeOfDay)

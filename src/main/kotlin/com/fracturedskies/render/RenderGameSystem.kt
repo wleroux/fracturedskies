@@ -8,7 +8,6 @@ import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.components.Scene.Companion.scene
 import com.fracturedskies.render.events.*
-import kotlinx.coroutines.experimental.launch
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
@@ -50,7 +49,7 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE)
 
     // Create window
-    val videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor())
+    val videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor())!!
     val screenWidth = videoMode.width() / 2
     val screenHeight = videoMode.height() / 2
     window = requireNotNull(glfwCreateWindow(screenWidth, screenHeight, "Fractured Skies", NULL, NULL))
@@ -102,7 +101,7 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
     glfwDestroyWindow(window)
 
     glfwTerminate()
-    glfwSetErrorCallback(null).free()
+    glfwSetErrorCallback(null)!!.free()
   }
 
   private var focus: Component<*>? = null
