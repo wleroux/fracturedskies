@@ -1,20 +1,16 @@
 package com.fracturedskies.render.components
 
-import com.fracturedskies.engine.collections.MultiTypeMap
-import com.fracturedskies.engine.collections.TypedKey
-import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Bounds
-import com.fracturedskies.engine.jeact.Node
+import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.Matrix4
-import com.fracturedskies.render.shaders.Material
-import com.fracturedskies.render.shaders.Mesh
+import com.fracturedskies.render.shaders.*
 import com.fracturedskies.render.shaders.Mesh.Attribute
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
 
 
-class BorderImage(attributes: MultiTypeMap) : AbstractComponent<Boolean>(attributes, false) {
+class BorderImage(attributes: MultiTypeMap) : Component<Boolean>(attributes, false) {
   companion object {
     val MATERIAL = TypedKey<Material>("material")
     private val LAYER_WIDTH = 4

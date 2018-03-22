@@ -4,9 +4,11 @@ import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.engine.jeact.Component.Companion.mount
+import com.fracturedskies.engine.jeact.Component.Companion.unmount
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.render.components.Scene.Companion.scene
+import com.fracturedskies.render.components.Scene
 import com.fracturedskies.render.events.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
@@ -16,8 +18,8 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
 import kotlin.coroutines.experimental.CoroutineContext
 
-class RenderGameSystem(private val coroutineContext: CoroutineContext) {
-  val channel = MessageChannel(coroutineContext + UI_CONTEXT) { message ->
+class RenderGameSystem(context: CoroutineContext) {
+  val channel = MessageChannel(context + UI_CONTEXT) { message ->
     when (message) {
       is Initialize -> initialize()
       is Update -> update()
@@ -26,13 +28,12 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
     }
   }
 
-  private lateinit var rootNode: Node<*>
-  private var rootComponent: Component<*>? = null
+  private lateinit var scene: Scene
   private lateinit var screenDimension: Bounds
 
   private var window: Long = 0
 
-  private suspend fun initialize() {
+  private fun initialize() {
     GLFWErrorCallback.createPrint(System.err).set()
 
     // Initialize GLFW
@@ -77,25 +78,26 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
 
-    rootNode = scene()
+    scene = mount(::Scene, null, MultiTypeMap())
+    scene.update(MultiTypeMap(), true)
   }
 
-  private suspend fun update() {
+  private fun update() {
     glfwPollEvents()
   }
 
-  private suspend fun render() {
+  private fun render() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
     // Render Scene
-    rootComponent = rootNode.toComponent(rootComponent)
-    rootComponent?.render(screenDimension)
+    scene.update(MultiTypeMap(), false)
+    scene.render(screenDimension)
 
     glfwSwapBuffers(window) // swap the color buffers
   }
 
-  private suspend fun shutdown() {
-    rootComponent?.unmount()
+  private fun shutdown() {
+    unmount(scene)
 
     glfwFreeCallbacks(window)
     glfwDestroyWindow(window)
@@ -120,7 +122,7 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
   private var hover: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) {
     mousePos = Point(xpos.toInt(), screenDimension.height - ypos.toInt())
-    val nextHover = rootComponent?.componentFromPoint(mousePos)
+    val nextHover = scene.componentFromPoint(mousePos)
     val prevHover = hover
     if (prevHover !== nextHover) {
       prevHover?.dispatch(Unhover(prevHover))
@@ -129,7 +131,7 @@ class RenderGameSystem(private val coroutineContext: CoroutineContext) {
     }
   }
   @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) {
-    val component = rootComponent?.componentFromPoint(mousePos)
+    val component = scene.componentFromPoint(mousePos)
     if (component != null) {
       val event = Click(component, mousePos, button, action, mods)
       component.dispatch(event)

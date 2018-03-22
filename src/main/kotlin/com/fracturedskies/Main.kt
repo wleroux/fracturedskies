@@ -20,17 +20,18 @@ lateinit var UI_CONTEXT: CoroutineContext
 fun main(args: Array<String>) = runBlocking {
   UI_CONTEXT = coroutineContext
 
+  // Listen for Shutdown request
+  val shutdownRequested = AtomicBoolean(false)
+  register(MessageChannel(coroutineContext) { message ->
+    if (message is RequestShutdown) shutdownRequested.set(true)
+  })
+
   // Load Mods
   val modLoaders = ServiceLoader.load(ModLoader::class.java)
   modLoaders.forEach { modLoader -> modLoader.initialize(coroutineContext + CommonPool) }
   modLoaders.forEach { modLoader -> modLoader.start() }
 
   // Run Main Game Loop
-  val shutdownRequested = AtomicBoolean(false)
-  register(MessageChannel(coroutineContext) { message ->
-    if (message is RequestShutdown) shutdownRequested.set(true)
-  })
-
   send(Initialize(Cause.of(this))).await()
   var last = System.nanoTime()
   while (!shutdownRequested.get()) {

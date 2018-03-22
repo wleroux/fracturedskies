@@ -5,7 +5,7 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.shaders.*
 import org.lwjgl.opengl.GL11
 
-class MeshRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit) {
+class MeshRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
     val MESH = TypedKey<Mesh>("mesh")
     val MATERIAL = TypedKey<Material>("material")

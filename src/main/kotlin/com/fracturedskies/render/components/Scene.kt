@@ -1,16 +1,15 @@
 package com.fracturedskies.render.components
 
 import com.fracturedskies.engine.collections.MultiTypeMap
-import com.fracturedskies.engine.jeact.AbstractComponent
-import com.fracturedskies.engine.jeact.Node
-import com.fracturedskies.engine.jeact.nodes
+import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.components.FpsRenderer.Companion.fpsRenderer
+import com.fracturedskies.render.components.Scene.SceneState
 import com.fracturedskies.render.components.layout.*
 import com.fracturedskies.render.components.layout.Layout.Companion.GROW
 import com.fracturedskies.render.components.layout.Layout.Companion.layout
 import com.fracturedskies.render.components.world.WorldRenderer.Companion.worldRenderer
 
-class Scene(attributes: MultiTypeMap) : AbstractComponent<Scene.SceneState>(attributes, SceneState()) {
+class Scene(attributes: MultiTypeMap) : Component<SceneState>(attributes, SceneState()) {
   companion object {
     fun scene(): Node<SceneState> {
       return Node(::Scene)
@@ -23,13 +22,14 @@ class Scene(attributes: MultiTypeMap) : AbstractComponent<Scene.SceneState>(attr
     get() = nextState?.text ?: state.text
     set(value) {nextState = (nextState?:state).copy(text = value)}
 
-  override fun toNode() = nodes {
+  override fun toNodes() = nodes {
     layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
       worldRenderer(MultiTypeMap(
               GROW to 1.0
       ))
     }
     layout {
+//      input(initialValue = "Testing", onTextChanged = {message-> println(message)})
       fpsRenderer()
     }
   }

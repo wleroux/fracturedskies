@@ -4,7 +4,7 @@ import com.fracturedskies.engine.collections.*
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.*
 
-data class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>, val attributes: MultiTypeMap) {
+class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>, val attributes: MultiTypeMap) {
   companion object {
     val NODES = TypedKey<List<Node<*>>>("nodes")
     operator fun <T> invoke(type: (MultiTypeMap) -> Component<T>, context: MultiTypeMap = MultiTypeMap(), block: Builder<T>.() -> Unit = {}) = Builder(type, context).apply(block).build()
@@ -18,7 +18,7 @@ data class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>,
   }
 
   @Suppress("UNCHECKED_CAST")
-  private val typeClass: KClass<Component<T>> = type.reflect()!!.returnType.jvmErasure as KClass<Component<T>>
+  val typeClass: KClass<Component<T>> = type.reflect()!!.returnType.jvmErasure as KClass<Component<T>>
   override fun toString() = "${typeClass.simpleName}($attributes)"
   override fun hashCode() = 31 * type.hashCode() + attributes.hashCode()
   override fun equals(other: Any?): Boolean {
@@ -29,22 +29,9 @@ data class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>,
       else -> false
     }
   }
-
-  @Suppress("UNCHECKED_CAST")
-  fun toComponent(prev: Component<*>? = null, parent: Component<*>? = null): Component<T> {
-    val reuseComponent = if (prev != null) prev::class == this.typeClass else false
-    val component: Component<T> = if (reuseComponent) {
-      prev!! as Component<T>
-    } else {
-      prev?.unmount()
-      mount(type, parent, this.attributes)
-    }
-    component.update(this.attributes, !reuseComponent)
-    return component
-  }
 }
 
-class NodeCollector(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit)
+class NodeCollector(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
 fun nodes(block: Node.Builder<*>.() -> Unit): List<Node<*>> {
   return requireNotNull(Node(::NodeCollector, MultiTypeMap(), block).attributes[Node.NODES])
 }

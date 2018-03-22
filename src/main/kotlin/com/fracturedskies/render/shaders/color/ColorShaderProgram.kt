@@ -19,13 +19,13 @@ class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.ver
     /**
      * Standard Shader Uniforms
      */
-    private val MODEL_LOCATION = 0
-    private val VIEW_LOCATION = 1
-    private val PROJECTION_LOCATION = 2
+    private const val MODEL_LOCATION = 0
+    private const val VIEW_LOCATION = 1
+    private const val PROJECTION_LOCATION = 2
 
-    private val LIGHT_DIRECTION_LOCATION = 3
-    private val SKY_COLORS_LOCATION = 4
-    private val BLOCK_COLORS_LOCATION = 20
+    private const val LIGHT_DIRECTION_LOCATION = 3
+    private const val SKY_COLORS_LOCATION = 4
+    private const val BLOCK_COLORS_LOCATION = 20
   }
 
   override fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh) {

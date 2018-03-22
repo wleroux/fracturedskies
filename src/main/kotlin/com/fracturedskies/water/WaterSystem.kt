@@ -12,6 +12,7 @@ import java.util.function.ToIntFunction
 import kotlin.coroutines.experimental.CoroutineContext
 
 class WaterSystem(coroutineContext: CoroutineContext) {
+  private var initialized = false
   private lateinit var water: WaterMap
   private lateinit var pathFinder: WaterPathFinder
   val channel = MessageChannel(coroutineContext) { message ->
@@ -19,8 +20,10 @@ class WaterSystem(coroutineContext: CoroutineContext) {
       is NewGameRequested -> {
         water = WaterMap(message.dimension)
         pathFinder = WaterPathFinder(water)
+        initialized = true
       }
       is UpdateBlock -> {
+        if (!initialized) return@MessageChannel
         val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
         message.updates.forEach { (pos, type) ->
           water.setOpaque(pos, type.opaque)
@@ -34,6 +37,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         }
       }
       is UpdateBlockWater -> {
+        if (!initialized) return@MessageChannel
         if (message.cause.first() != this) {
           message.updates.forEach { (pos, waterLevel) ->
             water.setLevel(pos, waterLevel)
@@ -41,6 +45,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         }
       }
       is Update -> {
+        if (!initialized) return@MessageChannel
         val flow = flow()
         val evaporation = evaporation()
 

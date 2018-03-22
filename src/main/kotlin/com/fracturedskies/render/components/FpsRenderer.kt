@@ -1,7 +1,6 @@
 package com.fracturedskies.render.components
 
-import com.fracturedskies.engine.api.Render
-import com.fracturedskies.engine.api.Update
+import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.messages.MessageBus.register
@@ -10,7 +9,7 @@ import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.render.components.TextRenderer.Companion.textRenderer
 import java.util.concurrent.TimeUnit
 
-class FpsRenderer(attributes: MultiTypeMap) : AbstractComponent<FpsRenderer.FpsData>(attributes, FpsData(0, 0)) {
+class FpsRenderer(attributes: MultiTypeMap) : Component<FpsRenderer.FpsData>(attributes, FpsData(0, 0)) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
     fun Node.Builder<*>.fpsRenderer() {
@@ -26,7 +25,7 @@ class FpsRenderer(attributes: MultiTypeMap) : AbstractComponent<FpsRenderer.FpsD
     get() = nextState?.ups ?: state.ups
     set(value) { nextState = FpsData(fps, value) }
 
-  lateinit private var fpsCounter: MessageChannel
+  private lateinit var fpsCounter: MessageChannel
   override fun willMount() {
     super.willMount()
     var lastFps = System.nanoTime()
@@ -64,7 +63,7 @@ class FpsRenderer(attributes: MultiTypeMap) : AbstractComponent<FpsRenderer.FpsD
     unregister(fpsCounter)
   }
   override fun componentFromPoint(point: Point): Component<*>? = null
-  override fun toNode() = nodes {
+  override fun toNodes() = nodes {
     textRenderer("FPS: $fps, MSPF: ${1000f / fps}; UPS: $ups, MSPF: ${1000f / ups}")
   }
 }

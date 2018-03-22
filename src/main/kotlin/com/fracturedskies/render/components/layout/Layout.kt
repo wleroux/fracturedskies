@@ -6,7 +6,7 @@ import com.fracturedskies.engine.jeact.*
 /**
  * Layout takes the `bounds` provided and divides the space with to child components
  */
-class Layout(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit) {
+class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
     // Flex Attributes
     val DIRECTION = TypedKey<Direction>("direction")

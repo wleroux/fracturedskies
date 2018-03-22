@@ -14,7 +14,7 @@ class NoopProgram : ShaderProgram(this::class.java.getResource("noop.vert").read
     /**
      * Standard Shader Uniforms
      */
-    private val ALBEDO_LOCATION = 3
+    private const val ALBEDO_LOCATION = 3
   }
 
   override fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh) {

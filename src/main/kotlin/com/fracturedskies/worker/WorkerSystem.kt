@@ -12,18 +12,22 @@ import kotlin.coroutines.experimental.CoroutineContext
 class WorkerSystem(context: CoroutineContext) {
   private lateinit var workers: MutableMap<Id, Worker>
   private lateinit var blocks: ObjectMap<BlockType>
+  private var initialized = false
 
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
         blocks = ObjectMap(message.dimension) { BlockType.AIR}
         workers = mutableMapOf()
+        initialized = true
       }
       is UpdateBlock -> message.updates.forEach { pos, blockType -> blocks[pos] = blockType }
       is SpawnWorker -> {
+        if (!initialized) return@MessageChannel
         workers.plusAssign((message.id to Worker(message.initialPos)))
       }
       is Update -> {
+        if (!initialized) return@MessageChannel
         val movements = workers.map {(id, worker) ->
           val movement = Vector3i.XZ_PLANE_NEIGHBORS
               .map { worker.pos + it }

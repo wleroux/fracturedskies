@@ -15,7 +15,7 @@ class TextShaderProgram: ShaderProgram(this::class.java.getResource("text.vert")
     /**
      * Standard Shader Uniforms
      */
-    private val PROJECTION_LOCATION = 2
+    private const val PROJECTION_LOCATION = 2
   }
 
   override fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh) {

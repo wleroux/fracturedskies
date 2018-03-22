@@ -14,7 +14,7 @@ import com.fracturedskies.render.shaders.*
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW
 
-class Input(attributes: MultiTypeMap) : AbstractComponent<Input.InputState>(attributes, InputState(attributes[INITIAL_VALUE] ?: "")) {
+class Input(attributes: MultiTypeMap) : Component<Input.InputState>(attributes, InputState(attributes[INITIAL_VALUE] ?: "")) {
   companion object {
     val INITIAL_VALUE = TypedKey<String>("initialValue")
     val ON_TEXT_CHANGED = TypedKey<(String) -> Unit>("onTextChanged")
@@ -41,7 +41,7 @@ class Input(attributes: MultiTypeMap) : AbstractComponent<Input.InputState>(attr
   private val onTextChanged
     get() = requireNotNull(attributes[ON_TEXT_CHANGED])
 
-  lateinit private var material: Material
+  private lateinit var material: Material
   override fun willMount() {
     material = Material(StandardShaderProgram(), MultiTypeMap(
         StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("com/fracturedskies/render/components/input/input_default.png", this@Input.javaClass))
@@ -52,7 +52,7 @@ class Input(attributes: MultiTypeMap) : AbstractComponent<Input.InputState>(attr
     onTextChanged(text)
   }
 
-  override fun toNode() = nodes {
+  override fun toNodes() = nodes {
     layout(direction = Direction.COLUMN_REVERSE) {
       borderImage(material) {
         val displayText = if (focused) {

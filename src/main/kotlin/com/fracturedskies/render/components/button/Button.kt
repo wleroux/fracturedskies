@@ -10,7 +10,7 @@ import com.fracturedskies.render.shaders.*
 import com.fracturedskies.render.shaders.standard.StandardShaderProgram
 import org.lwjgl.glfw.GLFW
 
-class Button(attributes: MultiTypeMap) : AbstractComponent<Boolean>(attributes, false) {
+class Button(attributes: MultiTypeMap) : Component<Boolean>(attributes, false) {
   companion object {
     val ON_CLICK = TypedKey<(Click) -> Unit>("onClick")
     fun Node.Builder<*>.button(onClick: (Click) -> Unit = {}, additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.()->Unit = {}) {
@@ -28,8 +28,8 @@ class Button(attributes: MultiTypeMap) : AbstractComponent<Boolean>(attributes, 
   /* Attributes */
   private val onClick get() = requireNotNull(attributes[ON_CLICK])
 
-  lateinit private var defaultMaterial: Material
-  lateinit private var hoverMaterial: Material
+  private lateinit var defaultMaterial: Material
+  private lateinit var hoverMaterial: Material
   override fun willMount() {
     hoverMaterial = Material(StandardShaderProgram(), MultiTypeMap(
         StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("button_hover.png", this@Button.javaClass))
@@ -39,9 +39,9 @@ class Button(attributes: MultiTypeMap) : AbstractComponent<Boolean>(attributes, 
     ))
   }
 
-  override fun toNode() = nodes {
+  override fun toNodes() = nodes {
     borderImage(if (hover) hoverMaterial else defaultMaterial) {
-      nodes.addAll(super.toNode())
+      nodes.addAll(super.toNodes())
     }
   }
 

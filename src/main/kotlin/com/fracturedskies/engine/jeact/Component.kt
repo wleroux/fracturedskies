@@ -2,45 +2,86 @@ package com.fracturedskies.engine.jeact
 
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
-import com.fracturedskies.engine.jeact.event.Event
-import com.fracturedskies.engine.jeact.event.EventHandler
-import com.fracturedskies.engine.jeact.event.Phase
+import com.fracturedskies.engine.jeact.event.*
 
-interface Component<T> {
-  var attributes: MultiTypeMap
-  var state: T
-  var nextState: T?
-  val handler: EventHandler
+abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
+  companion object {
+    fun unmount(component: Component<*>) {
+      component.children.forEach { unmount(it) }
+      component.willUnmount()
+    }
 
-  // Bounds
-  var bounds: Bounds
-  fun preferredWidth(parentWidth: Int, parentHeight: Int): Int =
-          children.map({ it.preferredWidth(parentWidth, parentHeight) }).max() ?: 0
-  fun preferredHeight(parentWidth: Int, parentHeight: Int): Int =
-          children.map({ it.preferredHeight(parentWidth, parentHeight) }).max() ?: 0
+    fun <S, C: Component<S>> mount(type: (MultiTypeMap) -> C, parent: Component<*>?, attributes: MultiTypeMap): C {
+      val component = type(attributes)
+
+      component.willMount()
+      component.parent = parent
+      component.attributes = attributes
+      component.state = component.nextState ?: component.state
+      component.didMount()
+
+      return component
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> toComponent(node: Node<T>, prev: Component<*>? = null, parent: Component<*>? = null): Component<T> {
+      val reuseComponent = if (prev != null) prev::class == node.typeClass else false
+      val component: Component<T> = if (reuseComponent) {
+        prev!! as Component<T>
+      } else {
+        if (prev != null) unmount(prev)
+        mount(node.type, parent, node.attributes)
+      }
+      component.update(node.attributes, !reuseComponent)
+      return component
+    }
+  }
+
+  var state: T = initialState
+  var nextState: T? = null
+  open val handler: EventHandler = {}
 
   // Component Tree
-  var parent: Component<*>?
-  var children: List<Component<*>>
+  var parent: Component<*>? = null
+  var children: List<Component<*>> = listOf()
 
   // Mounting
-  fun willMount() = Unit
-  fun didMount() = Unit
+  open fun willMount() = Unit
+  open fun didMount() = Unit
 
   // Updating
-  fun willReceiveProps(nextAttributes: MultiTypeMap) = Unit
-  fun shouldUpdate(nextAttributes: MultiTypeMap, nextState: T): Boolean =
+  open fun willReceiveProps(nextAttributes: MultiTypeMap) = Unit
+  open fun shouldUpdate(nextAttributes: MultiTypeMap, nextState: T): Boolean =
           attributes !== nextAttributes || state !== nextState
-  fun willUpdate(nextAttributes: MultiTypeMap, nextState: T) = Unit
-  fun didUpdate(prevAttributes: MultiTypeMap, prevState: T) = Unit
+  open fun willUpdate(nextAttributes: MultiTypeMap, nextState: T) = Unit
+  open fun didUpdate(prevAttributes: MultiTypeMap, prevState: T) = Unit
 
   // Unmounting
-  fun willUnmount() = Unit
+  open fun willUnmount() = Unit
 
-  fun toNode(): List<Node<*>> = requireNotNull(attributes[NODES])
-  fun render(bounds: Bounds)
+  // Rendering Components
+  lateinit var bounds: Bounds
+  open fun preferredWidth(parentWidth: Int, parentHeight: Int): Int =
+      children.map({ it.preferredWidth(parentWidth, parentHeight) }).max() ?: 0
+  open fun preferredHeight(parentWidth: Int, parentHeight: Int): Int =
+      children.map({ it.preferredHeight(parentWidth, parentHeight) }).max() ?: 0
+  open fun render(bounds: Bounds) {
+    this.bounds = bounds
+    for (child in children) {
+      child.render(this.bounds)
+    }
+  }
+  open fun componentFromPoint(point: Point): Component<*>? {
+    return if (point within this.bounds) {
+      val child = children.reversed().mapNotNull({ it.componentFromPoint(point) }).firstOrNull()
+      child ?: this
+    } else {
+      null
+    }
+  }
 
   // Lifecycle functions
+  open fun toNodes(): List<Node<*>> = requireNotNull(attributes[NODES])
   fun update(attributes: MultiTypeMap, forceUpdate: Boolean = false) {
     // Update component
     val prevAttributes = this.attributes
@@ -57,24 +98,19 @@ interface Component<T> {
       this.attributes = nextAttributes
       this.state = nextState
       this.nextState = null
-      this.children = this.toNode().mapIndexed({ index, node ->
+      this.children = this.toNodes().mapIndexed({ index, node ->
         val prevChildComponent = this.children.getOrNull(index)
-        node.toComponent(prevChildComponent, this)
+        toComponent(node, prevChildComponent, this)
       })
 
-      // Unmount discarded toNode
-      prevChildren.minus(this.children).forEach({ it.unmount() })
+      // Unmount discarded toNodes
+      prevChildren.minus(this.children).forEach({ unmount(it) })
       this.didUpdate(prevAttributes, prevState)
     } else {
       this.children.forEach({ childComponent ->
         childComponent.update(childComponent.attributes)
       })
     }
-  }
-
-  fun unmount() {
-    this.children.forEach({it.unmount()})
-    this.willUnmount()
   }
 
   fun dispatch(event: Event) {
@@ -108,41 +144,5 @@ interface Component<T> {
     }
   }
 
-  fun componentFromPoint(point: Point): Component<*>? {
-    return if (point within this.bounds) {
-      val child = children.reversed().mapNotNull({ it.componentFromPoint(point) }).firstOrNull()
-      child ?: this
-    } else {
-      null
-    }
-  }
-}
-
-abstract class AbstractComponent<T>(override var attributes: MultiTypeMap, initialState: T) : Component<T> {
-  override var state: T = initialState
-  override var nextState: T? = null
-  override val handler: EventHandler = {}
-  override var parent: Component<*>? = null
-  override var children: List<Component<*>> = listOf()
-  override lateinit var bounds: Bounds
-
-  override fun render(bounds: Bounds) {
-    this.bounds = bounds
-    for (child in children) {
-      child.render(this.bounds)
-    }
-  }
-
   override fun toString(): String = this.javaClass.simpleName
-}
-
-fun <T> mount(type: (MultiTypeMap) -> Component<T>, parent: Component<*>?, attributes: MultiTypeMap): Component<T> {
-  val component = type(attributes)
-
-  component.willMount()
-  component.parent = parent
-  component.attributes = attributes
-  component.state = component.nextState ?: component.state
-  component.didMount()
-  return component
 }

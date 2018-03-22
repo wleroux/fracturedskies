@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.*
+import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.*
@@ -22,7 +22,7 @@ import org.lwjgl.opengl.GL11.*
 import java.lang.Integer.*
 import kotlin.math.PI
 
-class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit) {
+class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
     const val CHUNK_X_SIZE = 16
     const val CHUNK_Y_SIZE = 1

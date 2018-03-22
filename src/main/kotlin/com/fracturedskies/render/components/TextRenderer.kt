@@ -15,7 +15,7 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.stb.STBEasyFont
 import org.lwjgl.stb.STBEasyFont.*
 
-class TextRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit) {
+class TextRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
     val TEXT = TypedKey<String>("text")
     val COLOR = TypedKey<Color4>("color")
@@ -34,7 +34,7 @@ class TextRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribute
   override fun preferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)
   var mesh: Mesh? = null
 
-  override fun toNode() = nodes {
+  override fun toNodes() = nodes {
     val colorBuffer = BufferUtils.createByteBuffer(4)
     colorBuffer.put(color.red.toByte())
     colorBuffer.put(color.green.toByte())

@@ -22,10 +22,10 @@ class StandardShaderProgram: ShaderProgram(this::class.java.getResource("standar
     /**
      * Standard Shader Uniforms
      */
-    private val MODEL_LOCATION = 0
-    private val VIEW_LOCATION = 1
-    private val PROJECTION_LOCATION = 2
-    private val ALBEDO_LOCATION = 3
+    private const val MODEL_LOCATION = 0
+    private const val VIEW_LOCATION = 1
+    private const val PROJECTION_LOCATION = 2
+    private const val ALBEDO_LOCATION = 3
   }
 
   override fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh) {
