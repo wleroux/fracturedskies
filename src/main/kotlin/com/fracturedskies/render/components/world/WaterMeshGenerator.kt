@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.BlockType
+import com.fracturedskies.api.BlockType
 import com.fracturedskies.engine.collections.ObjectMap
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.shaders.Mesh

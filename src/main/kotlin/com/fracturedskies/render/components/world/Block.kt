@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.BlockType
+import com.fracturedskies.api.BlockType
 
 class Block(var type: BlockType, var skyLight: Int, var blockLight: Int, var waterLevel: Byte) {
   override fun toString(): String {

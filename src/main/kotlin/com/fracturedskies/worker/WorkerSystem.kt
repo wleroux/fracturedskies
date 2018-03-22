@@ -1,6 +1,5 @@
 package com.fracturedskies.worker
 
-import com.fracturedskies.BlockType
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.api.Update
@@ -10,14 +9,14 @@ import com.fracturedskies.engine.messages.*
 import kotlin.coroutines.experimental.CoroutineContext
 
 
-class WorkerSystem(coroutineContext: CoroutineContext) {
+class WorkerSystem(context: CoroutineContext) {
   private lateinit var workers: MutableMap<Id, Worker>
   private lateinit var blocks: ObjectMap<BlockType>
 
-  val channel = MessageChannel(coroutineContext) { message ->
+  val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        blocks = ObjectMap(message.dimension) {BlockType.AIR}
+        blocks = ObjectMap(message.dimension) { BlockType.AIR}
         workers = mutableMapOf()
       }
       is UpdateBlock -> message.updates.forEach { pos, blockType -> blocks[pos] = blockType }

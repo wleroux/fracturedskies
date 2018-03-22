@@ -67,7 +67,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
     }
   }
 
-  private suspend fun flow(): Map<Vector3i, Byte> {
+  private fun flow(): Map<Vector3i, Byte> {
     water.maxFlowOut.clear()
     val originalWaterLevel = mutableMapOf<Vector3i, Byte>()
     val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()

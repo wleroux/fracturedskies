@@ -1,16 +1,14 @@
 package com.fracturedskies.engine.messages
 
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.launch
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
+import kotlin.coroutines.experimental.*
 
-class MessageChannel(coroutineContext: CoroutineContext = EmptyCoroutineContext, private val handler: suspend (Message) -> Unit) {
+class MessageChannel(context: CoroutineContext = EmptyCoroutineContext, private val handler: suspend (Message) -> Unit) {
   private val channel = Channel<Message>(Channel.UNLIMITED)
   private var processing = false
   init {
-    launch(coroutineContext) {
+    launch(context) {
       channel.consumeEach { message ->
         try {
           processing = true

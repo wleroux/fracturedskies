@@ -7,7 +7,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class LightModLoader: ModLoader() {
   override fun initialize(initialContext: CoroutineContext) {
-    register(BlockLightSystem(initialContext).channel)
-    register(SkyLightSystem(initialContext).channel)
+    register(blockLightSystem(initialContext))
+    register(skyLightSystem(initialContext))
   }
 }

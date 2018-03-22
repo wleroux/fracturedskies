@@ -1,17 +1,16 @@
 package com.fracturedskies.light
 
-import com.fracturedskies.BlockType.AIR
-import com.fracturedskies.UI_CONTEXT
 import com.fracturedskies.api.*
+import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
+import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
 import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
-class SkyLightSystem(coroutineContext: CoroutineContext) {
+fun skyLightSystem(context: CoroutineContext): MessageChannel {
   class SkyLightMap(val dimension: Dimension) {
     val level = IntMap(dimension)
     val type = ObjectMap(dimension, { AIR })
@@ -19,30 +18,9 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
     fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
     fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   }
+  lateinit var light: SkyLightMap
 
-  private lateinit var light: SkyLightMap
-  val channel = MessageChannel(coroutineContext + UI_CONTEXT) { message ->
-    when (message) {
-      is NewGameRequested -> {
-        light = SkyLightMap(message.dimension)
-      }
-      is UpdateBlock -> {
-        message.updates.forEach { pos, type ->
-          light.type[pos] = type
-        }
-
-        val lightUpdates = message.updates.flatMap { (pos, _) ->
-          updateSkylight(pos).toList()
-        }.toMap()
-
-        if (lightUpdates.isNotEmpty()) {
-          send(SkyLightUpdated(lightUpdates, Cause.of(message.cause, this), message.context))
-        }
-      }
-    }
-  }
-
-  private fun propagateSkyLight(lightPropagation: LinkedList<Vector3i>): Map<Vector3i, Int> {
+  fun propagateSkyLight(lightPropagation: LinkedList<Vector3i>): Map<Vector3i, Int> {
     val lightUpdates = mutableMapOf<Vector3i, Int>()
     while (lightPropagation.isNotEmpty()) {
       val blockPos = lightPropagation.pollFirst()
@@ -71,7 +49,7 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
     return lightUpdates
   }
 
-  private fun updateSkylight(initialPos: Vector3i): Map<Vector3i, Int> {
+  fun updateSkylight(initialPos: Vector3i): Map<Vector3i, Int> {
     val lightUpdates = mutableMapOf<Vector3i, Int>()
     if (light.type[initialPos].opaque) {
       // Remove Skylight
@@ -82,23 +60,23 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
       light.level[initialPos] = 0
       val lightPos = LinkedList<Vector3i>()
       val skyunlitPos = LinkedList<Vector3i>(Vector3i.NEIGHBOURS
-              .map { initialPos + it }
-              .filter { light.has(it) })
+          .map { initialPos + it }
+          .filter { light.has(it) })
       while (skyunlitPos.isNotEmpty()) {
         val blockPos = skyunlitPos.pollFirst()
         if (light.level[blockPos] == 0 || light.type[blockPos].opaque)
           continue
         val lit = (blockPos.y == light.dimension.height - 1) || Vector3i.NEIGHBOURS
-                .filter { light.has(blockPos + it) }
-                .any {
-                  if (it == Vector3i.AXIS_Y &&
-                          light.level[blockPos + it] == MAX_LIGHT_LEVEL &&
-                          light.level[blockPos] <= light.level[blockPos + it]) {
-                    true
-                  } else {
-                    (light.level[blockPos] < light.level[blockPos + it])
-                  }
-                }
+            .filter { light.has(blockPos + it) }
+            .any {
+              if (it == Vector3i.AXIS_Y &&
+                  light.level[blockPos + it] == MAX_LIGHT_LEVEL &&
+                  light.level[blockPos] <= light.level[blockPos + it]) {
+                true
+              } else {
+                (light.level[blockPos] < light.level[blockPos + it])
+              }
+            }
         if (lit) {
           lightPos.add(blockPos)
         } else {
@@ -120,11 +98,32 @@ class SkyLightSystem(coroutineContext: CoroutineContext) {
       lightUpdates[initialPos] = skyLightLevel
       light.level[initialPos] = skyLightLevel
       val skylightPos = LinkedList(Vector3i.NEIGHBOURS
-              .map { initialPos + it }
-              .filter { light.has(it) })
+          .map { initialPos + it }
+          .filter { light.has(it) })
       skylightPos.addFirst(initialPos)
       lightUpdates.putAll(propagateSkyLight(skylightPos))
       return lightUpdates
+    }
+  }
+
+  return MessageChannel(context) { message ->
+    when (message) {
+      is NewGameRequested -> {
+        light = SkyLightMap(message.dimension)
+      }
+      is UpdateBlock -> {
+        message.updates.forEach { pos, type ->
+          light.type[pos] = type
+        }
+
+        val lightUpdates = message.updates.flatMap { (pos, _) ->
+          updateSkylight(pos).toList()
+        }.toMap()
+
+        if (lightUpdates.isNotEmpty()) {
+          send(SkyLightUpdated(lightUpdates, message.cause, message.context))
+        }
+      }
     }
   }
 }

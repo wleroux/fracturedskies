@@ -4,5 +4,3 @@ com.fracturedskies.time.TimeModLoader
 com.fracturedskies.render.RenderModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
 com.fracturedskies.worker.WorkerModLoader
-
-#com.fracturedskies.MessageLoggerModLoader

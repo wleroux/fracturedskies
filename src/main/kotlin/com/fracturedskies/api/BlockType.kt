@@ -1,4 +1,4 @@
-package com.fracturedskies
+package com.fracturedskies.api
 
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.light.api.MAX_LIGHT_LEVEL

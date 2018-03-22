@@ -4,7 +4,6 @@ import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
-import com.fracturedskies.BlockType
 
 data class NewGameRequested(val dimension: Dimension, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 

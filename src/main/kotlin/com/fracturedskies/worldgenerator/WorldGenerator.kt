@@ -2,8 +2,8 @@ package com.fracturedskies.worldgenerator
 
 import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.BlockType
-import com.fracturedskies.BlockType.*
+import com.fracturedskies.api.BlockType
+import com.fracturedskies.api.BlockType.*
 
 
 class WorldGenerator(private val dimension: Dimension, private val seed: Int) {

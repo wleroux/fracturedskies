@@ -9,6 +9,7 @@ import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.register
+import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.render.events.*
 import com.fracturedskies.render.shaders.Mesh
@@ -22,11 +23,10 @@ import java.lang.Integer.*
 import kotlin.math.PI
 
 class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attributes, Unit) {
-  val dimension = DIMENSION
   companion object {
-    val CHUNK_X_SIZE = 128
-    val CHUNK_Y_SIZE = 1
-    val CHUNK_Z_SIZE = 128
+    const val CHUNK_X_SIZE = 16
+    const val CHUNK_Y_SIZE = 1
+    const val CHUNK_Z_SIZE = 16
     val CHUNKS = Vector3i(CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE)
     fun Node.Builder<*>.worldRenderer(additionalContext: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
@@ -131,9 +131,9 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
                     }
                   }
                 }.toMap()
-                MessageBus.send(UpdateBlock(updates, Cause.of(this), MultiTypeMap()))
+                send(UpdateBlock(updates, Cause.of(this)))
               } else {
-                MessageBus.send(SpawnWorker(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this), MultiTypeMap()))
+                send(SpawnWorker(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this)))
               }
             }
             // Remove Blocks
@@ -147,7 +147,7 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
                   }
                 }
               }.toMap()
-              MessageBus.send(UpdateBlock(updates, Cause.of(this), MultiTypeMap()))
+              send(UpdateBlock(updates, Cause.of(this)))
             }
             // Add Water
             else if (event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
@@ -171,7 +171,7 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
                 }
               }.toMap()
 
-              MessageBus.send(UpdateBlockWater(updates, Cause.of(this), MultiTypeMap()))
+              send(UpdateBlockWater(updates, Cause.of(this)))
             }
           }
           firstBlock = null
@@ -180,12 +180,17 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
     }
   })
 
-  lateinit private var program: ColorShaderProgram
-  private val world = ObjectMap(dimension) {Block(BlockType.AIR, 0, 0, 0)}
+  private var initialized = false
+  private lateinit var program: ColorShaderProgram
+  private lateinit var world: ObjectMap<Block>
   private var workers = mutableMapOf<Id, Worker>()
   private var timeOfDay = 0f
-  private var channel = MessageChannel(coroutineContext = UI_CONTEXT) { message ->
+  private var channel = MessageChannel(context = UI_CONTEXT) { message ->
     when (message) {
+      is NewGameRequested -> {
+        world = ObjectMap(message.dimension) { Block(BlockType.AIR, 0, 0, 0)}
+        initialized = true
+      }
       is UpdateBlock -> {
         message.updates.forEach { pos, type ->
           world[pos].type = type
@@ -322,17 +327,17 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
     }
   }
 
-  lateinit private var listener: MessageChannel
   private val skyLightDirection = Vector3(0f, -1f, -0.5f).normalize()
-  lateinit private var skyLightLevels: LightLevels
-  lateinit private var blockLightLevels: LightLevels
+  private lateinit var listener: MessageChannel
+  private lateinit var skyLightLevels: LightLevels
+  private lateinit var blockLightLevels: LightLevels
   override fun willMount() = runBlocking<Unit> {
     program = ColorShaderProgram()
     skyLightLevels = LightLevels.load(loadByteBuffer("SkyLightLevels.png", WorldRenderer::class.java), 240)
     blockLightLevels = LightLevels.load(loadByteBuffer("BlockLightLevels.png", WorldRenderer::class.java), 16)
     listener = register(channel)
     controller.register()
-    MessageBus.send(NewGameRequested(DIMENSION, Cause.of(this@WorldRenderer), MultiTypeMap()))
+    send(NewGameRequested(Dimension(4*CHUNK_X_SIZE, 32 * CHUNK_Y_SIZE, 4*CHUNK_Z_SIZE), Cause.of(this@WorldRenderer)))
   }
 
   override fun willUnmount() {
@@ -342,6 +347,8 @@ class WorldRenderer(attributes: MultiTypeMap) : AbstractComponent<Unit>(attribut
 
   override fun render(bounds: Bounds) {
     super.render(bounds)
+    if (!initialized)
+      return
 
     controller.viewCenter.y = run {
       val yRange = (0 until sliceHeight)
