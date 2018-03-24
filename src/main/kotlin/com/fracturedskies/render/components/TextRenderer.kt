@@ -27,8 +27,8 @@ class TextRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
     }
   }
 
-  private val text get() = requireNotNull(attributes[TEXT])
-  private val color get() = requireNotNull(attributes[COLOR])
+  private val text get() = requireNotNull(props[TEXT])
+  private val color get() = requireNotNull(props[COLOR])
 
   override fun preferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text)
   override fun preferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)

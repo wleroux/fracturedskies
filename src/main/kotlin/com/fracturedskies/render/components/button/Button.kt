@@ -26,7 +26,7 @@ class Button(attributes: MultiTypeMap) : Component<Boolean>(attributes, false) {
     set(value) {nextState = value}
 
   /* Attributes */
-  private val onClick get() = requireNotNull(attributes[ON_CLICK])
+  private val onClick get() = requireNotNull(props[ON_CLICK])
 
   private lateinit var defaultMaterial: Material
   private lateinit var hoverMaterial: Material

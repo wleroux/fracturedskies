@@ -1,7 +1,7 @@
 package com.fracturedskies.render
 
 import com.fracturedskies.UI_CONTEXT
-import com.fracturedskies.engine.api.*
+import com.fracturedskies.engine.api.RequestShutdown
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.Component.Companion.mount
@@ -20,20 +20,19 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class RenderGameSystem(context: CoroutineContext) {
   val channel = MessageChannel(context + UI_CONTEXT) { message ->
-    when (message) {
-      is Initialize -> initialize()
-      is Update -> update()
-      is Render -> render()
-      is Shutdown -> shutdown()
+    val nextGameState = updateGameState(gameState, message)
+    if (nextGameState !== gameState) {
+      gameState = nextGameState
     }
   }
 
+  private var gameState = GameState()
   private lateinit var scene: Scene
   private lateinit var screenDimension: Bounds
 
   private var window: Long = 0
 
-  private fun initialize() {
+  fun initialize() {
     GLFWErrorCallback.createPrint(System.err).set()
 
     // Initialize GLFW
@@ -78,25 +77,28 @@ class RenderGameSystem(context: CoroutineContext) {
     glEnable(GL_CULL_FACE)
     glCullFace(GL_FRONT)
 
-    scene = mount(::Scene, null, MultiTypeMap())
-    scene.update(MultiTypeMap(), true)
+    scene = mount(::Scene, null, MultiTypeMap(
+        Scene.GAME_STATE to gameState
+    ))
+    scene.update(MultiTypeMap(
+        Scene.GAME_STATE to gameState
+    ), true)
   }
 
-  private fun update() {
+  fun update() {
     glfwPollEvents()
   }
 
-  private fun render() {
+  fun render() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-
-    // Render Scene
-    scene.update(MultiTypeMap(), false)
+    scene.update(MultiTypeMap(
+        Scene.GAME_STATE to gameState
+    ), false)
     scene.render(screenDimension)
-
-    glfwSwapBuffers(window) // swap the color buffers
+    glfwSwapBuffers(window)
   }
 
-  private fun shutdown() {
+  fun shutdown() {
     unmount(scene)
 
     glfwFreeCallbacks(window)

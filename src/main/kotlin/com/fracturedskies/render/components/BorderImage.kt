@@ -27,7 +27,7 @@ class BorderImage(attributes: MultiTypeMap) : Component<Boolean>(attributes, fal
           2 * LAYER_HEIGHT + super.preferredHeight(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
 
   /* Attributes */
-  private val material: Material get() = requireNotNull(attributes[MATERIAL])
+  private val material: Material get() = requireNotNull(props[MATERIAL])
 
   override fun render(bounds: Bounds) {
     this.bounds = bounds

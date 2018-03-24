@@ -12,8 +12,8 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 fun skyLightSystem(context: CoroutineContext): MessageChannel {
   class SkyLightMap(val dimension: Dimension) {
-    val level = IntMap(dimension)
-    val type = ObjectMap(dimension, { AIR })
+    val level = IntMutableSpace(dimension)
+    val type = ObjectMutableSpace(dimension, { AIR })
 
     fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
     fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)

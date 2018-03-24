@@ -4,19 +4,19 @@ import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
 import com.fracturedskies.engine.jeact.event.*
 
-abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
+abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
   companion object {
     fun unmount(component: Component<*>) {
       component.children.forEach { unmount(it) }
       component.willUnmount()
     }
 
-    fun <S, C: Component<S>> mount(type: (MultiTypeMap) -> C, parent: Component<*>?, attributes: MultiTypeMap): C {
-      val component = type(attributes)
+    fun <S, C: Component<S>> mount(type: (MultiTypeMap) -> C, parent: Component<*>?, props: MultiTypeMap): C {
+      val component = type(props)
 
       component.willMount()
       component.parent = parent
-      component.attributes = attributes
+      component.props = props
       component.state = component.nextState ?: component.state
       component.didMount()
 
@@ -30,9 +30,9 @@ abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
         prev!! as Component<T>
       } else {
         if (prev != null) unmount(prev)
-        mount(node.type, parent, node.attributes)
+        mount(node.type, parent, node.props)
       }
-      component.update(node.attributes, !reuseComponent)
+      component.update(node.props, !reuseComponent)
       return component
     }
   }
@@ -50,17 +50,17 @@ abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
   open fun didMount() = Unit
 
   // Updating
-  open fun willReceiveProps(nextAttributes: MultiTypeMap) = Unit
-  open fun shouldUpdate(nextAttributes: MultiTypeMap, nextState: T): Boolean =
-          attributes !== nextAttributes || state !== nextState
-  open fun willUpdate(nextAttributes: MultiTypeMap, nextState: T) = Unit
-  open fun didUpdate(prevAttributes: MultiTypeMap, prevState: T) = Unit
+  open fun willReceiveProps(nextProps: MultiTypeMap) = Unit
+  open fun shouldUpdate(nextProps: MultiTypeMap, nextState: T): Boolean =
+          props !== nextProps || state !== nextState
+  open fun willUpdate(nextProps: MultiTypeMap, nextState: T) = Unit
+  open fun didUpdate(prevProps: MultiTypeMap, prevState: T) = Unit
 
   // Unmounting
   open fun willUnmount() = Unit
 
   // Rendering Components
-  lateinit var bounds: Bounds
+  var bounds: Bounds = Bounds(0, 0, 0, 0)
   open fun preferredWidth(parentWidth: Int, parentHeight: Int): Int =
       children.map({ it.preferredWidth(parentWidth, parentHeight) }).max() ?: 0
   open fun preferredHeight(parentWidth: Int, parentHeight: Int): Int =
@@ -81,21 +81,21 @@ abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
   }
 
   // Lifecycle functions
-  open fun toNodes(): List<Node<*>> = requireNotNull(attributes[NODES])
-  fun update(attributes: MultiTypeMap, forceUpdate: Boolean = false) {
+  open fun toNodes(): List<Node<*>> = requireNotNull(props[NODES])
+  fun update(props: MultiTypeMap, forceUpdate: Boolean = false) {
     // Update component
-    val prevAttributes = this.attributes
+    val prevProps = this.props
     val prevState = this.state
 
-    val nextAttributes = if (attributes == prevAttributes) prevAttributes else attributes
-    if (nextAttributes !== prevAttributes)
-      this.willReceiveProps(nextAttributes)
+    val nextProps = if (props == prevProps) prevProps else props
+    if (nextProps !== prevProps)
+      this.willReceiveProps(nextProps)
     val nextState = this.nextState ?: this.state
-    if (forceUpdate || this.shouldUpdate(nextAttributes, nextState)) {
-      this.willUpdate(nextAttributes, nextState)
+    if (forceUpdate || this.shouldUpdate(nextProps, nextState)) {
+      this.willUpdate(nextProps, nextState)
 
       val prevChildren = this.children
-      this.attributes = nextAttributes
+      this.props = nextProps
       this.state = nextState
       this.nextState = null
       this.children = this.toNodes().mapIndexed({ index, node ->
@@ -105,10 +105,10 @@ abstract class Component<T>(var attributes: MultiTypeMap, initialState: T) {
 
       // Unmount discarded toNodes
       prevChildren.minus(this.children).forEach({ unmount(it) })
-      this.didUpdate(prevAttributes, prevState)
+      this.didUpdate(prevProps, prevState)
     } else {
       this.children.forEach({ childComponent ->
-        childComponent.update(childComponent.attributes)
+        childComponent.update(childComponent.props)
       })
     }
   }

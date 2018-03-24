@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.collections.ObjectSpace
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
@@ -14,25 +14,25 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
   BOTTOM_LEFT({pos, u, v -> (pos + v - u)}),
   BOTTOM({pos, _, v -> (pos + v)}),
   BOTTOM_RIGHT({pos, u, v -> (pos + v + u)});
-  fun gathersLight(world: ObjectMap<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
+  fun gathersLight(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
     val target = offset(pos, u, v)
     return world.has(target) && !world[target].type.opaque
   }
-  fun opaque(world: ObjectMap<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
+  fun opaque(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
     val target = offset(pos, u, v)
     return if (world.has(target)) world[target].type.opaque else false
   }
-  fun skyLight(world: ObjectMap<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
+  fun skyLight(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
     val target = offset(pos, u, v)
     return if (world.has(target)) world[target].skyLight else 0
   }
-  fun blockLight(world: ObjectMap<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
+  fun blockLight(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
     val target = offset(pos, u, v)
     return if (world.has(target)) world[target].blockLight else 0
   }
 
   companion object {
-    fun of(world: ObjectMap<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): EnumSet<Occlusion> {
+    fun of(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): EnumSet<Occlusion> {
       val occlusions = EnumSet.noneOf(Occlusion::class.java)
       occlusions.addAll(Occlusion.values().filter({ it.opaque(world, pos, u, v) }))
       return occlusions

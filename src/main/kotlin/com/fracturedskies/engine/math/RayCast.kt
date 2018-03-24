@@ -1,9 +1,9 @@
 package com.fracturedskies.engine.math
 
-import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.collections.Space
 import kotlin.coroutines.experimental.buildSequence
 
-fun <K> raycast(space: ObjectMap<K>, origin: Vector3, direction: Vector3) = buildSequence {
+fun <K> raycast(space: Space<K>, origin: Vector3, direction: Vector3) = buildSequence {
   val normals = arrayOf(
           Vector3(-direction.x, 0f, 0f).normalize(),
           Vector3(0f, -direction.y, 0f).normalize(),

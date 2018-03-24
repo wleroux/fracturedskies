@@ -20,9 +20,9 @@ class MeshRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
   }
 
   /** Attributes */
-  private val mesh get() = requireNotNull(attributes[MESH])
-  private val material get() = requireNotNull(attributes[MATERIAL])
-  private val variables get() = requireNotNull(attributes[VARIABLES])
+  private val mesh get() = requireNotNull(props[MESH])
+  private val material get() = requireNotNull(props[MATERIAL])
+  private val variables get() = requireNotNull(props[VARIABLES])
 
   override fun render(bounds: Bounds) {
     this.bounds = bounds

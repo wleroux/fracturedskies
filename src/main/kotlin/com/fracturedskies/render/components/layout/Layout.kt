@@ -51,11 +51,11 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   }
 
   /* Attributes */
-  private val direction get() = requireNotNull(attributes[DIRECTION])
-  private val justifyContent get() = requireNotNull(attributes[JUSTIFY_CONTENT])
-  private val alignItems get() = requireNotNull(attributes[ALIGN_ITEMS])
-  private val alignContent get() = requireNotNull(attributes[ALIGN_CONTENT])
-  private val wrap get() = requireNotNull(attributes[WRAP])
+  private val direction get() = requireNotNull(props[DIRECTION])
+  private val justifyContent get() = requireNotNull(props[JUSTIFY_CONTENT])
+  private val alignItems get() = requireNotNull(props[ALIGN_ITEMS])
+  private val alignContent get() = requireNotNull(props[ALIGN_CONTENT])
+  private val wrap get() = requireNotNull(props[WRAP])
 
   override fun preferredWidth(parentWidth: Int, parentHeight: Int): Int {
     val componentRows = wrap.split(children, direction, parentWidth, parentHeight)
@@ -112,11 +112,11 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
       rowCrossSpace += additionalCrossSpace
 
       val extraMainSpace = if (mainAxisSize > rowMainSpace) mainAxisSize - rowMainSpace else 0
-      val totalGrow = componentRow.sumByDouble({it.attributes[GROW] ?: 0.0 })
+      val totalGrow = componentRow.sumByDouble({it.props[GROW] ?: 0.0 })
       val growCoefficient = if (totalGrow > 0.0) extraMainSpace / totalGrow else 0.0
 
       val missingMainSpace = if (mainAxisSize < rowMainSpace) rowMainSpace - mainAxisSize else 0
-      val totalShrink = componentRow.sumByDouble({ it.attributes[SHRINK] ?: 0.0 })
+      val totalShrink = componentRow.sumByDouble({ it.props[SHRINK] ?: 0.0 })
       val shrinkCoefficient = if (totalShrink > 0.0) missingMainSpace / totalShrink else 0.0
 
       val initialMainOffset = justifyContent.initialOffset(componentRow, if (growCoefficient > 0.0) 0 else extraMainSpace)
@@ -127,12 +127,12 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
       while (componentIterator.hasNext()) {
         val component = componentIterator.next()
 
-        val grow = growCoefficient * (component.attributes[GROW] ?: 0.0)
-        val shrink = shrinkCoefficient * (component.attributes[SHRINK] ?: 0.0)
+        val grow = growCoefficient * (component.props[GROW] ?: 0.0)
+        val shrink = shrinkCoefficient * (component.props[SHRINK] ?: 0.0)
         val componentMainSpace = (component.main(direction, bounds.width, bounds.height) + grow - shrink).toInt()
         val componentCrossSpace = component.cross(direction, bounds.width, bounds.height)
 
-        val alignSelf = component.attributes[ALIGN_SELF] ?: alignItems
+        val alignSelf = component.props[ALIGN_SELF] ?: alignItems
         val crossSpace = alignSelf.cross(componentCrossSpace, rowCrossSpace)
         val crossOffset = alignSelf.offset(componentCrossSpace, rowCrossSpace)
         component.render(Bounds(

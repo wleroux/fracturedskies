@@ -18,7 +18,13 @@ class MultiTypeMap(private val delegate: Map<TypedKey<*>, *>) {
             value1, value2, value3, value4
     ))
     @Suppress("UNCHECKED_CAST") operator fun <A, B, C, D, E> invoke(value1: TypedEntry<A>, value2: TypedEntry<B>, value3: TypedEntry<C>, value4: TypedEntry<D>, value5: TypedEntry<E>) = MultiTypeMap(mapOf(
-            value1, value2, value3, value4, value5
+        value1, value2, value3, value4, value5
+    ))
+    @Suppress("UNCHECKED_CAST") operator fun <A, B, C, D, E, F> invoke(value1: TypedEntry<A>, value2: TypedEntry<B>, value3: TypedEntry<C>, value4: TypedEntry<D>, value5: TypedEntry<E>, value6: TypedEntry<F>) = MultiTypeMap(mapOf(
+        value1, value2, value3, value4, value5, value6
+    ))
+    @Suppress("UNCHECKED_CAST") operator fun <A, B, C, D, E, F, G> invoke(value1: TypedEntry<A>, value2: TypedEntry<B>, value3: TypedEntry<C>, value4: TypedEntry<D>, value5: TypedEntry<E>, value6: TypedEntry<F>, value7: TypedEntry<G>) = MultiTypeMap(mapOf(
+        value1, value2, value3, value4, value5, value6, value7
     ))
   }
 
@@ -85,5 +91,22 @@ class MultiTypeMap(private val delegate: Map<TypedKey<*>, *>) {
     put(value3.first, value3.second)
     put(value4.first, value4.second)
     put(value5.first, value5.second)
+  }))
+  fun <A, B, C, D, E, F> with(value1: TypedEntry<A>, value2: TypedEntry<B>, value3: TypedEntry<C>, value4: TypedEntry<D>, value5: TypedEntry<E>, value6: TypedEntry<F>) = MultiTypeMap(delegate.toMutableMap().apply({
+    put(value1.first, value1.second)
+    put(value2.first, value2.second)
+    put(value3.first, value3.second)
+    put(value4.first, value4.second)
+    put(value5.first, value5.second)
+    put(value6.first, value6.second)
+  }))
+  fun <A, B, C, D, E, F, G> with(value1: TypedEntry<A>, value2: TypedEntry<B>, value3: TypedEntry<C>, value4: TypedEntry<D>, value5: TypedEntry<E>, value6: TypedEntry<F>, value7: TypedEntry<G>) = MultiTypeMap(delegate.toMutableMap().apply({
+    put(value1.first, value1.second)
+    put(value2.first, value2.second)
+    put(value3.first, value3.second)
+    put(value4.first, value4.second)
+    put(value5.first, value5.second)
+    put(value6.first, value6.second)
+    put(value7.first, value7.second)
   }))
 }

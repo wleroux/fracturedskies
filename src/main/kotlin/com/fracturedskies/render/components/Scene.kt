@@ -1,38 +1,36 @@
 package com.fracturedskies.render.components
 
-import com.fracturedskies.engine.collections.MultiTypeMap
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.render.GameState
 import com.fracturedskies.render.components.FpsRenderer.Companion.fpsRenderer
-import com.fracturedskies.render.components.Scene.SceneState
 import com.fracturedskies.render.components.layout.*
 import com.fracturedskies.render.components.layout.Layout.Companion.GROW
 import com.fracturedskies.render.components.layout.Layout.Companion.layout
-import com.fracturedskies.render.components.world.WorldRenderer.Companion.worldRenderer
+import com.fracturedskies.render.components.world.WorldController.Companion.worldController
+import org.lwjgl.opengl.GL11.*
 
-class Scene(attributes: MultiTypeMap) : Component<SceneState>(attributes, SceneState()) {
+class Scene(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
-    fun scene(): Node<SceneState> {
-      return Node(::Scene)
-    }
+    val GAME_STATE = TypedKey<GameState>("gameState")
   }
-  var displayBlock: Boolean
-    get() = nextState?.displayBlock ?: state.displayBlock
-    set(value) {nextState = (nextState?:state).copy(displayBlock = value)}
-  var text: String
-    get() = nextState?.text ?: state.text
-    set(value) {nextState = (nextState?:state).copy(text = value)}
+  private val gameState get() = requireNotNull(props[GAME_STATE])
 
   override fun toNodes() = nodes {
     layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
-      worldRenderer(MultiTypeMap(
-              GROW to 1.0
+      worldController(gameState, MultiTypeMap(
+          GROW to 1.0
       ))
     }
     layout {
-//      input(initialValue = "Testing", onTextChanged = {message-> println(message)})
       fpsRenderer()
     }
   }
 
-  data class SceneState(val displayBlock: Boolean = true, val text: String = "")
+  override fun render(bounds: Bounds) {
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+    glEnable(GL_DEPTH_TEST)
+
+    super.render(bounds)
+  }
 }

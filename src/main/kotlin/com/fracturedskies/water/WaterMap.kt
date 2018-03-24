@@ -5,10 +5,10 @@ import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
 class WaterMap(val dimension: Dimension) {
-  val maxFlowOut = ByteMap(dimension)
-  private val level = ByteMap(dimension)
-  private val opaque = BooleanMap(dimension)
-  val sea = ObjectMap<Sea?>(dimension, {null})
+  val maxFlowOut = ByteMutableSpace(dimension)
+  private val level = ByteMutableSpace(dimension)
+  private val opaque = BooleanMutableSpace(dimension)
+  val sea = ObjectMutableSpace<Sea?>(dimension, {null})
   val seas = mutableSetOf<Sea>()
   val evaporationCandidates = hashSetOf<Vector3i>()
 

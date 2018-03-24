@@ -39,7 +39,7 @@ class Input(attributes: MultiTypeMap) : Component<Input.InputState>(attributes, 
 
   /* Attributes */
   private val onTextChanged
-    get() = requireNotNull(attributes[ON_TEXT_CHANGED])
+    get() = requireNotNull(props[ON_TEXT_CHANGED])
 
   private lateinit var material: Material
   override fun willMount() {

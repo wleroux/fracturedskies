@@ -11,13 +11,13 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class WorkerSystem(context: CoroutineContext) {
   private lateinit var workers: MutableMap<Id, Worker>
-  private lateinit var blocks: ObjectMap<BlockType>
+  private lateinit var blocks: ObjectMutableSpace<BlockType>
   private var initialized = false
 
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        blocks = ObjectMap(message.dimension) { BlockType.AIR}
+        blocks = ObjectMutableSpace(message.dimension) { BlockType.AIR }
         workers = mutableMapOf()
         initialized = true
       }
@@ -53,7 +53,7 @@ class WorkerSystem(context: CoroutineContext) {
     }
   }
 
-  private fun isBlocked(pos: Vector3i) = !blocks.has(pos) or blocks[pos].opaque
+  private fun isBlocked(pos: Vector3i) = !blocks.has(pos) || blocks[pos].opaque
 }
 
 data class Worker(var pos: Vector3i)

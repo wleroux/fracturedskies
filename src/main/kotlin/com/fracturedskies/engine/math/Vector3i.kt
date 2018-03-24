@@ -1,6 +1,6 @@
 package com.fracturedskies.engine.math
 
-import com.fracturedskies.engine.collections.ObjectMap
+import com.fracturedskies.engine.collections.Space
 
 data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   companion object {
@@ -58,5 +58,5 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   operator fun div(o: Vector3i) = Vector3i(x / o.x, y / o.y, z / o.z)
 }
 
-infix fun <K> Vector3i.within(world: ObjectMap<K>): Boolean = world.has(this)
+infix fun <K> Vector3i.within(map: Space<K>): Boolean = map.has(this)
 fun Vector3i.toVector3() = Vector3(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())
