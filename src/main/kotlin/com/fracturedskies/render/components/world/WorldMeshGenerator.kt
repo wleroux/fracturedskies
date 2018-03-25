@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.collections.ObjectSpace
+import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.shaders.Mesh
 import org.lwjgl.BufferUtils
@@ -10,7 +10,7 @@ import java.util.*
  * A greedy mesh implementation
  */
 fun generateWorldMesh(
-    world: ObjectSpace<Block>,
+    world: Space<Block>,
     sliceMesh: Boolean,
     xRange: IntRange, yRange: IntRange, zRange: IntRange
 ): () -> Mesh {
@@ -121,7 +121,7 @@ fun generateWorldMesh(
 }
 
 
-private fun getBlock(world: ObjectSpace<Block>, pos: Vector3i): Block? {
+private fun getBlock(world: Space<Block>, pos: Vector3i): Block? {
   return if (world.has(pos)) { world[pos] } else { null }
 }
 private fun isOpaque(block: Block?) = block?.type?.opaque ?: false
@@ -134,7 +134,7 @@ private data class Data(
     val occlusion: EnumSet<Occlusion>
 )
 
-private fun getData(world: ObjectSpace<Block>, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
+private fun getData(world: Space<Block>, sliceMesh: Boolean, pos: Vector3i, d: Vector3i, u: Vector3i, v: Vector3i): Data? {
   val currentBlock = getBlock(world, pos)
   val nextBlock = getBlock(world, pos + d)
 

@@ -5,6 +5,7 @@ import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
+import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import java.util.*
 import java.util.Comparator.comparingInt
@@ -33,7 +34,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
           }
         }
         if (waterLevelUpdates.isNotEmpty()) {
-          MessageBus.send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
+          send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
         }
       }
       is UpdateBlockWater -> {
@@ -51,7 +52,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
 
         val updates = flow + evaporation
         if (updates.isNotEmpty()) {
-          MessageBus.send(UpdateBlockWater(updates, Cause.of(this), MultiTypeMap()))
+          send(UpdateBlockWater(updates, Cause.of(this), MultiTypeMap()))
         }
       }
     }

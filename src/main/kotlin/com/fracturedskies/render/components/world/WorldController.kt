@@ -42,7 +42,7 @@ class WorldController(attributes: MultiTypeMap) : Component<WorldControllerState
     private const val ROTATE_DOWN = (Math.PI / 4f).toFloat()
     private const val SPEED = 1f
 
-    private fun heightAt(world: ObjectSpace<Block>, x: Int, z: Int, yRange: IntRange): Int {
+    private fun heightAt(world: Space<Block>, x: Int, z: Int, yRange: IntRange): Int {
       val clampedX = clamp(x, 0 until world.dimension.width)
       val clampedZ = clamp(z, 0 until world.dimension.depth)
       return yRange

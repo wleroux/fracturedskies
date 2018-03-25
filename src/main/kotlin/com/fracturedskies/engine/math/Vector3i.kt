@@ -1,6 +1,6 @@
 package com.fracturedskies.engine.math
 
-import com.fracturedskies.engine.collections.Space
+import com.fracturedskies.engine.collections.*
 
 data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   companion object {
@@ -18,9 +18,9 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
     val XY_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Y_PLANE_NEIGHBORS
     val XZ_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Z_PLANE_NEIGHBORS
 
-    private val CACHE_X_SIZE = 128
-    private val CACHE_Y_SIZE = 258
-    private val CACHE_Z_SIZE = 128
+    private const val CACHE_X_SIZE = 128
+    private const val CACHE_Y_SIZE = 258
+    private const val CACHE_Z_SIZE = 128
     private val cache = Array(CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE, { it -> Vector3i(
             it % CACHE_X_SIZE,
             (it / CACHE_X_SIZE) % CACHE_Y_SIZE,
@@ -56,6 +56,9 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   }
 
   operator fun div(o: Vector3i) = Vector3i(x / o.x, y / o.y, z / o.z)
+  operator fun div(dimension: Dimension) = Vector3i(x / dimension.width, y / dimension.height, z / dimension.depth)
+  operator fun rem(dimension: Dimension) = Vector3i(x % dimension.width, y % dimension.height, z % dimension.depth)
+  operator fun times(dimension: Dimension) = Vector3i(x * dimension.width, y * dimension.height, z * dimension.depth)
 }
 
 infix fun <K> Vector3i.within(map: Space<K>): Boolean = map.has(this)

@@ -1,6 +1,6 @@
 package com.fracturedskies.render.components.world
 
-import com.fracturedskies.engine.collections.ObjectSpace
+import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
@@ -23,7 +23,7 @@ enum class VertexCorner(private val side1: Occlusion, private val side2: Occlusi
       else -> 3f/3f
     }
   }
-  fun skyLightLevel(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Float {
+  fun skyLightLevel(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Float {
     var sides = arrayOf(side1, corner, side2, self)
         .filter { it.gathersLight(world, pos, u, v) }
     if (sides.contains(corner) && !sides.contains(side1) && !sides.contains(side2))
@@ -36,7 +36,7 @@ enum class VertexCorner(private val side1: Occlusion, private val side2: Occlusi
     }
   }
 
-  fun blockLightLevel(world: ObjectSpace<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Float {
+  fun blockLightLevel(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Float {
     var sides = arrayOf(side1, corner, side2, self)
         .filter { it.gathersLight(world, pos, u, v) }
     if (sides.contains(corner) && !sides.contains(side1) && !sides.contains(side2))

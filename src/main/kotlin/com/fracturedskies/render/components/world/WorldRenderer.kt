@@ -1,5 +1,6 @@
 package com.fracturedskies.render.components.world
 
+import com.fracturedskies.api.*
 import com.fracturedskies.engine.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -7,7 +8,7 @@ import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11.glViewport
-import kotlin.math.PI
+import kotlin.math.*
 
 class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   companion object {
@@ -16,7 +17,7 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
     }
 
     // Attributes
-    val WORLD = TypedKey<ObjectSpace<Block>>("world")
+    val WORLD = TypedKey<ChunkSpace<Block>>("world")
     val TIME_OF_DAY = TypedKey<Float>("timeOfDay")
     val WORKERS = TypedKey<Map<Id, Worker>>("workers")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
@@ -42,46 +43,75 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
     val sliceHeight = requireNotNull(props[SLICE_HEIGHT])
     val world = requireNotNull(props[WORLD])
 
-    blockMesh = generateWorldMesh(world, false, 0 until world.width, 0 until sliceHeight, 0 until world.depth).invoke()
-    blockSliceMesh = generateWorldMesh(world, true, 0 until world.width, sliceHeight - 1 until sliceHeight, 0 until world.depth).invoke()
-    waterMesh = generateWaterMesh(world, false, 0 until world.width, 0 until sliceHeight, 0 until world.depth).invoke()
-    waterSliceMesh = generateWaterMesh(world, true, 0 until world.width, sliceHeight - 1 until sliceHeight, 0 until world.depth).invoke()
+    blockMesh = Array(world.chunks.dimension.size, {chunkIndex ->
+      generateChunkBlockMesh(world, sliceHeight, world.chunks.dimension.toVector3i(chunkIndex))
+    })
+    blockSliceMesh = Array(world.chunks.dimension.size, { chunkIndex ->
+      generateChunkSliceBlockMesh(world, sliceHeight, world.chunks.dimension.toVector3i(chunkIndex))
+    })
+
+    waterMesh = Array(world.chunks.dimension.size, {chunkIndex ->
+      generateChunkWaterMesh(world, sliceHeight, world.chunks.dimension.toVector3i(chunkIndex))
+    })
+    waterSliceMesh = Array(world.chunks.dimension.size, {chunkIndex ->
+      generateChunkSliceWaterMesh(world, sliceHeight, world.chunks.dimension.toVector3i(chunkIndex))
+    })
   }
 
   override fun willUnmount() {
-    blockMesh.close()
-    waterMesh.close()
-    blockSliceMesh.close()
-    waterSliceMesh.close()
+    blockMesh.forEach(Mesh::close)
+    waterMesh.forEach(Mesh::close)
+    blockSliceMesh.forEach(Mesh::close)
+    waterSliceMesh.forEach(Mesh::close)
   }
 
   private val model: Matrix4 = Matrix4(Vector3(0f, 0f, 0f))
   private var projection: Matrix4 = Matrix4.IDENTITY
   private lateinit var view: Matrix4
   private lateinit var lightDirection: Vector3
-  private lateinit var blockMesh: Mesh
-  private lateinit var waterMesh: Mesh
-  private lateinit var blockSliceMesh: Mesh
-  private lateinit var waterSliceMesh: Mesh
+  private lateinit var blockMesh: Array<Mesh>
+  private lateinit var waterMesh: Array<Mesh>
+  private lateinit var blockSliceMesh: Array<Mesh>
+  private lateinit var waterSliceMesh: Array<Mesh>
 
   override fun willReceiveProps(nextProps: MultiTypeMap) {
     super.willReceiveProps(nextProps)
+
     if (nextProps[VIEW] !== props[VIEW] || nextProps[ROTATION] !== props[ROTATION])
       view = Matrix4(requireNotNull(nextProps[VIEW]), requireNotNull(nextProps[ROTATION])).invert()
+
     if (nextProps[TIME_OF_DAY] !== props[TIME_OF_DAY])
       lightDirection = skyLightDirection * Quaternion4(Vector3.AXIS_Z, requireNotNull(nextProps[TIME_OF_DAY]) * 2f * PI.toFloat())
-    if (nextProps[WORLD] !== props[WORLD] || nextProps[SLICE_HEIGHT] !== props[SLICE_HEIGHT]) {
-      val sliceHeight = requireNotNull(nextProps[SLICE_HEIGHT])
-      val world = requireNotNull(nextProps[WORLD])
-      blockMesh.close()
-      blockMesh = generateWorldMesh(world, false, 0 until world.width, 0 until sliceHeight, 0 until world.depth).invoke()
-      blockSliceMesh.close()
-      blockSliceMesh = generateWorldMesh(world, true, 0 until world.width, sliceHeight - 1 until sliceHeight, 0 until world.depth).invoke()
 
-      waterMesh.close()
-      waterMesh = generateWaterMesh(world, false, 0 until world.width, 0 until sliceHeight, 0 until world.depth).invoke()
-      waterSliceMesh.close()
-      waterSliceMesh = generateWaterMesh(world, true, 0 until world.width, sliceHeight - 1 until sliceHeight, 0 until world.depth).invoke()
+    val prevSliceHeight = requireNotNull(props[SLICE_HEIGHT])
+    val nextSliceHeight = requireNotNull(nextProps[SLICE_HEIGHT])
+    val prevWorld = requireNotNull(props[WORLD])
+    val nextWorld = requireNotNull(nextProps[WORLD])
+    if (nextWorld !== prevWorld || nextSliceHeight != prevSliceHeight) {
+      nextWorld.chunks.dimension.forEach { chunkIndex ->
+        val chunkPos = nextWorld.chunks.dimension.toVector3i(chunkIndex)
+        val sliceHeightChanged = if (prevSliceHeight != nextSliceHeight) {
+          val chunkYRange = (chunkPos.y * CHUNK_Y_SIZE until (chunkPos.y + 1) * CHUNK_Y_SIZE)
+          (prevSliceHeight) in chunkYRange || (nextSliceHeight) in chunkYRange
+        } else {
+          false
+        }
+        val neighborChanged = Vector3i.NEIGHBOURS
+            .map { chunkPos + it }
+            .filter { nextWorld.chunks.dimension.has(it) }
+            .any { nextWorld.chunks[it] !== prevWorld.chunks[it] }
+        if (prevWorld.chunks[chunkIndex] !== nextWorld.chunks[chunkIndex] || neighborChanged || sliceHeightChanged) {
+          blockMesh[chunkIndex].close()
+          blockMesh[chunkIndex] = generateChunkBlockMesh(nextWorld, nextSliceHeight, chunkPos)
+          blockSliceMesh[chunkIndex].close()
+          blockSliceMesh[chunkIndex] = generateChunkSliceBlockMesh(nextWorld, nextSliceHeight, chunkPos)
+
+          waterMesh[chunkIndex].close()
+          waterMesh[chunkIndex] = generateChunkWaterMesh(nextWorld, nextSliceHeight, chunkPos)
+          waterSliceMesh[chunkIndex].close()
+          waterSliceMesh[chunkIndex] = generateChunkSliceWaterMesh(nextWorld, nextSliceHeight, chunkPos)
+        }
+      }
     }
   }
 
@@ -102,8 +132,8 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
       skyColors(skyLightLevels, timeOfDay)
       blockColors(blockLightLevels)
 
-      draw(blockMesh)
-      draw(blockSliceMesh)
+      blockMesh.forEach(::draw)
+      blockSliceMesh.forEach(::draw)
       val sliceHeight = requireNotNull(props[SLICE_HEIGHT])
       workers.forEach { _, worker -> if (worker.pos.y < sliceHeight) {
         val workerModel = Matrix4(position = worker.pos.toVector3())
@@ -114,8 +144,41 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
         workerMesh.close()
       }}
       model(requireNotNull(model))
-      draw(waterMesh)
-      draw(waterSliceMesh)
+      waterMesh.forEach(::draw)
+      waterSliceMesh.forEach(::draw)
+    }
+  }
+
+  private fun generateChunkBlockMesh(space: ChunkSpace<Block>, sliceHeight: Int, chunkPos: Vector3i) = generateWorldMesh(space, false,
+      chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
+      chunkPos.y * CHUNK_Y_SIZE until min((chunkPos.y + 1) * CHUNK_Y_SIZE, sliceHeight),
+      chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
+  ).invoke()
+  private fun generateChunkSliceBlockMesh(space: ChunkSpace<Block>, sliceHeight: Int, chunkPos: Vector3i): Mesh {
+    return if (sliceHeight in (chunkPos.y * CHUNK_Y_SIZE until (chunkPos.y + 1) * CHUNK_Y_SIZE)) {
+      generateWorldMesh(space, true,
+          chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
+          sliceHeight - 1 until sliceHeight,
+          chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
+      ).invoke()
+    } else {
+      Mesh(FloatArray(0), IntArray(0), emptyList())
+    }
+  }
+  private fun generateChunkWaterMesh(space: ChunkSpace<Block>, sliceHeight: Int, chunkPos: Vector3i) = generateWaterMesh(space, false,
+      chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
+      chunkPos.y * CHUNK_Y_SIZE until Math.min((chunkPos.y + 1) * CHUNK_Y_SIZE, sliceHeight),
+      chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
+  ).invoke()
+  private fun generateChunkSliceWaterMesh(space: ChunkSpace<Block>, sliceHeight: Int, chunkPos: Vector3i): Mesh {
+    return if (sliceHeight in (chunkPos.y * CHUNK_Y_SIZE until (chunkPos.y + 1) * CHUNK_Y_SIZE)) {
+      generateWaterMesh(space, true,
+          chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
+          sliceHeight - 1 until sliceHeight,
+          chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
+      ).invoke()
+    } else {
+      Mesh(FloatArray(0), IntArray(0), emptyList())
     }
   }
 }

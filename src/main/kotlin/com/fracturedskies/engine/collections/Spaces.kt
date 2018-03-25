@@ -1,5 +1,6 @@
 package com.fracturedskies.engine.collections
 
+import com.fracturedskies.api.CHUNK_DIMENSION
 import com.fracturedskies.engine.math.Vector3i
 import org.lwjgl.BufferUtils
 import java.util.*
@@ -15,8 +16,7 @@ interface Space<K> {
   fun has(index: Int) = dimension.has(index)
   fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
   fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
-
-  fun toMutableDimensionalMap(): MutableSpace<K>
+  fun mutate(mutator: (MutableSpace<K>.() -> Unit)): Space<K>
 }
 interface MutableSpace<K>: Space<K> {
   operator fun set(index: Int, value: K)
@@ -29,11 +29,14 @@ open class BooleanSpace(final override val dimension: Dimension, init: (Int) -> 
     dimension.forEach { index -> set(index, init(index)) }
   }
   override fun get(index: Int) = backend[index]
-  override fun toMutableDimensionalMap() = BooleanMutableSpace(this)
+  override fun mutate(mutator: MutableSpace<Boolean>.() -> Unit): BooleanSpace {
+    val mutations = SpaceMutator(this).apply(mutator)
+    return BooleanSpace(dimension, { mutations[it] })
+  }
 }
 open class BooleanMutableSpace(dimension: Dimension, init: (Int) -> Boolean = { false }): BooleanSpace(dimension, init), MutableSpace<Boolean> {
-  constructor(o: Space<Boolean>) : this(o.dimension, { index -> o[index] } )
   override operator fun set(index: Int, value: Boolean) { backend[index] = value }
+  override fun mutate(mutator: MutableSpace<Boolean>.() -> Unit): BooleanSpace = apply(mutator)
 }
 
 open class ByteSpace(final override val dimension: Dimension, init: (Int) -> Byte = { 0.toByte() }): Space<Byte> {
@@ -41,28 +44,88 @@ open class ByteSpace(final override val dimension: Dimension, init: (Int) -> Byt
     dimension.forEach { index -> put(index, init(index) ) }
   })
   override fun get(index: Int) = backend[index]
-  override fun toMutableDimensionalMap() = ByteMutableSpace(dimension, { index -> this[index]})
+  override fun mutate(mutator: MutableSpace<Byte>.() -> Unit): ByteSpace {
+    val mutations = SpaceMutator(this).apply(mutator)
+    return ByteSpace(dimension, { mutations[it] })
+  }
 }
 open class ByteMutableSpace(dimension: Dimension, init: (Int) -> Byte = { 0.toByte() }): ByteSpace(dimension, init), MutableSpace<Byte> {
   override operator fun set(index: Int, value: Byte) { backend.put(index, value) }
   fun clear() { BufferUtils.zeroBuffer(backend) }
+  override fun mutate(mutator: MutableSpace<Byte>.() -> Unit): ByteMutableSpace = apply(mutator)
 }
 
 open class IntSpace(final override val dimension: Dimension, init: (Int) -> Int = { 0 }): Space<Int> {
   protected val backend = IntArray(dimension.size, init)
   override fun get(index: Int) = backend[index]
-  override fun toMutableDimensionalMap() = IntMutableSpace(dimension, { index -> this[index]})
+  override fun mutate(mutator: MutableSpace<Int>.() -> Unit): IntSpace {
+    val mutations = SpaceMutator(this).apply(mutator)
+    return IntSpace(dimension, { mutations[it] })
+  }
 }
 open class IntMutableSpace(dimension: Dimension, init: (Int) -> Int = { 0 }): IntSpace(dimension, init), MutableSpace<Int> {
   override operator fun set(index: Int, value: Int) { backend[index] = value }
+  override fun mutate(mutator: MutableSpace<Int>.() -> Unit): IntMutableSpace = apply(mutator)
+}
+
+open class ChunkSpace<K>(final override val dimension: Dimension, init: (Int) -> Space<K>): Space<K> {
+  private val chunkDimension = dimension / CHUNK_DIMENSION
+  val chunks = ObjectSpace(chunkDimension, { init(it) })
+
+  override fun get(index: Int): K {
+    val spacePos = dimension.toVector3i(index)
+    val chunkPos = spacePos / CHUNK_DIMENSION
+    val localPos = spacePos % CHUNK_DIMENSION
+    return chunks[chunkPos][localPos]
+  }
+
+  override fun mutate(mutator: MutableSpace<K>.() -> Unit): ChunkSpace<K> {
+    val mutatedSpace = SpaceMutator(this).apply(mutator)
+    val mutatedChunks = mutatedSpace.mutations.entries
+        .groupBy { dimension.toVector3i(it.key) / CHUNK_DIMENSION }
+
+    return ChunkSpace(dimension, { chunkIndex ->
+      val chunkPos = chunkDimension.toVector3i(chunkIndex)
+      if (!mutatedChunks.containsKey(chunkPos)) {
+        chunks[chunkIndex]
+      } else {
+        chunks[chunkIndex].mutate {
+          mutatedChunks[chunkPos]!!.forEach { (index, value) ->
+            val spacePos = this@ChunkSpace.dimension.toVector3i(index)
+            val localPos = spacePos % CHUNK_DIMENSION
+            set(localPos, value)
+          }
+        }
+      }
+    })
+  }
 }
 
 open class ObjectSpace<K>(final override val dimension: Dimension, init: (Int) -> K): Space<K> {
   @Suppress("UNCHECKED_CAST")
   protected val backend = Array(dimension.size, { init(it) as Any? }) as Array<K>
+
+  @Suppress("UNCHECKED_CAST")
   override operator fun get(index: Int) = backend[index]
-  override fun toMutableDimensionalMap() = ObjectMutableSpace(dimension, { index -> this[index] })
+  override fun mutate(mutator: (MutableSpace<K>.() -> Unit)): ObjectSpace<K> {
+    val mutatedSpace = SpaceMutator(this).apply(mutator)
+    return ObjectSpace(dimension, { mutatedSpace[it] })
+  }
 }
 open class ObjectMutableSpace<K>(dimension: Dimension, init: (Int) -> K): ObjectSpace<K>(dimension, init), MutableSpace<K> {
   override operator fun set(index: Int, value: K) { backend[index] = value }
+}
+
+private class SpaceMutator<K>(private val backend: Space<K>) : MutableSpace<K> {
+  override val dimension = backend.dimension
+  val mutations = hashMapOf<Int, K>()
+  override fun get(index: Int): K {
+    @Suppress("UNCHECKED_CAST")
+    return if (mutations.containsKey(index)) mutations[index] as K else backend[index]
+  }
+
+  override fun set(index: Int, value: K) {
+    mutations[index] = value
+  }
+  override fun mutate(mutator: MutableSpace<K>.() -> Unit) = apply(mutator)
 }

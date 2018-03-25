@@ -6,6 +6,7 @@ import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
+import com.fracturedskies.engine.messages.MessageBus.send
 import kotlin.coroutines.experimental.CoroutineContext
 
 
@@ -48,7 +49,7 @@ class WorkerSystem(context: CoroutineContext) {
         movements.forEach { id, nextPosition ->
           workers[id]!!.pos = nextPosition
         }
-        MessageBus.send(MoveWorkers(movements, Cause.of(this@WorkerSystem, message.cause), MultiTypeMap()))
+        send(MoveWorkers(movements, Cause.of(this@WorkerSystem, message.cause), MultiTypeMap()))
       }
     }
   }

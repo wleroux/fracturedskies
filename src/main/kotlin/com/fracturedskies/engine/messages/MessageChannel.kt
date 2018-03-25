@@ -1,7 +1,7 @@
 package com.fracturedskies.engine.messages
 
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.Channel
 import kotlin.coroutines.experimental.*
 
 class MessageChannel(context: CoroutineContext = EmptyCoroutineContext, private val handler: suspend (Message) -> Unit) {
@@ -9,12 +9,16 @@ class MessageChannel(context: CoroutineContext = EmptyCoroutineContext, private 
   private var processing = false
   init {
     launch(context) {
-      channel.consumeEach { message ->
-        try {
+      while (isActive && !channel.isClosedForReceive) {
+        if (!channel.isEmpty) {
           processing = true
-          handler(message)
-        } finally {
-          processing = false
+          try {
+            handler(channel.receive())
+          } finally {
+            processing = false
+          }
+        } else {
+          yield()
         }
       }
     }

@@ -1,7 +1,7 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.api.BlockType
-import com.fracturedskies.engine.collections.ObjectSpace
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
@@ -9,7 +9,7 @@ import org.lwjgl.BufferUtils.*
 
 
 fun generateWaterMesh(
-    world: ObjectSpace<Block>,
+    world: Space<Block>,
     sliceMesh: Boolean,
     xRange: IntRange, yRange: IntRange, zRange: IntRange
 ): () -> Mesh {
@@ -197,6 +197,6 @@ private fun waterHeight(waterLevel: Byte): Float {
   return map(waterLevel.toFloat(), 0f..MAX_WATER_LEVEL.toFloat(), 0f..1f)
 }
 
-private fun isEmpty(world: ObjectSpace<Block>, pos: Vector3i): Boolean {
+private fun isEmpty(world: Space<Block>, pos: Vector3i): Boolean {
   return if (!world.has(pos)) true else world[pos].type === BlockType.AIR
 }
