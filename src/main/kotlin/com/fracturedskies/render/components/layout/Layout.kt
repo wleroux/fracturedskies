@@ -6,7 +6,7 @@ import com.fracturedskies.engine.jeact.*
 /**
  * Layout takes the `bounds` provided and divides the space with to child components
  */
-class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
+class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     // Flex Attributes
     val DIRECTION = TypedKey<Direction>("direction")
@@ -39,13 +39,13 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
 
     /* Helper Functions */
     private fun Component<*>.cross(direction: Direction, width: Int, height: Int): Int {
-      val preferredWidth = this.preferredWidth(width, height)
-      val preferredHeight = this.preferredHeight(width, height)
+      val preferredWidth = this.glPreferredWidth(width, height)
+      val preferredHeight = this.glPreferredHeight(width, height)
       return direction.cross(preferredWidth, preferredHeight)
     }
     private fun Component<*>.main(direction: Direction, width: Int, height: Int): Int {
-      val preferredWidth = this.preferredWidth(width, height)
-      val preferredHeight = this.preferredHeight(width, height)
+      val preferredWidth = this.glPreferredWidth(width, height)
+      val preferredHeight = this.glPreferredHeight(width, height)
       return direction.main(preferredWidth, preferredHeight)
     }
   }
@@ -57,13 +57,13 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
   private val alignContent get() = requireNotNull(props[ALIGN_CONTENT])
   private val wrap get() = requireNotNull(props[WRAP])
 
-  override fun preferredWidth(parentWidth: Int, parentHeight: Int): Int {
+  override fun glPreferredWidth(parentWidth: Int, parentHeight: Int): Int {
     val componentRows = wrap.split(children, direction, parentWidth, parentHeight)
     val maxMainSpace = maxMainSpace(componentRows, parentWidth, parentHeight)
     val maxCrossSpace = maxCrossSpace(componentRows, parentWidth, parentHeight)
     return direction.x(maxMainSpace, maxCrossSpace)
   }
-  override fun preferredHeight(parentWidth: Int, parentHeight: Int): Int {
+  override fun glPreferredHeight(parentWidth: Int, parentHeight: Int): Int {
     val componentRows = wrap.split(children, direction, parentWidth, parentHeight)
     val maxMainSpace = maxMainSpace(componentRows, parentWidth, parentHeight)
     val maxCrossSpace = maxCrossSpace(componentRows, parentWidth, parentHeight)
@@ -83,11 +83,11 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
               .sum()
     }).max() ?: 0
   }
-  override fun componentFromPoint(point: Point): Component<*>? {
-    return children.reversed().mapNotNull({ it.componentFromPoint(point) }).firstOrNull()
+  override fun glComponentFromPoint(point: Point): Component<*>? {
+    return children.reversed().mapNotNull({ it.glComponentFromPoint(point) }).firstOrNull()
   }
 
-  override fun render(bounds: Bounds) {
+  override fun glRender(bounds: Bounds) {
     this.bounds = bounds
 
     val mainAxisSize = direction.main(bounds.width, bounds.height)
@@ -135,7 +135,7 @@ class Layout(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
         val alignSelf = component.props[ALIGN_SELF] ?: alignItems
         val crossSpace = alignSelf.cross(componentCrossSpace, rowCrossSpace)
         val crossOffset = alignSelf.offset(componentCrossSpace, rowCrossSpace)
-        component.render(Bounds(
+        component.glRender(Bounds(
                 bounds.x + direction.x(componentMainOffset, componentCrossOffset + crossOffset),
                 bounds.y + direction.y(componentMainOffset, componentCrossOffset + crossOffset),
                 direction.x(componentMainSpace, crossSpace),

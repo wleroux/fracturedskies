@@ -15,7 +15,7 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.stb.STBEasyFont
 import org.lwjgl.stb.STBEasyFont.*
 
-class TextRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
+class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     val TEXT = TypedKey<String>("text")
     val COLOR = TypedKey<Color4>("color")
@@ -30,11 +30,11 @@ class TextRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
   private val text get() = requireNotNull(props[TEXT])
   private val color get() = requireNotNull(props[COLOR])
 
-  override fun preferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text)
-  override fun preferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)
+  override fun glPreferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text)
+  override fun glPreferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)
   var mesh: Mesh? = null
 
-  override fun toNodes() = nodes {
+  override fun render() = nodes {
     val colorBuffer = BufferUtils.createByteBuffer(4)
     colorBuffer.put(color.red.toByte())
     colorBuffer.put(color.green.toByte())
@@ -96,7 +96,7 @@ class TextRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
       temp
     }
 
-    dispatch(CursorPosition(this, cursorPosition))
+    dispatch(this, CursorPosition(this, cursorPosition))
   }
 
   class CursorPosition(target: Component<*>, val cursorPosition: Int) : Event(target)

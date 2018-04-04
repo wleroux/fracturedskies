@@ -10,7 +10,7 @@ import com.fracturedskies.render.components.FpsRenderer.FpsRendererState
 import com.fracturedskies.render.components.TextRenderer.Companion.textRenderer
 import java.util.concurrent.TimeUnit
 
-class FpsRenderer(attributes: MultiTypeMap) : Component<FpsRendererState>(attributes, FpsRendererState()) {
+class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsRendererState()) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
     fun Node.Builder<*>.fpsRenderer() {
@@ -20,16 +20,16 @@ class FpsRenderer(attributes: MultiTypeMap) : Component<FpsRendererState>(attrib
 
   /* State */
   data class FpsRendererState(val fps: Int = 0, val ups: Int = 0)
-  var fps
+  private var fps
     get() = (nextState ?: state).fps
     set(value) { nextState = (nextState ?: state).copy(fps = value) }
-  var ups
+  private var ups
     get() = (nextState ?: state).ups
     set(value) { nextState = (nextState ?: state).copy(ups = value) }
 
   private lateinit var fpsCounter: MessageChannel
-  override fun willMount() {
-    super.willMount()
+  override fun componentWillMount() {
+    super.componentWillMount()
     var lastUps = System.nanoTime()
     var upsTicks = 0
     fpsCounter = register(MessageChannel { message ->
@@ -46,20 +46,20 @@ class FpsRenderer(attributes: MultiTypeMap) : Component<FpsRendererState>(attrib
       }
     })
   }
-  override fun willUnmount() {
-    super.willUnmount()
+  override fun componentWillUnmount() {
+    super.componentWillUnmount()
     unregister(fpsCounter)
   }
-  override fun componentFromPoint(point: Point): Component<*>? = null
-  override fun toNodes() = nodes {
-    textRenderer("FPS: $fps, MSPF: ${1000f / fps}; UPS: $ups, MSPU: ${1000f / ups}")
+  override fun glComponentFromPoint(point: Point): Component<*>? = null
+  override fun render() = nodes {
+    textRenderer("FPS: $fps, UPS: $ups")
   }
 
   var fpsTicks = 0
   var lastFps = System.nanoTime()
 
-  override fun render(bounds: Bounds) {
-    super.render(bounds)
+  override fun glRender(bounds: Bounds) {
+    super.glRender(bounds)
 
     // Track FPS ticks
     val now = System.nanoTime()

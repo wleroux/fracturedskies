@@ -10,7 +10,7 @@ import com.fracturedskies.render.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11.glViewport
 import kotlin.math.*
 
-class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
+class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     fun Node.Builder<*>.worldRenderer(additionalContext: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldRenderer, additionalContext))
@@ -32,8 +32,8 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
   private lateinit var program: ColorShaderProgram
   private lateinit var skyLightLevels: LightLevels
   private lateinit var blockLightLevels: LightLevels
-  override fun willMount() {
-    super.willMount()
+  override fun componentWillMount() {
+    super.componentWillMount()
     program = ColorShaderProgram()
     skyLightLevels = LightLevels.load(loadByteBuffer("SkyLightLevels.png", WorldRenderer::class.java), 240)
     blockLightLevels = LightLevels.load(loadByteBuffer("BlockLightLevels.png", WorldRenderer::class.java), 16)
@@ -58,7 +58,7 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
     })
   }
 
-  override fun willUnmount() {
+  override fun componentWillUnmount() {
     blockMesh.forEach(Mesh::close)
     waterMesh.forEach(Mesh::close)
     blockSliceMesh.forEach(Mesh::close)
@@ -74,8 +74,8 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
   private lateinit var blockSliceMesh: Array<Mesh>
   private lateinit var waterSliceMesh: Array<Mesh>
 
-  override fun willReceiveProps(nextProps: MultiTypeMap) {
-    super.willReceiveProps(nextProps)
+  override fun componentWillReceiveProps(nextProps: MultiTypeMap) {
+    super.componentWillReceiveProps(nextProps)
 
     if (nextProps[VIEW] !== props[VIEW] || nextProps[ROTATION] !== props[ROTATION])
       view = Matrix4(requireNotNull(nextProps[VIEW]), requireNotNull(nextProps[ROTATION])).invert()
@@ -115,10 +115,10 @@ class WorldRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit
     }
   }
 
-  override fun render(bounds: Bounds) {
+  override fun glRender(bounds: Bounds) {
     if (this.bounds != bounds)
       projection = Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
-    super.render(bounds)
+    super.glRender(bounds)
 
     // Specify Viewport
     glViewport(bounds.x, bounds.y, bounds.width, bounds.height)

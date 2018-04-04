@@ -10,13 +10,13 @@ import com.fracturedskies.render.components.layout.Layout.Companion.layout
 import com.fracturedskies.render.components.world.WorldController.Companion.worldController
 import org.lwjgl.opengl.GL11.*
 
-class Scene(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
+class Scene(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     val GAME_STATE = TypedKey<GameState>("gameState")
   }
   private val gameState get() = requireNotNull(props[GAME_STATE])
 
-  override fun toNodes() = nodes {
+  override fun render() = nodes {
     layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
       worldController(gameState, MultiTypeMap(
           GROW to 1.0
@@ -27,10 +27,10 @@ class Scene(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
     }
   }
 
-  override fun render(bounds: Bounds) {
+  override fun glRender(bounds: Bounds) {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
 
-    super.render(bounds)
+    super.glRender(bounds)
   }
 }

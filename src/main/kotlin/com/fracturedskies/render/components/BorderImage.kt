@@ -10,7 +10,7 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11
 
 
-class BorderImage(attributes: MultiTypeMap) : Component<Boolean>(attributes, false) {
+class BorderImage(props: MultiTypeMap) : Component<Boolean>(props, false) {
   companion object {
     val MATERIAL = TypedKey<Material>("material")
     private val LAYER_WIDTH = 4
@@ -21,15 +21,15 @@ class BorderImage(attributes: MultiTypeMap) : Component<Boolean>(attributes, fal
       ).with(additionalContext), block))
     }
   }
-  override fun preferredWidth(parentWidth: Int, parentHeight: Int) =
-          2 * LAYER_WIDTH + super.preferredWidth(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
-  override fun preferredHeight(parentWidth: Int, parentHeight: Int) =
-          2 * LAYER_HEIGHT + super.preferredHeight(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
+  override fun glPreferredWidth(parentWidth: Int, parentHeight: Int) =
+          2 * LAYER_WIDTH + super.glPreferredWidth(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
+  override fun glPreferredHeight(parentWidth: Int, parentHeight: Int) =
+          2 * LAYER_HEIGHT + super.glPreferredHeight(parentWidth - 2 * LAYER_WIDTH, parentHeight - 2 * LAYER_HEIGHT)
 
   /* Attributes */
   private val material: Material get() = requireNotNull(props[MATERIAL])
 
-  override fun render(bounds: Bounds) {
+  override fun glRender(bounds: Bounds) {
     this.bounds = bounds
     val fillWidth = bounds.width - 2 * LAYER_WIDTH
     val fillHeight = bounds.height - 2 * LAYER_HEIGHT
@@ -79,7 +79,7 @@ class BorderImage(attributes: MultiTypeMap) : Component<Boolean>(attributes, fal
     GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
     material.render(variables, mesh)
     for (child in children) {
-      child.render(Bounds(bounds.x + LAYER_WIDTH, bounds.y + LAYER_HEIGHT, bounds.width - 2 * LAYER_WIDTH, bounds.height - 2 * LAYER_HEIGHT))
+      child.glRender(Bounds(bounds.x + LAYER_WIDTH, bounds.y + LAYER_HEIGHT, bounds.width - 2 * LAYER_WIDTH, bounds.height - 2 * LAYER_HEIGHT))
     }
   }
 }

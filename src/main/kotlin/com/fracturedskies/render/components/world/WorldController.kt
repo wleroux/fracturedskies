@@ -26,7 +26,7 @@ data class WorldControllerState(
     val rotationAngle: Float = 0f,
     val viewCenter: Vector3 = Vector3(0f, 0f, 0f)
 )
-class WorldController(attributes: MultiTypeMap) : Component<WorldControllerState>(attributes, WorldControllerState()) {
+class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(props, WorldControllerState()) {
 
   companion object {
     fun Node.Builder<*>.worldController(gameState: GameState, additionalContext: MultiTypeMap = MultiTypeMap()) {
@@ -150,8 +150,8 @@ class WorldController(attributes: MultiTypeMap) : Component<WorldControllerState
   }
 
   private lateinit var controllerUpdates: Job
-  override fun willMount() {
-    super.willMount()
+  override fun componentWillMount() {
+    super.componentWillMount()
     controllerUpdates = launch {
       while (isActive) {
         onUpdate(16f/1000f)
@@ -160,13 +160,13 @@ class WorldController(attributes: MultiTypeMap) : Component<WorldControllerState
     }
   }
 
-  override fun willUnmount() {
-    super.willUnmount()
+  override fun componentWillUnmount() {
+    super.componentWillUnmount()
     controllerUpdates.cancel()
   }
 
-  override fun willUpdate(nextProps: MultiTypeMap, nextState: WorldControllerState) {
-    super.willUpdate(nextProps, nextState)
+  override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: WorldControllerState) {
+    super.componentWillUpdate(nextProps, nextState)
 
     if (initialized) {
       viewCenter.y = run {
@@ -322,7 +322,7 @@ class WorldController(attributes: MultiTypeMap) : Component<WorldControllerState
     }
   })
 
-  override fun toNodes() = nodes {
+  override fun render() = nodes {
     if (initialized) {
       worldRenderer(MultiTypeMap(
           WorldRenderer.VIEW to view,

@@ -8,17 +8,17 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
   companion object {
     fun unmount(component: Component<*>) {
       component.children.forEach { unmount(it) }
-      component.willUnmount()
+      component.componentWillUnmount()
     }
 
     fun <S, C: Component<S>> mount(type: (MultiTypeMap) -> C, parent: Component<*>?, props: MultiTypeMap): C {
       val component = type(props)
 
-      component.willMount()
+      component.componentWillMount()
       component.parent = parent
       component.props = props
       component.state = component.nextState ?: component.state
-      component.didMount()
+      component.componentDidMount()
 
       return component
     }
@@ -32,115 +32,121 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
         if (prev != null) unmount(prev)
         mount(node.type, parent, node.props)
       }
-      component.update(node.props, !reuseComponent)
+      update(component, node.props, !reuseComponent)
       return component
+    }
+
+    fun <T> dispatch(target: Component<T>, event: Event) {
+      val ancestry = mutableListOf<Component<*>>()
+      var child: Component<*>? = target.parent
+      while (child != null) {
+        ancestry.add(child)
+        child = child.parent
+      }
+
+      // Capture phase
+      event.phase = Phase.CAPTURE
+      for (component in ancestry.reversed()) {
+        component.handler(event)
+        if (event.stopPropogation)
+          return
+      }
+
+      // Target phase
+      event.phase = Phase.TARGET
+      target.handler(event)
+      if (event.stopPropogation)
+        return
+
+      // Bubble phase
+      event.phase = Phase.BUBBLE
+      for (component in ancestry) {
+        component.handler(event)
+        if (event.stopPropogation)
+          return
+      }
+    }
+
+
+    // Lifecycle functions
+    fun <T> update(component: Component<T>, props: MultiTypeMap, forceUpdate: Boolean = false) {
+      // Update component
+      val prevProps = component.props
+      val prevState = component.state
+
+      val nextProps = if (props == prevProps) prevProps else props
+      if (nextProps !== prevProps)
+        component.componentWillReceiveProps(nextProps)
+      val nextState = component.nextState ?: component.state
+      if (forceUpdate || component.shouldComponentUpdate(nextProps, nextState)) {
+        component.componentWillUpdate(nextProps, nextState)
+
+        val prevChildren = component.children
+        component.props = nextProps
+        component.state = nextState
+        component.nextState = null
+        component.children = component.render().mapIndexed({ index, node ->
+          val prevChildComponent = component.children.getOrNull(index)
+          toComponent(node, prevChildComponent, component)
+        })
+
+        // Unmount discarded toNodes
+        prevChildren.minus(component.children).forEach({ unmount(it) })
+        component.componentDidUpdate(prevProps, prevState)
+      } else {
+        component.children.forEach({ childComponent ->
+          update(childComponent, childComponent.props)
+        })
+      }
     }
   }
 
   var state: T = initialState
   var nextState: T? = null
-  open val handler: EventHandler = {}
+  var currentState = nextState ?: state
 
   // Component Tree
   var parent: Component<*>? = null
   var children: List<Component<*>> = listOf()
 
   // Mounting
-  open fun willMount() = Unit
-  open fun didMount() = Unit
+  open fun componentWillMount() = Unit
+  open fun componentDidMount() = Unit
 
   // Updating
-  open fun willReceiveProps(nextProps: MultiTypeMap) = Unit
-  open fun shouldUpdate(nextProps: MultiTypeMap, nextState: T): Boolean =
+  open fun componentWillReceiveProps(nextProps: MultiTypeMap) = Unit
+  open fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: T): Boolean =
           props !== nextProps || state !== nextState
-  open fun willUpdate(nextProps: MultiTypeMap, nextState: T) = Unit
-  open fun didUpdate(prevProps: MultiTypeMap, prevState: T) = Unit
+  open fun componentWillUpdate(nextProps: MultiTypeMap, nextState: T) = Unit
+  open fun componentDidUpdate(prevProps: MultiTypeMap, prevState: T) = Unit
 
   // Unmounting
-  open fun willUnmount() = Unit
+  open fun componentWillUnmount() = Unit
+
+  // Rendering
+  open fun render(): List<Node<*>> = requireNotNull(props[NODES])
+
+  // Event Handling
+  open val handler: EventHandler = {}
 
   // Rendering Components
   var bounds: Bounds = Bounds(0, 0, 0, 0)
-  open fun preferredWidth(parentWidth: Int, parentHeight: Int): Int =
-      children.map({ it.preferredWidth(parentWidth, parentHeight) }).max() ?: 0
-  open fun preferredHeight(parentWidth: Int, parentHeight: Int): Int =
-      children.map({ it.preferredHeight(parentWidth, parentHeight) }).max() ?: 0
-  open fun render(bounds: Bounds) {
+  open fun glPreferredWidth(parentWidth: Int, parentHeight: Int): Int =
+      children.map({ it.glPreferredWidth(parentWidth, parentHeight) }).max() ?: 0
+  open fun glPreferredHeight(parentWidth: Int, parentHeight: Int): Int =
+      children.map({ it.glPreferredHeight(parentWidth, parentHeight) }).max() ?: 0
+  open fun glRender(bounds: Bounds) {
     this.bounds = bounds
     for (child in children) {
-      child.render(this.bounds)
+      child.glRender(this.bounds)
     }
   }
-  open fun componentFromPoint(point: Point): Component<*>? {
+  open fun glComponentFromPoint(point: Point): Component<*>? {
     return if (point within this.bounds) {
-      val child = children.reversed().mapNotNull({ it.componentFromPoint(point) }).firstOrNull()
+      val child = children.reversed().mapNotNull({ it.glComponentFromPoint(point) }).firstOrNull()
       child ?: this
     } else {
       null
-    }
-  }
-
-  // Lifecycle functions
-  open fun toNodes(): List<Node<*>> = requireNotNull(props[NODES])
-  fun update(props: MultiTypeMap, forceUpdate: Boolean = false) {
-    // Update component
-    val prevProps = this.props
-    val prevState = this.state
-
-    val nextProps = if (props == prevProps) prevProps else props
-    if (nextProps !== prevProps)
-      this.willReceiveProps(nextProps)
-    val nextState = this.nextState ?: this.state
-    if (forceUpdate || this.shouldUpdate(nextProps, nextState)) {
-      this.willUpdate(nextProps, nextState)
-
-      val prevChildren = this.children
-      this.props = nextProps
-      this.state = nextState
-      this.nextState = null
-      this.children = this.toNodes().mapIndexed({ index, node ->
-        val prevChildComponent = this.children.getOrNull(index)
-        toComponent(node, prevChildComponent, this)
-      })
-
-      // Unmount discarded toNodes
-      prevChildren.minus(this.children).forEach({ unmount(it) })
-      this.didUpdate(prevProps, prevState)
-    } else {
-      this.children.forEach({ childComponent ->
-        childComponent.update(childComponent.props)
-      })
-    }
-  }
-
-  fun dispatch(event: Event) {
-    // Capture phase
-    event.phase = Phase.CAPTURE
-    val ancestry = mutableListOf<Component<*>>()
-    var child: Component<*>? = parent
-    while (child != null) {
-      ancestry.add(child)
-      child = child.parent
-    }
-
-    for (component in ancestry.reversed()) {
-      component.handler(event)
-      if (event.stopPropogation)
-        return
-    }
-
-    // Target phase
-    event.phase = Phase.TARGET
-    handler(event)
-    if (event.stopPropogation)
-      return
-
-    // Bubble phase
-    event.phase = Phase.BUBBLE
-    for (component in ancestry) {
-      component.handler(event)
-      if (event.stopPropogation)
-        return
     }
   }
 

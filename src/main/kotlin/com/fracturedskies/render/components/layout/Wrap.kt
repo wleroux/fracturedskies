@@ -16,7 +16,7 @@ enum class Wrap {
         var cumulativeMainAxisSize = 0
         while (currentComponentIndex < components.size) {
           val component = components[currentComponentIndex]
-          val componentMainSize = direction.main(component.preferredWidth(width, height), component.preferredHeight(width, height))
+          val componentMainSize = direction.main(component.glPreferredWidth(width, height), component.glPreferredHeight(width, height))
           if (cumulativeMainAxisSize + componentMainSize > mainAxisSize && componentRow.size > 0) {
             break
           } else {

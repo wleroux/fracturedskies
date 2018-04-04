@@ -5,7 +5,7 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.shaders.*
 import org.lwjgl.opengl.GL11
 
-class MeshRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit) {
+class MeshRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     val MESH = TypedKey<Mesh>("mesh")
     val MATERIAL = TypedKey<Material>("material")
@@ -24,7 +24,7 @@ class MeshRenderer(attributes: MultiTypeMap) : Component<Unit>(attributes, Unit)
   private val material get() = requireNotNull(props[MATERIAL])
   private val variables get() = requireNotNull(props[VARIABLES])
 
-  override fun render(bounds: Bounds) {
+  override fun glRender(bounds: Bounds) {
     this.bounds = bounds
     GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
     GL11.glViewport(bounds.x, bounds.y, bounds.width, bounds.height)

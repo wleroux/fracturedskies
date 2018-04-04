@@ -3,8 +3,10 @@ package com.fracturedskies.render
 import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.engine.jeact.Component.Companion.dispatch
 import com.fracturedskies.engine.jeact.Component.Companion.mount
 import com.fracturedskies.engine.jeact.Component.Companion.unmount
+import com.fracturedskies.engine.jeact.Component.Companion.update
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.components.Scene
@@ -31,7 +33,7 @@ class RenderGameSystem(context: CoroutineContext) {
 
   private var window: Long = 0
 
-  fun initialize() {
+  fun glInitialize() {
     GLFWErrorCallback.createPrint(System.err).set()
 
     // Initialize GLFW
@@ -79,25 +81,25 @@ class RenderGameSystem(context: CoroutineContext) {
     scene = mount(::Scene, null, MultiTypeMap(
         Scene.GAME_STATE to gameState
     ))
-    scene.update(MultiTypeMap(
+    update(scene, MultiTypeMap(
         Scene.GAME_STATE to gameState
     ), true)
   }
 
-  fun update() {
+  fun glUpdate() {
     glfwPollEvents()
   }
 
-  fun render() {
+  fun glRender() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-    scene.update(MultiTypeMap(
+    update(scene, MultiTypeMap(
         Scene.GAME_STATE to gameState
     ), false)
-    scene.render(screenDimension)
+    scene.glRender(screenDimension)
     glfwSwapBuffers(window)
   }
 
-  fun shutdown() {
+  fun glShutdown() {
     unmount(scene)
 
     glfwFreeCallbacks(window)
@@ -110,12 +112,12 @@ class RenderGameSystem(context: CoroutineContext) {
   private var focus: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun keyCallback(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {
     if (focus != null) {
-      focus?.dispatch(Key(focus!!, key, scancode, action, mods))
+      dispatch(focus!!, Key(focus!!, key, scancode, action, mods))
     }
   }
   @Suppress("UNUSED_PARAMETER") private fun charModsCallback(window: Long, codepoint: Int, mods: Int) {
     if (focus != null) {
-      focus?.dispatch(CharMods(focus!!, codepoint, mods))
+      dispatch(focus!!, CharMods(focus!!, codepoint, mods))
     }
   }
 
@@ -123,33 +125,35 @@ class RenderGameSystem(context: CoroutineContext) {
   private var hover: Component<*>? = null
   @Suppress("UNUSED_PARAMETER") private fun cursorPosCallback(window: Long, xpos: Double, ypos: Double) {
     mousePos = Point(xpos.toInt(), screenDimension.height - ypos.toInt())
-    val nextHover = scene.componentFromPoint(mousePos)
+    val nextHover = scene.glComponentFromPoint(mousePos)
     val prevHover = hover
     if (prevHover !== nextHover) {
-      prevHover?.dispatch(Unhover(prevHover))
-      nextHover?.dispatch(Hover(nextHover))
+      if (prevHover != null)
+        dispatch(prevHover, Unhover(prevHover))
+      if (nextHover != null)
+        dispatch(nextHover, Hover(nextHover))
       hover = nextHover
     }
   }
   @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) {
-    val component = scene.componentFromPoint(mousePos)
-    if (component != null) {
-      val event = Click(component, mousePos, button, action, mods)
-      component.dispatch(event)
+    val nextFocus = scene.glComponentFromPoint(mousePos)
+    if (nextFocus != null) {
+      val event = Click(nextFocus, mousePos, button, action, mods)
+      dispatch(nextFocus, event)
       if (!event.stopPropogation) {
         val prevFocus = focus
-        val nextFocus = component
-
         if (prevFocus !== nextFocus) {
-          prevFocus?.dispatch(Unfocus(prevFocus))
-          nextFocus.dispatch(Focus(nextFocus))
+          if (prevFocus != null)
+            dispatch(prevFocus, Unfocus(prevFocus))
+          dispatch(nextFocus, Focus(nextFocus))
           focus = nextFocus
         }
       }
     }
   }
   @Suppress("UNUSED_PARAMETER") private fun scrollCallback(window: Long, xoffset: Double, yoffset: Double) {
-    focus?.dispatch(Scroll(focus!!, xoffset, yoffset))
+    if (focus != null)
+      dispatch(focus!!, Scroll(focus!!, xoffset, yoffset))
   }
 
   @Suppress("UNUSED_PARAMETER") private fun windowSizeCallback(window: Long, width: Int, height: Int) {

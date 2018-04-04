@@ -1,6 +1,7 @@
 package com.fracturedskies.engine.messages
 
 import kotlinx.coroutines.experimental.*
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 object MessageBus {
   private var messageChannels = listOf<MessageChannel>()
@@ -11,11 +12,15 @@ object MessageBus {
   fun unregister(messageChannel: MessageChannel) {
     messageChannels -= messageChannel
   }
-  fun <T: Message> send(message: T) = async {
+  fun <T: Message> send(message: T) = runBlocking {
     messageChannels.forEach { it.send(message) }
+  }
 
-    while (!messageChannels.all { it.isIdle() }) {
-      yield()
+  fun isIdle() = messageChannels.all { it.isIdle() }
+
+  suspend fun waitForIdle() {
+    while (!isIdle()) {
+      delay(1L, MILLISECONDS)
     }
   }
 }
