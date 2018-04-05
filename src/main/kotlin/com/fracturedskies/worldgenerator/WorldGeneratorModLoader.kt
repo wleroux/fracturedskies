@@ -12,7 +12,7 @@ class WorldGeneratorModLoader: ModLoader() {
     register(MessageChannel(initialContext) { message ->
       if (message is NewGameRequested) {
         val blocks = WorldGenerator(message.dimension, 0).generate()
-        send(UpdateBlock(blocks, message.cause, message.context))
+        send(BlockUpdated(blocks, message.cause, message.context))
       }
     })
   }

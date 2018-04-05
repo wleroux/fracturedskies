@@ -92,7 +92,7 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
       is NewGameRequested -> {
         light = BlockLightMap(message.dimension)
       }
-      is UpdateBlock -> {
+      is BlockUpdated -> {
         val blockLightUpdates = message.updates.map { (pos, type) ->
           light.type[pos] = type
           updateBlockLight(pos)

@@ -1,6 +1,7 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.api.*
+import com.fracturedskies.colonist.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -273,9 +274,11 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                     }
                   }
                 }.toMap()
-                send(UpdateBlock(updates, Cause.of(this)))
+                updates.forEach { update ->
+                  send(TaskCreated(Id(), Category.MINE, Priority.AVERAGE, SingleAssigneeCondition, PlaceBlock(update.key, update.value), Cause.of(this)))
+                }
               } else {
-                send(SpawnWorker(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this)))
+                send(ColonistSpawned(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this)))
               }
             }
             // Remove Blocks
@@ -289,7 +292,9 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                   }
                 }
               }.toMap()
-              send(UpdateBlock(updates, Cause.of(this)))
+              updates.forEach { update ->
+                send(TaskCreated(Id(), Category.MINE, Priority.AVERAGE, SingleAssigneeCondition, RemoveBlock(update.key), Cause.of(this)))
+              }
             }
             // Add Water
             else if (event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
@@ -313,7 +318,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                 }
               }.toMap()
 
-              send(UpdateBlockWater(updates, Cause.of(this)))
+              send(BlockWaterLevelUpdated(updates, Cause.of(this)))
             }
           }
           firstBlock = null

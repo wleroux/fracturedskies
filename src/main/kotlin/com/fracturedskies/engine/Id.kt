@@ -8,4 +8,6 @@ data class Id(private val uuid: UUID) {
       return Id(UUID.randomUUID())
     }
   }
+
+  override fun toString() = "Id($uuid)"
 }

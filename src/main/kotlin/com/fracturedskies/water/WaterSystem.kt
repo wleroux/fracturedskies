@@ -23,7 +23,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         pathFinder = WaterPathFinder(water)
         initialized = true
       }
-      is UpdateBlock -> {
+      is BlockUpdated -> {
         if (!initialized) return@MessageChannel
         val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
         message.updates.forEach { (pos, type) ->
@@ -34,10 +34,10 @@ class WaterSystem(coroutineContext: CoroutineContext) {
           }
         }
         if (waterLevelUpdates.isNotEmpty()) {
-          send(UpdateBlockWater(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
+          send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
         }
       }
-      is UpdateBlockWater -> {
+      is BlockWaterLevelUpdated -> {
         if (!initialized) return@MessageChannel
         if (message.cause.first() != this) {
           message.updates.forEach { (pos, waterLevel) ->
@@ -52,7 +52,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
 
         val updates = flow + evaporation
         if (updates.isNotEmpty()) {
-          send(UpdateBlockWater(updates, Cause.of(this), MultiTypeMap()))
+          send(BlockWaterLevelUpdated(updates, Cause.of(this), MultiTypeMap()))
         }
       }
     }

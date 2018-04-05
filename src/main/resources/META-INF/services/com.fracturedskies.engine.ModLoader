@@ -2,4 +2,4 @@ com.fracturedskies.light.LightModLoader
 com.fracturedskies.water.WaterModLoader
 com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
-com.fracturedskies.worker.WorkerModLoader
+com.fracturedskies.colonist.ColonistModLoader

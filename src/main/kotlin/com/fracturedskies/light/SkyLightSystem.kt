@@ -111,7 +111,7 @@ fun skyLightSystem(context: CoroutineContext): MessageChannel {
       is NewGameRequested -> {
         light = SkyLightMap(message.dimension)
       }
-      is UpdateBlock -> {
+      is BlockUpdated -> {
         message.updates.forEach { pos, type ->
           light.type[pos] = type
         }

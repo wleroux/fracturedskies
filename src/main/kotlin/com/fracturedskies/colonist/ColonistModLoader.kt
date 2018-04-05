@@ -1,12 +1,12 @@
-package com.fracturedskies.worker
+package com.fracturedskies.colonist
 
 import com.fracturedskies.engine.ModLoader
 import com.fracturedskies.engine.messages.MessageBus.register
 import kotlin.coroutines.experimental.CoroutineContext
 
-
-class WorkerModLoader: ModLoader() {
+class ColonistModLoader: ModLoader() {
   override fun initialize(initialContext: CoroutineContext) {
-    register(WorkerSystem(initialContext).channel)
+    register(ColonistTaskSystem(initialContext).channel)
+    register(ColonistSystem(initialContext).channel)
   }
 }

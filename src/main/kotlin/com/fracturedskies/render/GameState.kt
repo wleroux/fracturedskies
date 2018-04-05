@@ -21,7 +21,7 @@ fun updateGameState(state: GameState, message: Any): GameState {
           workers = emptyMap(),
           timeOfDay = 0f
     )
-    is UpdateBlock -> state.copy(world = state.world!!.mutate {
+    is BlockUpdated -> state.copy(world = state.world!!.mutate {
       message.updates.forEach { pos, value ->
         set(pos, get(pos).copy(type = value))
       }
@@ -36,15 +36,15 @@ fun updateGameState(state: GameState, message: Any): GameState {
         set(pos, get(pos).copy(blockLight = value))
       }
     })
-    is UpdateBlockWater -> state.copy(world = state.world!!.mutate {
+    is BlockWaterLevelUpdated -> state.copy(world = state.world!!.mutate {
       message.updates.forEach { pos, value ->
         set(pos, get(pos).copy(waterLevel = value))
       }
     })
-    is SpawnWorker -> state.copy(workers = state.workers!!.toMutableMap().apply {
+    is ColonistSpawned -> state.copy(workers = state.workers!!.toMutableMap().apply {
       set(message.id, Worker(message.initialPos))
     })
-    is MoveWorkers -> state.copy(workers = state.workers!!.toMutableMap().apply {
+    is ColonistMoved -> state.copy(workers = state.workers!!.toMutableMap().apply {
       message.movements.forEach { id, nextPos ->
         set(id, get(id)!!.copy(pos = nextPos))
       }
