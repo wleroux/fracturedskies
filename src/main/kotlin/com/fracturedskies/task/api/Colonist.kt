@@ -1,11 +1,11 @@
-package com.fracturedskies.colonist
+package com.fracturedskies.task.api
 
 import com.fracturedskies.engine.Id
 
 
 data class Colonist(
     val id: Id,
-    val categoryPriorities: Map<Category, Int>,
+    val categoryPriorities: Map<TaskCategory, Int>,
     val taskCondition: Condition,
     val taskPriorityComparator: PriorityComparator
 )

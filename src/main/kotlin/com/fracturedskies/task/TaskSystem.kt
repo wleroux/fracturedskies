@@ -1,15 +1,16 @@
-package com.fracturedskies.colonist
+package com.fracturedskies.task
 
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.engine.messages.MessageChannel
+import com.fracturedskies.task.api.*
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * This system is responsible for assigning the colonist to the desired task every tick
  */
-class ColonistTaskSystem(context: CoroutineContext) {
+class TaskSystem(context: CoroutineContext) {
   var tasks = listOf<Task<*>>()
   var colonists = listOf<Colonist>()
 
@@ -23,6 +24,18 @@ class ColonistTaskSystem(context: CoroutineContext) {
       }
       is TaskCompleted -> {
         tasks = tasks.filterNot { it.id == message.id }
+      }
+      is TaskCancelled -> {
+        tasks = tasks.filterNot { it.id == message.id }
+      }
+      is ColonistRejectedTask -> {
+        tasks = tasks.map { task ->
+          when {
+            task.id == message.task && task.assigned.contains(message.colonist) -> task.copy(assigned = (task.assigned - message.colonist))
+            else -> task
+          }
+        }
+        send(ColonistTaskSelected(message.colonist, null, message.cause, message.context))
       }
       is Update -> {
         colonists.forEach { colonist ->

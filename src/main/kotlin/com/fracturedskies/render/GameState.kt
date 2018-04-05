@@ -45,9 +45,7 @@ fun updateGameState(state: GameState, message: Any): GameState {
       set(message.id, Worker(message.initialPos))
     })
     is ColonistMoved -> state.copy(workers = state.workers!!.toMutableMap().apply {
-      message.movements.forEach { id, nextPos ->
-        set(id, get(id)!!.copy(pos = nextPos))
-      }
+        set(message.id, get(message.id)!!.copy(pos = message.pos))
     })
     is TimeUpdated -> state.copy(
         timeOfDay = message.time

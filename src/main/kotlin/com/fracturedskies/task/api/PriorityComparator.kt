@@ -1,4 +1,4 @@
-package com.fracturedskies.colonist
+package com.fracturedskies.task.api
 
 interface PriorityComparator {
   fun compare(colonist: Colonist, o1: Task<*>, o2: Task<*>): Int

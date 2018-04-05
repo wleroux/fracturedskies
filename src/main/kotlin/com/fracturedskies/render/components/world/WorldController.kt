@@ -1,7 +1,6 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.api.*
-import com.fracturedskies.colonist.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -13,6 +12,7 @@ import com.fracturedskies.render.GameState
 import com.fracturedskies.render.components.world.WorldRenderer.Companion.worldRenderer
 import com.fracturedskies.render.controller.Keyboard
 import com.fracturedskies.render.events.*
+import com.fracturedskies.task.api.*
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW.*
@@ -275,7 +275,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                   }
                 }.toMap()
                 updates.forEach { update ->
-                  send(TaskCreated(Id(), Category.MINE, Priority.AVERAGE, SingleAssigneeCondition, PlaceBlock(update.key, update.value), Cause.of(this)))
+                  send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, PlaceBlock(update.key, update.value), Cause.of(this)))
                 }
               } else {
                 send(ColonistSpawned(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this)))
@@ -293,7 +293,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                 }
               }.toMap()
               updates.forEach { update ->
-                send(TaskCreated(Id(), Category.MINE, Priority.AVERAGE, SingleAssigneeCondition, RemoveBlock(update.key), Cause.of(this)))
+                send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, RemoveBlock(update.key), Cause.of(this)))
               }
             }
             // Add Water

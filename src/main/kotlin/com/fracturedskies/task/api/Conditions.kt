@@ -1,4 +1,4 @@
-package com.fracturedskies.colonist
+package com.fracturedskies.task.api
 
 import com.fracturedskies.engine.Id
 

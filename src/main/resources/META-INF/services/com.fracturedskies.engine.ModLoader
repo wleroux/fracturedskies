@@ -3,3 +3,4 @@ com.fracturedskies.water.WaterModLoader
 com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
 com.fracturedskies.colonist.ColonistModLoader
+com.fracturedskies.task.TaskModLoader

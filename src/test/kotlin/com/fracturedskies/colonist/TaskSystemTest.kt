@@ -1,13 +1,15 @@
 package com.fracturedskies.colonist
 
-import com.fracturedskies.colonist.Category.*
-import com.fracturedskies.colonist.Priority.*
+import com.fracturedskies.task.api.TaskCategory.*
+import com.fracturedskies.task.api.TaskPriority.*
 import com.fracturedskies.engine.Id
+import com.fracturedskies.task.*
+import com.fracturedskies.task.api.*
 import org.junit.Test
 import kotlin.test.*
 
 
-class ColonistTaskSystemTest {
+class TaskSystemTest {
 
   @Test
   fun itPrioritizesTasks_TaskPriority() {
@@ -24,8 +26,8 @@ class ColonistTaskSystemTest {
   @Test
   fun itPrioritizesTasks_CategoryPriority() {
     val tasks = listOf(
-        Task(Id(), CONSTRUCTION, Priority.AVERAGE, AllCondition, emptyList(), Unit),
-        Task(Id(), MINE, Priority.AVERAGE, AllCondition, emptyList(), Unit)
+        Task(Id(), CONSTRUCTION, AVERAGE, AllCondition, emptyList(), Unit),
+        Task(Id(), MINE, AVERAGE, AllCondition, emptyList(), Unit)
     )
     val colonist = Colonist(Id(), mapOf(CONSTRUCTION to 10, MINE to 9), AllCondition, CategoryPriorityComparator)
     val desiredTask = getDesiredTask(colonist, tasks)
