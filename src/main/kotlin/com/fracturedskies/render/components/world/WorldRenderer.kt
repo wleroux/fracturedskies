@@ -115,6 +115,7 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     }
   }
 
+  private val workerMeshCache = mutableMapOf<Pair<Int, Int>, Mesh>()
   override fun glRender(bounds: Bounds) {
     if (this.bounds != bounds)
       projection = Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
@@ -139,9 +140,11 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         val workerModel = Matrix4(position = worker.pos.toVector3())
         model(workerModel)
         val block = requireNotNull(props[WORLD])[worker.pos]
-        val workerMesh = generateWorkerMesh(block.skyLight.toFloat(), block.blockLight.toFloat()).invoke()
+
+        val workerMesh = workerMeshCache.computeIfAbsent(block.skyLight to block.blockLight, { (skyLight, blockLight) ->
+          generateWorkerMesh(skyLight.toFloat(), blockLight.toFloat()).invoke()
+        })
         draw(workerMesh)
-        workerMesh.close()
       }}
       model(requireNotNull(model))
       waterMesh.forEach(::draw)

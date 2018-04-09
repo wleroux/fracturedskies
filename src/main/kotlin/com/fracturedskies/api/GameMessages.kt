@@ -20,6 +20,6 @@ data class ColonistMoved(val id: Id, val pos: Vector3i, override val cause: Caus
 data class ColonistTaskSelected(val colonist: Id, val task: Id?, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class ColonistRejectedTask(val colonist: Id, val task: Id, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 
-data class TaskCreated<out T>(val id: Id, val category: TaskCategory, val priority: TaskPriority, val condition: Condition, val taskDetails: T, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
+data class TaskCreated<out T>(val id: Id, val category: TaskCategory, val priority: TaskPriority, val condition: Condition, val details: T, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class TaskCancelled(val id: Id, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class TaskCompleted(val id: Id, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message

@@ -1,6 +1,7 @@
 package com.fracturedskies.engine.math
 
 import com.fracturedskies.engine.collections.*
+import kotlin.math.abs
 
 data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   companion object {
@@ -23,13 +24,13 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
     private const val CACHE_Z_SIZE = 128
     private val cache = Array(CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE, { it -> Vector3i(
             it % CACHE_X_SIZE,
-            (it / CACHE_X_SIZE) % CACHE_Y_SIZE,
-            (it / CACHE_X_SIZE / CACHE_Y_SIZE) % CACHE_Z_SIZE
+            (it / CACHE_X_SIZE / CACHE_Z_SIZE) % CACHE_Y_SIZE,
+            (it / CACHE_X_SIZE) % CACHE_Z_SIZE
     )})
 
     operator fun invoke(x: Int, y: Int, z: Int): Vector3i {
-      return if (x >= 0 && x < CACHE_X_SIZE && y >= 0 && y < CACHE_Y_SIZE && z >= 0 && z < CACHE_Z_SIZE) {
-        val index = z * CACHE_Y_SIZE * CACHE_X_SIZE + y * CACHE_X_SIZE + x
+      return if (0 <= x && x < CACHE_X_SIZE && 0 <= y && y < CACHE_Y_SIZE && 0 <= z && z < CACHE_Z_SIZE) {
+        val index = y * CACHE_X_SIZE * CACHE_Z_SIZE + z * CACHE_X_SIZE + x
         cache[index]
       } else {
         Vector3i(x, y, z)
@@ -61,5 +62,7 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   operator fun times(dimension: Dimension) = Vector3i(x * dimension.width, y * dimension.height, z * dimension.depth)
 }
 
+infix fun Vector3i.distanceTo(o: Vector3i) =
+    abs(this.x - o.x) + abs(this.y - o.y) + abs(this.z - o.z)
 infix fun <K> Vector3i.within(map: Space<K>): Boolean = map.has(this)
 fun Vector3i.toVector3() = Vector3(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())

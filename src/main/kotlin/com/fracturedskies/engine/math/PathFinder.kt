@@ -1,6 +1,5 @@
 package com.fracturedskies.engine.math
 
-import com.fracturedskies.engine.collections.BooleanSpace
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_X
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Y
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Z
@@ -11,21 +10,17 @@ import com.fracturedskies.engine.math.Vector3i.Companion.NEIGHBOURS
 import com.fracturedskies.engine.math.Vector3i.Companion.XY_PLANE_NEIGHBORS
 import com.fracturedskies.engine.math.Vector3i.Companion.Y_PLANE_NEIGHBORS
 import java.util.*
+import java.util.function.*
 
-class PathFinder(private val blockedSpace: BooleanSpace){
+class PathFinder(private val isBlocked: Predicate<Vector3i>){
   private data class JumpNode(val pos: Vector3i, val dirs: List<Vector3i>)
-  private fun distance(from: Vector3i, to: Vector3i) =
-    (to - from).toVector3().magnitude
 
-  fun find(initialPos: Vector3i, targetPos: Vector3i): List<Vector3i> {
+  fun find(initialPos: Vector3i, isTarget: Predicate<Vector3i>, costHeuristic: ToIntFunction<Vector3i>): List<Vector3i>? {
     val cameFrom = HashMap<Vector3i, Vector3i?>()
     cameFrom[initialPos] = null
 
-    val distanceComparator = Comparator.comparing { it: JumpNode ->
-      distance(it.pos, targetPos)
-    }
-
-    val unvisitedCells = PriorityQueue<JumpNode>(distanceComparator)
+    val costComparator = Comparator.comparing { it: JumpNode -> costHeuristic.applyAsInt(it.pos) }
+    val unvisitedCells = PriorityQueue<JumpNode>(costComparator)
     unvisitedCells.add(JumpNode(initialPos, NEIGHBOURS))
 
     while (!unvisitedCells.isEmpty()) {
@@ -33,7 +28,7 @@ class PathFinder(private val blockedSpace: BooleanSpace){
       val nodePos = node.pos
 
       // Found the target!
-      if (nodePos == targetPos) {
+      if (isTarget.test(nodePos)) {
         var currPos = nodePos
 
         val path = ArrayList<Vector3i>()
@@ -55,7 +50,7 @@ class PathFinder(private val blockedSpace: BooleanSpace){
         return path.reversed()
       }
 
-      for (successor in successors(node, targetPos)) {
+      for (successor in successors(node, isTarget)) {
         if (!cameFrom.containsKey(successor.pos)) {
           cameFrom[successor.pos] = node.pos
           unvisitedCells.add(successor)
@@ -63,37 +58,35 @@ class PathFinder(private val blockedSpace: BooleanSpace){
       }
     }
 
-    return emptyList()
+    return null
   }
 
-  private fun successors(current: JumpNode, target: Vector3i): List<JumpNode> {
-    return current.dirs.map { jump(current.pos, it, target) }
-  }
+  private fun successors(current: JumpNode, isTarget: Predicate<Vector3i>) =
+    current.dirs.map { jump(current.pos, it, isTarget) }
 
-  private tailrec fun jump(current: Vector3i, dir: Vector3i, target: Vector3i): JumpNode {
+  private tailrec fun jump(current: Vector3i, dir: Vector3i, isTarget: Predicate<Vector3i>): JumpNode {
     val next = current + dir
-    if (isBlocking(next)) return JumpNode(current, listOf())
-    if (next == target)
-      return JumpNode(next, listOf())
-    when (dir) {
-      AXIS_Y, AXIS_NEG_Y -> {
-        return JumpNode(next, Vector3i.XZ_PLANE_NEIGHBORS + dir)
-      }
-      AXIS_X, AXIS_NEG_X -> {
-        val forcedNeighbors = forcedNeighbors(current, next, Y_PLANE_NEIGHBORS)
-        return JumpNode(next, Vector3i.Z_PLANE_NEIGHBORS + forcedNeighbors + dir)
-      }
-      AXIS_Z, AXIS_NEG_Z -> {
-        val forcedNeighbors = forcedNeighbors(current, next, XY_PLANE_NEIGHBORS)
-        if (forcedNeighbors.isNotEmpty())
-          return JumpNode(next, forcedNeighbors + dir)
+    return when {
+      isBlocked.test(next) -> JumpNode(current, listOf())
+      isTarget.test(next) -> JumpNode(next, listOf())
+      else -> when (dir) {
+        AXIS_Y, AXIS_NEG_Y -> {
+          JumpNode(next, Vector3i.XZ_PLANE_NEIGHBORS + dir)
+        }
+        AXIS_X, AXIS_NEG_X -> {
+          val forcedNeighbors = forcedNeighbors(current, next, Y_PLANE_NEIGHBORS)
+          JumpNode(next, Vector3i.Z_PLANE_NEIGHBORS + forcedNeighbors + dir)
+        }
+        AXIS_Z, AXIS_NEG_Z -> {
+          val forcedNeighbors = forcedNeighbors(current, next, XY_PLANE_NEIGHBORS)
+          if (forcedNeighbors.isNotEmpty())
+            JumpNode(next, forcedNeighbors + dir)
+          else jump(next, dir, isTarget)
+        }
+        else -> jump(next, dir, isTarget)
       }
     }
-    return jump(next, dir, target)
   }
-
   private fun forcedNeighbors(current: Vector3i, next: Vector3i, dirs: List<Vector3i>)
-          = dirs.filter { isBlocking(current + it) && !isBlocking(next + it) }
-  private fun isBlocking(pos: Vector3i)
-          = !(blockedSpace.has(pos) && !blockedSpace[pos])
+          = dirs.filter { isBlocked.test(current + it) && !isBlocked.test(next + it) }
 }

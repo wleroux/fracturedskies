@@ -60,7 +60,7 @@ fun main(args: Array<String>) = runBlocking {
         waitForIdle()
         last = now
       } else {
-        delay(1L, MILLISECONDS)
+        delay(250L, MICROSECONDS)
       }
     }
     send(Shutdown(Cause.of(this)))

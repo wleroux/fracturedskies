@@ -1,6 +1,7 @@
 package com.fracturedskies.task.api
 
 import com.fracturedskies.engine.Id
+import com.fracturedskies.task.*
 
 
 interface Condition {
@@ -39,4 +40,10 @@ class SpecificColonistCondition(val id: Id): Condition {
       id == colonist.id
 
   override fun toString() = "Colonist must be $id"
+}
+
+class IsPossible: Condition {
+  override fun matches(colonist: Colonist, task: Task<*>): Boolean {
+    return true
+  }
 }

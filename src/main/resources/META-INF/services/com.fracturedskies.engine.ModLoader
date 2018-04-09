@@ -2,5 +2,5 @@ com.fracturedskies.light.LightModLoader
 com.fracturedskies.water.WaterModLoader
 com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
-com.fracturedskies.colonist.ColonistModLoader
-com.fracturedskies.task.TaskModLoader
+com.fracturedskies.task.TaskExecutionModLoader
+com.fracturedskies.task.TaskManagementModLoader
