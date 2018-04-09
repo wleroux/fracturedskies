@@ -1,6 +1,7 @@
 package com.fracturedskies.render.components.world
 
 import com.fracturedskies.api.*
+import com.fracturedskies.api.GameSpeed.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -105,6 +106,15 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   }
 
   private fun onUpdate(dt: Float) {
+    // Game Speed
+    when {
+      keyboard.isPressed(GLFW_KEY_SPACE) -> send(GameSpeedUpdated(PAUSE, Cause.of(this)))
+      keyboard.isPressed(GLFW_KEY_1) -> send(GameSpeedUpdated(SLOW, Cause.of(this)))
+      keyboard.isPressed(GLFW_KEY_2) -> send(GameSpeedUpdated(NORMAL, Cause.of(this)))
+      keyboard.isPressed(GLFW_KEY_3) -> send(GameSpeedUpdated(FAST, Cause.of(this)))
+      keyboard.isPressed(GLFW_KEY_4) -> send(GameSpeedUpdated(UNLIMITED, Cause.of(this)))
+    }
+
     // Perspective
     val lookUp = (keyboard.isPressed(GLFW_KEY_UP) or keyboard.isPressed(GLFW_KEY_W)) and keyboard.isPressed(GLFW_KEY_LEFT_SHIFT)
     val lookDown = (keyboard.isPressed(GLFW_KEY_DOWN) or keyboard.isPressed(GLFW_KEY_S)) and keyboard.isPressed(GLFW_KEY_LEFT_SHIFT)

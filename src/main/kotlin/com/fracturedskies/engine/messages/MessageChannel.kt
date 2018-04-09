@@ -2,6 +2,7 @@ package com.fracturedskies.engine.messages
 
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.coroutines.experimental.*
 
 class MessageChannel(context: CoroutineContext = EmptyCoroutineContext, private val handler: suspend (Message) -> Unit) {
@@ -13,9 +14,9 @@ class MessageChannel(context: CoroutineContext = EmptyCoroutineContext, private 
       while (iterator.hasNext()) {
         processing = true
         try {
-            handler(iterator.next())
+          handler(iterator.next())
         } finally {
-            processing = false
+          processing = false
         }
       }
     }

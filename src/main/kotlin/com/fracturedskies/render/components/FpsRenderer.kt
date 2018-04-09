@@ -30,19 +30,9 @@ class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsR
   private lateinit var fpsCounter: MessageChannel
   override fun componentWillMount() {
     super.componentWillMount()
-    var lastUps = System.nanoTime()
-    var upsTicks = 0
     fpsCounter = register(MessageChannel { message ->
       if (message is Update) {
-        // Track UPS ticks
-        val now = System.nanoTime()
-        if (now - lastUps >= ONE_SECOND_IN_NANOSECONDS) {
-          ups = upsTicks
-          upsTicks = 0
-          lastUps = now
-        } else {
-          upsTicks++
-        }
+        upsTicks++
       }
     })
   }
@@ -55,18 +45,21 @@ class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsR
     textRenderer("FPS: $fps, UPS: $ups")
   }
 
+  var upsTicks = 0
   var fpsTicks = 0
-  var lastFps = System.nanoTime()
+  var lastUpdate = System.nanoTime()
 
   override fun glRender(bounds: Bounds) {
     super.glRender(bounds)
 
     // Track FPS ticks
     val now = System.nanoTime()
-    if (now - lastFps >= ONE_SECOND_IN_NANOSECONDS) {
+    if (now - lastUpdate >= ONE_SECOND_IN_NANOSECONDS) {
       fps = fpsTicks
+      ups = upsTicks
       fpsTicks = 0
-      lastFps = now
+      upsTicks = 0
+      lastUpdate = now
     } else {
       fpsTicks ++
     }

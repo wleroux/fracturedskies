@@ -7,4 +7,4 @@ data class Initialize(override val cause: Cause, override val context: MultiType
 data class Update(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class Shutdown(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 
-data class RequestShutdown(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
+data class ShutdownRequested(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message

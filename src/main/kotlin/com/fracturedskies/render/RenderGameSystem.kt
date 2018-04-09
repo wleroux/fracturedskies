@@ -160,6 +160,6 @@ class RenderGameSystem(context: CoroutineContext) {
     screenDimension = Bounds(0, 0, width, height)
   }
   @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) {
-    send(RequestShutdown(Cause.of(this@RenderGameSystem), MultiTypeMap()))
+    send(ShutdownRequested(Cause.of(this@RenderGameSystem), MultiTypeMap()))
   }
 }

@@ -1,7 +1,8 @@
 package com.fracturedskies.engine.messages
 
-import kotlinx.coroutines.experimental.*
-import java.util.concurrent.TimeUnit.MILLISECONDS
+import kotlinx.coroutines.experimental.runBlocking
+import java.util.concurrent.TimeUnit.MICROSECONDS
+import java.util.concurrent.locks.LockSupport.parkNanos
 
 object MessageBus {
   private var messageChannels = listOf<MessageChannel>()
@@ -16,11 +17,11 @@ object MessageBus {
     messageChannels.forEach { it.send(message) }
   }
 
-  fun isIdle() = messageChannels.all { it.isIdle() }
+  private fun isIdle() = messageChannels.all { it.isIdle() }
 
-  suspend fun waitForIdle() {
+  fun waitForIdle() {
     while (!isIdle()) {
-      delay(1L, MILLISECONDS)
+      parkNanos(MICROSECONDS.toNanos(125L))
     }
   }
 }

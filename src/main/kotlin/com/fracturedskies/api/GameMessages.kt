@@ -7,6 +7,8 @@ import com.fracturedskies.engine.messages.*
 import com.fracturedskies.task.api.*
 
 data class NewGameRequested(val dimension: Dimension, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
+enum class GameSpeed(val msBetweenUpdates: Long) { PAUSE(Long.MAX_VALUE), SLOW(450L), NORMAL(150L), FAST(50L), UNLIMITED(0L) }
+data class GameSpeedUpdated(val gameSpeed: GameSpeed, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 
 data class BlockUpdated(val updates: Map<Vector3i, BlockType>, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class BlockWaterLevelUpdated(val updates: Map<Vector3i, Byte>, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message

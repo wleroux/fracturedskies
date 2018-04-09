@@ -1,6 +1,7 @@
 package com.fracturedskies
 
-import com.fracturedskies.api.NewGameRequested
+import com.fracturedskies.api.*
+import com.fracturedskies.api.GameSpeed.NORMAL
 import com.fracturedskies.engine.ModLoader
 import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.Dimension
@@ -12,18 +13,16 @@ import com.fracturedskies.render.RenderGameSystem
 import kotlinx.coroutines.experimental.*
 import java.util.*
 import java.util.concurrent.TimeUnit.*
-import java.util.concurrent.atomic.AtomicBoolean
-
-private const val MILLISECONDS_PER_UPDATE: Long = 16
-private val NANOSECONDS_PER_UPDATE: Long = NANOSECONDS.convert(MILLISECONDS_PER_UPDATE, MILLISECONDS)
-private const val SECONDS_PER_UPDATE: Float = MILLISECONDS_PER_UPDATE.toFloat() / 1000f
+import java.util.concurrent.atomic.*
+import java.util.concurrent.locks.LockSupport.parkNanos
 
 fun main(args: Array<String>) = runBlocking {
-//  val CachedPool = Executors.newCachedThreadPool().asCoroutineDispatcher()
   // Listen for Shutdown request
   val shutdownRequested = AtomicBoolean(false)
+  val gameSpeed = AtomicReference<GameSpeed>(NORMAL)
   register(MessageChannel(coroutineContext) { message ->
-    if (message is RequestShutdown) shutdownRequested.set(true)
+    if (message is ShutdownRequested) shutdownRequested.set(true)
+    if (message is GameSpeedUpdated) gameSpeed.set(message.gameSpeed)
   })
 
   // Load Mods
@@ -55,12 +54,12 @@ fun main(args: Array<String>) = runBlocking {
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
-      if (now - last >= NANOSECONDS_PER_UPDATE) {
+      if (now - last >= MILLISECONDS.toNanos(gameSpeed.get().msBetweenUpdates)) {
         send(Update(Cause.of(this)))
         waitForIdle()
         last = now
       } else {
-        delay(250L, MICROSECONDS)
+        parkNanos(MICROSECONDS.toNanos(125L))
       }
     }
     send(Shutdown(Cause.of(this)))
