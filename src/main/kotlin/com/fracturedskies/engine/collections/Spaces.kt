@@ -37,6 +37,12 @@ interface MutableSpace<K>: Space<K> {
   operator fun set(x: Int, y: Int, z: Int, value: K) = set(dimension(x, y, z), value)
 }
 
+inline fun <K> Space<K>.forEach(block: (Vector3i, K) -> Unit) {
+  this.dimension.indices().forEach {
+    block(dimension.toVector3i(it), this[it])
+  }
+}
+
 open class BooleanSpace(final override val dimension: Dimension, init: (Int) -> Boolean = { false }): Space<Boolean> {
   protected val backend = BitSet(dimension.size).apply {
     dimension.forEach { index -> set(index, init(index)) }

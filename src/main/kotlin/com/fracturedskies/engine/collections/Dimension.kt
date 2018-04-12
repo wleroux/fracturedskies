@@ -15,8 +15,9 @@ class Dimension(val width: Int, val height: Int, val depth: Int) {
   operator fun invoke(x: Int, y: Int, z: Int) = (y * widthDepth) + (z * width) + x
 
   inline fun forEach(block: (Int) -> Unit) {
-    (0 until size).forEach(block)
+    indices().forEach(block)
   }
+  fun indices() = (0 until size)
 
   override fun toString() = "[$width, $height, $depth]"
   fun toVector3i(index: Int): Vector3i {

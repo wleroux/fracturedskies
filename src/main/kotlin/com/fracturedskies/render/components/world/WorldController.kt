@@ -10,7 +10,7 @@ import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.GameState
-import com.fracturedskies.render.components.world.WorldRenderer.Companion.worldRenderer
+import com.fracturedskies.render.components.world.GLWorldRenderer.Companion.worldRenderer
 import com.fracturedskies.render.controller.Keyboard
 import com.fracturedskies.render.events.*
 import com.fracturedskies.task.api.*
@@ -340,15 +340,14 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
 
   override fun render() = nodes {
     if (initialized) {
-      worldRenderer(MultiTypeMap(
-          WorldRenderer.VIEW to view,
-          WorldRenderer.ROTATION to rotation,
-          WorldRenderer.SLICE_HEIGHT to sliceHeight,
-          WorldRenderer.TIME_OF_DAY to timeOfDay,
-          WorldRenderer.WORLD to world,
-          WorldRenderer.WORKERS to workers,
-          WorldRenderer.ITEMS to items
-          ))
+      worldRenderer(
+        Matrix4(position = view, rotation = rotation).invert(),
+        timeOfDay,
+        world,
+        sliceHeight,
+        workers.values,
+        items.values
+      )
     }
   }
 }

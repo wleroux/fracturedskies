@@ -4,8 +4,7 @@ import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.math.Matrix4
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL13.GL_TEXTURE0
-import org.lwjgl.opengl.GL13.glActiveTexture
+import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30
 import org.lwjgl.opengl.GL30.glBindVertexArray
@@ -23,7 +22,7 @@ abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: S
     val success = glGetProgrami(id, GL_LINK_STATUS)
     if (success != GL_TRUE) {
       val errorMessage = glGetProgramInfoLog(id)
-      throw RuntimeException("Could not link program: " + errorMessage)
+      throw RuntimeException("Could not link program: $errorMessage")
     }
 
     glDeleteShader(vertexShaderId)
@@ -38,10 +37,16 @@ abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: S
     val success = glGetShaderi(shaderId, GL_COMPILE_STATUS)
     if (success != GL_TRUE) {
       val errorMessage = glGetShaderInfoLog(shaderId)
-      throw RuntimeException("Could not compile shader: " + errorMessage + "\n" + source)
+      throw RuntimeException("Could not compile shader: $errorMessage\n$source")
     }
 
     return shaderId
+  }
+
+  inline fun bind(block: ()->Unit) {
+    glUseProgram(id)
+    block.invoke()
+    glUseProgram(0)
   }
 
   protected fun uniform(location: Int, mat4: Matrix4) {

@@ -4,7 +4,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.components.world.LightLevels
 import com.fracturedskies.render.shaders.*
-import org.lwjgl.opengl.GL20.*
+import org.lwjgl.opengl.GL20.glUniform3f
 import org.lwjgl.opengl.GL30.glUniform4uiv
 
 class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.vert").readText(), this::class.java.getResource("color.frag").readText()) {
@@ -19,31 +19,25 @@ class ColorShaderProgram : ShaderProgram(this::class.java.getResource("color.ver
     /**
      * Standard Shader Uniforms
      */
-    private const val MODEL_LOCATION = 0
-    private const val VIEW_LOCATION = 1
-    private const val PROJECTION_LOCATION = 2
+    const val MODEL_LOCATION = 0
+    const val VIEW_LOCATION = 1
+    const val PROJECTION_LOCATION = 2
 
-    private const val LIGHT_DIRECTION_LOCATION = 3
-    private const val SKY_COLORS_LOCATION = 4
-    private const val BLOCK_COLORS_LOCATION = 20
+    const val LIGHT_DIRECTION_LOCATION = 3
+    const val SKY_COLORS_LOCATION = 4
+    const val BLOCK_COLORS_LOCATION = 20
   }
 
   override fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh) {
     // Shader Configuration
     bind {
-      model(requireNotNull(variables[MODEL]))
-      view(requireNotNull(variables[VIEW]))
-      projection(requireNotNull(variables[PROJECTION]))
+      model(variables[MODEL])
+      view(variables[VIEW])
+      projection(variables[PROJECTION])
 
       // Render
       draw(mesh)
     }
-  }
-
-  inline fun bind(block: ColorShaderProgram.()->Unit) {
-    glUseProgram(id)
-    this.block()
-    glUseProgram(0)
   }
 
   fun model(model: Matrix4) {
