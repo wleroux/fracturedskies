@@ -16,9 +16,9 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val WRAP = TypedKey<Wrap>("wrap")
 
     // Item Attributes
-    val GROW = TypedKey<Double>("grow")
-    val SHRINK = TypedKey<Double>("shrink")
-    val ALIGN_SELF = TypedKey<ItemAlign>("alignSelf")
+    val GROW = TypedKey<Double?>("grow")
+    val SHRINK = TypedKey<Double?>("shrink")
+    val ALIGN_SELF = TypedKey<ItemAlign?>("alignSelf")
 
     fun Node.Builder<*>.layout(
         direction: Direction = Direction.ROW,
@@ -51,11 +51,11 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   }
 
   /* Attributes */
-  private val direction get() = requireNotNull(props[DIRECTION])
-  private val justifyContent get() = requireNotNull(props[JUSTIFY_CONTENT])
-  private val alignItems get() = requireNotNull(props[ALIGN_ITEMS])
-  private val alignContent get() = requireNotNull(props[ALIGN_CONTENT])
-  private val wrap get() = requireNotNull(props[WRAP])
+  private val direction get() = props[DIRECTION]
+  private val justifyContent get() = props[JUSTIFY_CONTENT]
+  private val alignItems get() = props[ALIGN_ITEMS]
+  private val alignContent get() = props[ALIGN_CONTENT]
+  private val wrap get() = props[WRAP]
 
   override fun glPreferredWidth(parentWidth: Int, parentHeight: Int): Int {
     val componentRows = wrap.split(children, direction, parentWidth, parentHeight)

@@ -35,7 +35,7 @@ class MultiTypeMap(private val delegate: Map<TypedKey<*>, *>) {
   fun containsKey(key: TypedKey<*>): Boolean = delegate.containsKey(key)
   fun containsValue(value: Any): Boolean = delegate.containsValue(value)
   fun isEmpty(): Boolean = delegate.isEmpty()
-  @Suppress("UNCHECKED_CAST") operator fun <T> get(key: TypedKey<T>): T? = delegate[key] as T?
+  @Suppress("UNCHECKED_CAST") operator fun <T> get(key: TypedKey<T>): T = delegate[key] as T
 
   override fun toString(): String {
     return entries.joinToString(prefix = "{", separator = ", ", postfix = "}")

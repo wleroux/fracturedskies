@@ -5,11 +5,13 @@ import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.render.components.world.*
+import com.fracturedskies.task.Item
 
 data class GameState(
     val initialized: Boolean = false,
     val world: ChunkSpace<Block>? = null,
     val workers: Map<Id, Worker>? = null,
+    val items: Map<Id, Item>? = null,
     val timeOfDay: Float = 0f
 )
 
@@ -19,6 +21,7 @@ fun updateGameState(state: GameState, message: Any): GameState {
           initialized = true,
           world = ChunkSpace(message.dimension, { ObjectSpace(CHUNK_DIMENSION, { Block(AIR, 0, 0, 0) } ) } ),
           workers = emptyMap(),
+          items = emptyMap(),
           timeOfDay = 0f
     )
     is BlockUpdated -> state.copy(world = state.world!!.mutate {
@@ -46,6 +49,12 @@ fun updateGameState(state: GameState, message: Any): GameState {
     })
     is ColonistMoved -> state.copy(workers = state.workers!!.toMutableMap().apply {
         set(message.id, get(message.id)!!.copy(pos = message.pos))
+    })
+    is ItemSpawned -> state.copy(items = state.items!!.toMutableMap().apply {
+      set(message.id, Item(message.id, message.blockType, message.position))
+    })
+    is ItemMoved -> state.copy(items = state.items!!.toMutableMap().apply {
+      set(message.id, Item(message.id, get(message.id)!!.blockType, message.position))
     })
     is TimeUpdated -> state.copy(
         timeOfDay = message.time

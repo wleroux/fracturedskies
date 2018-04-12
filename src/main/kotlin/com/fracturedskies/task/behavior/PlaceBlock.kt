@@ -2,7 +2,8 @@ package com.fracturedskies.task.behavior
 
 import com.fracturedskies.api.*
 import com.fracturedskies.api.BlockType.AIR
-import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.engine.Id
+import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.task.*
@@ -24,9 +25,17 @@ class PutBlockBehavior(private val pos: Vector3i, private val blockType: BlockTy
   override fun cost(state: WorldState, colonist: Colonist) = 1
   override fun isPossible(state: WorldState, colonist: Colonist) = true
   override fun execute(state: WorldState, colonist: Colonist) = buildSequence {
-    send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
-    yield(RUNNING)
-    yield(SUCCESS)
+    if (pos distanceTo colonist.position != 1) {
+      yield(FAILURE)
+    } else {
+      val previousBlockType = state.blockType[pos]
+      send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
+      if (previousBlockType != BlockType.AIR) {
+        send(ItemSpawned(Id(), previousBlockType, colonist.position, Cause.of(this)))
+      }
+      yield(RUNNING)
+      yield(SUCCESS)
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 com.fracturedskies.light.LightModLoader
 com.fracturedskies.water.WaterModLoader
+com.fracturedskies.gravity.GravityModLoader
 com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
 com.fracturedskies.task.TaskExecutionModLoader

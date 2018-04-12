@@ -4,6 +4,9 @@ import com.fracturedskies.api.CHUNK_DIMENSION
 import com.fracturedskies.engine.math.Vector3i
 import org.lwjgl.BufferUtils
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 interface Space<K> {
   val dimension: Dimension
@@ -17,6 +20,16 @@ interface Space<K> {
   fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
   fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   fun mutate(mutator: (MutableSpace<K>.() -> Unit)): Space<K>
+}
+fun <K, T> Space<K>.map(mapper: (K) -> T): Space<T> {
+  return object : Space<T> {
+    override val dimension: Dimension get() = this@map.dimension
+    override fun get(index: Int): T = mapper(this@map[index])
+    override fun mutate(mutator: MutableSpace<T>.() -> Unit): Space<T> {
+      val mutations = SpaceMutator(this).apply(mutator)
+      return ObjectSpace(dimension, { mutations[it] })
+    }
+  }
 }
 interface MutableSpace<K>: Space<K> {
   operator fun set(index: Int, value: K)

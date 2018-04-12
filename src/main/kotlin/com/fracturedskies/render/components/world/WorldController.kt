@@ -58,6 +58,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   private val world get() = requireNotNull(gameState.world)
   private val initialized get() = gameState.initialized
   private val workers get() = requireNotNull(gameState.workers)
+  private val items get() = requireNotNull(gameState.items)
   private val timeOfDay get() = gameState.timeOfDay
 
   private var firstBlock: Vector3i? = null
@@ -345,7 +346,8 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
           WorldRenderer.SLICE_HEIGHT to sliceHeight,
           WorldRenderer.TIME_OF_DAY to timeOfDay,
           WorldRenderer.WORLD to world,
-          WorldRenderer.WORKERS to workers
+          WorldRenderer.WORKERS to workers,
+          WorldRenderer.ITEMS to items
           ))
     }
   }

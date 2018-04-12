@@ -7,6 +7,7 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.shaders.Mesh
 import com.fracturedskies.render.shaders.color.ColorShaderProgram
+import com.fracturedskies.task.Item
 import org.lwjgl.opengl.GL11.glViewport
 import kotlin.math.*
 
@@ -20,6 +21,7 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val WORLD = TypedKey<ChunkSpace<Block>>("world")
     val TIME_OF_DAY = TypedKey<Float>("timeOfDay")
     val WORKERS = TypedKey<Map<Id, Worker>>("workers")
+    val ITEMS = TypedKey<Map<Id, Item>>("items")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
     val VIEW = TypedKey<Vector3>("view")
     val ROTATION = TypedKey<Quaternion4>("rotation")
@@ -27,6 +29,7 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
 
   private val timeOfDay get() = requireNotNull(props[TIME_OF_DAY])
   private val workers get() = requireNotNull(props[WORKERS])
+  private val items get() = requireNotNull(props[ITEMS])
 
   private val skyLightDirection = Vector3(0f, -1f, -0.5f).normalize()
   private lateinit var program: ColorShaderProgram
@@ -80,7 +83,7 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     if (nextProps[VIEW] !== props[VIEW] || nextProps[ROTATION] !== props[ROTATION])
       view = Matrix4(requireNotNull(nextProps[VIEW]), requireNotNull(nextProps[ROTATION])).invert()
 
-    if (nextProps[TIME_OF_DAY] !== props[TIME_OF_DAY])
+    if (nextProps[TIME_OF_DAY] != props[TIME_OF_DAY])
       lightDirection = skyLightDirection * Quaternion4(Vector3.AXIS_Z, requireNotNull(nextProps[TIME_OF_DAY]) * 2f * PI.toFloat())
 
     val prevSliceHeight = requireNotNull(props[SLICE_HEIGHT])
@@ -116,10 +119,10 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   }
 
   private val workerMeshCache = mutableMapOf<Pair<Int, Int>, Mesh>()
+  private val itemsMeshCache = mutableMapOf<BlockType, MutableMap<Pair<Int, Int>, Mesh>>()
   override fun glRender(bounds: Bounds) {
     if (this.bounds != bounds)
       projection = Matrix4.perspective(Math.PI.toFloat() / 4, bounds.width, bounds.height, 0.03f, 1000f)
-    super.glRender(bounds)
 
     // Specify Viewport
     glViewport(bounds.x, bounds.y, bounds.width, bounds.height)
@@ -137,19 +140,36 @@ class WorldRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
       blockSliceMesh.forEach(::draw)
       val sliceHeight = requireNotNull(props[SLICE_HEIGHT])
       workers.forEach { _, worker -> if (worker.pos.y < sliceHeight) {
-        val workerModel = Matrix4(position = worker.pos.toVector3())
-        model(workerModel)
+        model(Matrix4(position = worker.pos.toVector3()))
         val block = requireNotNull(props[WORLD])[worker.pos]
 
         val workerMesh = workerMeshCache.computeIfAbsent(block.skyLight to block.blockLight, { (skyLight, blockLight) ->
-          generateWorkerMesh(skyLight.toFloat(), blockLight.toFloat()).invoke()
+          generateBlock(Color4.WHITE, skyLight.toFloat(), blockLight.toFloat(),
+              Vector3(0.25f, 0.00f, 0.25f),
+              Vector3(0.50f, 0.50f, 0.50f)
+          ).invoke()
         })
         draw(workerMesh)
+      }}
+      items.forEach { _, item -> if (item.position.y < sliceHeight) {
+        model(Matrix4(position = item.position.toVector3()))
+        val block = requireNotNull(props[WORLD])[item.position]
+        val itemMesh = itemsMeshCache
+            .computeIfAbsent(item.blockType, { mutableMapOf() })
+            .computeIfAbsent(block.skyLight to block.blockLight, {
+              generateBlock(item.blockType.color, block.skyLight.toFloat(), block.blockLight.toFloat(),
+                  Vector3(0.375f, 0.000f, 0.375f),
+                  Vector3(0.250f, 0.250f, 0.250f)
+              ).invoke()
+            })
+        draw(itemMesh)
       }}
       model(requireNotNull(model))
       waterMesh.forEach(::draw)
       waterSliceMesh.forEach(::draw)
     }
+
+    super.glRender(bounds)
   }
 
   private fun generateChunkBlockMesh(space: ChunkSpace<Block>, sliceHeight: Int, chunkPos: Vector3i) = generateWorldMesh(space, false,

@@ -93,20 +93,39 @@ class Task<out T>(
   }
 }
 
+class Item(
+    val id: Id,
+    val blockType: BlockType,
+    var position: Vector3i
+) {
+  fun process(message: Any) {
+    when (message) {
+      is ItemMoved -> {
+        if (message.id == id)
+          position = message.position
+      }
+    }
+  }
+}
+
 abstract class WorldState(val dimension: Dimension) {
   val colonists = mutableMapOf<Id, Colonist>()
   val tasks = mutableMapOf<Id, Task<*>>()
-  val blocked = BooleanMutableSpace(dimension)
+  val blockType = ObjectMutableSpace(dimension, {BlockType.AIR})
+  val blocked = blockType.map { it.opaque }
   val pathFinder = PathFinder(Predicate { pos -> !(blocked.has(pos) && !blocked[pos])})
+  val items = mutableMapOf<Id, Item>()
 
   open fun process(message: Any) {
     colonists.values.forEach { colonist -> colonist.process(message)}
     tasks.values.forEach { task -> task.process(message) }
+    items.values.forEach { item -> item.process(message) }
     when (message) {
-      is BlockUpdated -> message.updates.forEach { pos, blockType -> blocked[pos] = blockType.opaque }
+      is BlockUpdated -> message.updates.forEach { pos, blockType -> this.blockType[pos] = blockType }
       is TaskCreated<*> -> tasks[message.id] = Task(message.id, message.category, message.condition, message.details, message.priority, listOf())
       is TaskCompleted -> tasks.remove(message.id)
       is TaskCancelled -> tasks.remove(message.id)
+      is ItemSpawned -> items[message.id] = Item(message.id, message.blockType, message.position)
       is ColonistSpawned -> colonists[message.id] = Colonist(message.id, message.initialPos, mutableMapOf(), mutableMapOf(), null)
     }
   }
