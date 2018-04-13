@@ -7,7 +7,7 @@ import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.math.Vector3i.Companion.NEIGHBOURS
 import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.meshRenderer
 import com.fracturedskies.render.common.shaders.Mesh
-import com.fracturedskies.render.world.Block
+import com.fracturedskies.render.world.WorldState.Block
 import kotlin.math.min
 
 

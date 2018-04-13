@@ -1,11 +1,12 @@
 package com.fracturedskies.render.world.components
 
 import com.fracturedskies.api.BlockType
-import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.world.*
 import com.fracturedskies.render.world.VertexCorner.*
+import com.fracturedskies.render.world.WorldState.Block
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import org.lwjgl.BufferUtils.*
 

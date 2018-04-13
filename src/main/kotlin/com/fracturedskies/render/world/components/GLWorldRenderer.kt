@@ -16,19 +16,19 @@ import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Compani
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Companion.PROJECTION_LOCATION
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Companion.SKY_COLORS_LOCATION
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Companion.VIEW_LOCATION
-import com.fracturedskies.render.world.*
+import com.fracturedskies.render.world.LightLevels
+import com.fracturedskies.render.world.WorldState.*
 import com.fracturedskies.render.world.components.GLBlockRenderer.Companion.blockRenderer
 import com.fracturedskies.render.world.components.GLColonistRenderer.Companion.colonistRenderer
 import com.fracturedskies.render.world.components.GLItemRenderer.Companion.itemRenderer
 import com.fracturedskies.render.world.components.GLWaterRenderer.Companion.waterRenderer
-import com.fracturedskies.task.Item
 import java.nio.IntBuffer
 import kotlin.math.PI
 
 
 class GLWorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.worldRenderer(view: Matrix4, timeOfDay: Float, blocks: ChunkSpace<Block>, sliceHeight: Int, colonists: Collection<Worker>, items: Collection<Item>, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.worldRenderer(view: Matrix4, timeOfDay: Float, blocks: ChunkSpace<Block>, sliceHeight: Int, colonists: Collection<Colonist>, items: Collection<Item>, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::GLWorldRenderer, MultiTypeMap(
           VIEW to view,
           TIME_OF_DAY to timeOfDay,
@@ -46,7 +46,7 @@ class GLWorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
     val BLOCKS = TypedKey<ChunkSpace<Block>>("blocks")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
 
-    val COLONISTS = TypedKey<Collection<Worker>>("colonists")
+    val COLONISTS = TypedKey<Collection<Colonist>>("colonists")
     val ITEMS = TypedKey<Collection<Item>>("items")
   }
 

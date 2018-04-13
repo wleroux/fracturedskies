@@ -10,10 +10,10 @@ import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.GameState
-import com.fracturedskies.render.world.components.GLWorldRenderer.Companion.worldRenderer
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
-import com.fracturedskies.render.world.Block
+import com.fracturedskies.render.world.WorldState.Block
+import com.fracturedskies.render.world.components.GLWorldRenderer.Companion.worldRenderer
 import com.fracturedskies.task.api.*
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import kotlinx.coroutines.experimental.*
@@ -55,17 +55,17 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     }
   }
 
-  private val gameState get() = requireNotNull(props[GAME_STATE])
-  private val world get() = requireNotNull(gameState.world)
+  private val gameState get() = props[GAME_STATE]
+  private val world get() = gameState.world!!
   private val initialized get() = gameState.initialized
-  private val workers get() = requireNotNull(gameState.workers)
-  private val items get() = requireNotNull(gameState.items)
-  private val timeOfDay get() = gameState.timeOfDay
+  private val workers get() = world.colonists
+  private val items get() = world.items
+  private val timeOfDay get() = world.timeOfDay
 
   private var firstBlock: Vector3i? = null
   private var focused = false
   private val sliceHeight: Int
-    get() = world.dimension.height - clamp(slice, 0 until world.dimension.height)
+    get() = world.blocks.dimension.height - clamp(slice, 0 until world.blocks.dimension.height)
 
   private var keyboard = Keyboard()
   private var zoomLevel
@@ -184,8 +184,8 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     if (initialized) {
       viewCenter.y = run {
         val yRange = (0 until sliceHeight)
-        val viewHeight = heightAt(world, view.x.toInt(), view.z.toInt(), yRange).toFloat()
-        val viewCenterHeight = heightAt(world, viewCenter.x.toInt(), viewCenter.z.toInt(), yRange).toFloat()
+        val viewHeight = heightAt(world.blocks, view.x.toInt(), view.z.toInt(), yRange).toFloat()
+        val viewCenterHeight = heightAt(world.blocks, viewCenter.x.toInt(), viewCenter.z.toInt(), yRange).toFloat()
         val minimumHeight = viewHeight + 5f
         val desiredHeight = viewCenterHeight + viewOffset.y
 
@@ -235,7 +235,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
     val direction = (rayEnd3 - rayStart3).normalize()
 
-    val selectedBlock = raycast(world, rayStart3, direction)
+    val selectedBlock = raycast(world.blocks, rayStart3, direction)
             .filter { it.position.y < sliceHeight }
             .filterNot { it.obj.type == BlockType.AIR }
             .firstOrNull()
@@ -280,7 +280,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
                 val updates = xRange.flatMap { x ->
                   zRange.flatMap { z ->
                     yRange.flatMap { y ->
-                      if (world.has(x, y, z) && !world[x, y, z].type.opaque)
+                      if (world.blocks.has(x, y, z) && !world.blocks[x, y, z].type.opaque)
                         listOf(Vector3i(x, y, z) to blockType)
                       else listOf()
                     }
@@ -298,7 +298,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (world.has(x, y, z) && world[x, y, z].type.opaque)
+                    if (world.blocks.has(x, y, z) && world.blocks[x, y, z].type.opaque)
                       listOf(Vector3i(x, y, z) to BlockType.AIR)
                     else listOf()
                   }
@@ -313,14 +313,14 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
               val updates = xRange.flatMap { x ->
                 zRange.flatMap { z ->
                   yRange.flatMap { y ->
-                    if (world.has(x, y, z) && !world[x, y, z].type.opaque) {
+                    if (world.blocks.has(x, y, z) && !world.blocks[x, y, z].type.opaque) {
                       if (event.button == GLFW_MOUSE_BUTTON_1) {
-                        val waterLevel = world[x, y, z].waterLevel
+                        val waterLevel = world.blocks[x, y, z].waterLevel
                         if (waterLevel > 0.toByte()) {
                           listOf(Vector3i(x, y, z) to waterLevel.dec())
                         } else listOf()
                       } else {
-                        val waterLevel = world[x, y, z].waterLevel
+                        val waterLevel = world.blocks[x, y, z].waterLevel
                         if (waterLevel < MAX_WATER_LEVEL) {
                           listOf(Vector3i(x, y, z) to MAX_WATER_LEVEL)
                         } else listOf()
@@ -344,7 +344,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
       worldRenderer(
         Matrix4(position = view, rotation = rotation).invert(),
         timeOfDay,
-        world,
+        world.blocks,
         sliceHeight,
         workers.values,
         items.values

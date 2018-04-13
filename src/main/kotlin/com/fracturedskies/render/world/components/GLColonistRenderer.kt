@@ -5,12 +5,12 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.meshRenderer
 import com.fracturedskies.render.common.shaders.Mesh
-import com.fracturedskies.render.world.Worker
+import com.fracturedskies.render.world.WorldState.Colonist
 
 
 class GLColonistRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.colonistRenderer(colonist: Worker, skyLight: Int, blockLight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.colonistRenderer(colonist: Colonist, skyLight: Int, blockLight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::GLColonistRenderer, MultiTypeMap(
           COLONIST to colonist,
           SKY_LIGHT to skyLight,
@@ -20,7 +20,7 @@ class GLColonistRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
 
     val SKY_LIGHT = TypedKey<Int>("skyLight")
     val BLOCK_LIGHT = TypedKey<Int>("blockLight")
-    val COLONIST = TypedKey<Worker>("colonist")
+    val COLONIST = TypedKey<Colonist>("colonist")
   }
 
   var cache = mutableMapOf<Pair<Int, Int>, Mesh>()

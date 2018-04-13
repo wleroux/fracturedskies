@@ -6,7 +6,7 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.Vector3
 import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.meshRenderer
 import com.fracturedskies.render.common.shaders.Mesh
-import com.fracturedskies.task.Item
+import com.fracturedskies.render.world.WorldState.Item
 
 
 class GLItemRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
