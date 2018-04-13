@@ -9,8 +9,7 @@ import com.fracturedskies.engine.jeact.Component.Companion.unmount
 import com.fracturedskies.engine.jeact.Component.Companion.update
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.render.components.Scene
-import com.fracturedskies.render.events.*
+import com.fracturedskies.render.common.events.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
@@ -22,7 +21,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 class RenderGameSystem(context: CoroutineContext) {
   private var nextGameState: GameState = GameState()
   val channel = MessageChannel(context) { message ->
-    nextGameState = updateGameState(nextGameState, message)
+    nextGameState = nextGameState.process(message)
     if (message is Update)
       gameState = nextGameState
   }
