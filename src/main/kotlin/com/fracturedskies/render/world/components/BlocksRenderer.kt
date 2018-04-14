@@ -20,7 +20,7 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   private val chunksSliceMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
 
   companion object {
-    fun Node.Builder<*>.blocksRenderer(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.blocks(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::BlocksRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           SLICE_HEIGHT to sliceHeight

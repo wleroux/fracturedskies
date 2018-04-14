@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class GLMeshRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.meshRenderer(mesh: Mesh, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.mesh(mesh: Mesh, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::GLMeshRenderer, MultiTypeMap(
           MESH to mesh
       ).with(additionalProps)))

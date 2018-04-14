@@ -7,7 +7,7 @@ import com.fracturedskies.engine.messages.MessageBus.register
 import com.fracturedskies.engine.messages.MessageBus.unregister
 import com.fracturedskies.engine.messages.MessageChannel
 import com.fracturedskies.render.FpsRenderer.FpsRendererState
-import com.fracturedskies.render.common.components.TextRenderer.Companion.textRenderer
+import com.fracturedskies.render.common.components.TextRenderer.Companion.text
 import java.util.concurrent.TimeUnit
 
 class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsRendererState()) {
@@ -42,7 +42,7 @@ class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsR
   }
   override fun glComponentFromPoint(point: Point): Component<*>? = null
   override fun render() = nodes {
-    textRenderer("FPS: $fps, UPS: $ups")
+    text("FPS: $fps, UPS: $ups")
   }
 
   var upsTicks = 0

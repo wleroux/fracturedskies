@@ -25,6 +25,8 @@ class TaskManagementSystem(context: CoroutineContext) {
         initialized = true
       }
       is Update -> {
+        if (!initialized) return@MessageChannel
+
         state.colonists.values
             .map { colonist -> async(context) { colonist to getDesiredTask(state, colonist, state.tasks.values) } }.map { it.await() }
             .groupBy({(_, desiredTask) -> desiredTask}, {(colonist, _) -> colonist})

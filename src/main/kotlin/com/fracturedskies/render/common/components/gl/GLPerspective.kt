@@ -37,6 +37,7 @@ class GLPerspective(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   override fun glRender(bounds: Bounds) {
     if (bounds != this.bounds)
       projection = perspective(props[FIELD_OF_VIEW], bounds.width, bounds.height, props[NEAR], props[FAR])
+    super.glRender(bounds)
 
     projection.store(mat4Buffer)
     mat4Buffer.flip()

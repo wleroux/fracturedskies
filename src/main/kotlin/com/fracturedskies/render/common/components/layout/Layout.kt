@@ -92,6 +92,8 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
 
   override fun glRender(bounds: Bounds) {
     this.bounds = bounds
+    if (this.children.isEmpty())
+      return
 
     val mainAxisSize = direction.main(bounds.width, bounds.height)
     val crossAxisSpace = direction.cross(bounds.width, bounds.height)

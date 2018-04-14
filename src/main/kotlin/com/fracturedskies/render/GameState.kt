@@ -6,7 +6,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 
 data class GameState(
-    var initialized: Boolean = false,
+    var gameStarted: Boolean = false,
     var world: RenderWorldState? = null
 ) {
   class RenderWorldState(dimension: Dimension) : WorldState(dimension) {
@@ -41,18 +41,18 @@ data class GameState(
   fun process(message: Any) {
     when (message) {
       is NewGameRequested -> {
-        initialized = true
+        gameStarted = true
         world = RenderWorldState(message.dimension)
       }
       else -> {
-        if (initialized)
+        if (gameStarted)
           world!!.process(message)
       }
     }
   }
 
   fun clearDirty() {
-    if (initialized) {
+    if (gameStarted) {
       world!!.blocksDirty.clear()
       world!!.itemsDirty = false
       world!!.colonistsDirty = false

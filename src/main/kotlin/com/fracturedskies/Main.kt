@@ -42,11 +42,10 @@ fun main(args: Array<String>) = runBlocking {
   modLoaders.forEach { modLoader -> modLoader.start() }
 
   // Run Main Render Loop
-  val renderDispatcher = newSingleThreadExecutor(daemonThreadFactory("render")).asCoroutineDispatcher()
-  val renderGameSystem = RenderGameSystem(coroutineContext, coroutineContext + renderDispatcher)
+  val renderGameSystem = RenderGameSystem(coroutineContext + systemDispatcher, coroutineContext)
   register(renderGameSystem.channel)
 
-  val renderJob = launch(coroutineContext + renderDispatcher) {
+  val renderJob = launch(coroutineContext) {
     renderGameSystem.glInitialize()
     while (!shutdownRequested.get()) {
       renderGameSystem.glUpdate()
@@ -62,8 +61,6 @@ fun main(args: Array<String>) = runBlocking {
     send(Initialize(Cause.of(this)))
     waitForIdle()
 
-    send(NewGameRequested(GameSize.NORMAL.dimension, 0, Cause.of(this)))
-    waitForIdle()
     var last = System.nanoTime()
     while (!shutdownRequested.get()) {
       val now = System.nanoTime()
@@ -82,6 +79,7 @@ fun main(args: Array<String>) = runBlocking {
   updateJob.join()
   renderJob.join()
   coroutineContext.cancelChildren()
+  System.exit(0)
 }
 
 private fun daemonThreadFactory(name: String): ThreadFactory {

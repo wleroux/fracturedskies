@@ -12,16 +12,16 @@ import com.fracturedskies.render.common.shaders.ShaderProgram
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Companion.PROJECTION_LOCATION
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram.Companion.VIEW_LOCATION
-import com.fracturedskies.render.world.components.BlocksRenderer.Companion.blocksRenderer
-import com.fracturedskies.render.world.components.ColonistsRenderer.Companion.colonistsRenderer
-import com.fracturedskies.render.world.components.ItemsRenderer.Companion.itemsRenderer
+import com.fracturedskies.render.world.components.BlocksRenderer.Companion.blocks
+import com.fracturedskies.render.world.components.ColonistsRenderer.Companion.colonists
+import com.fracturedskies.render.world.components.ItemsRenderer.Companion.items
 import com.fracturedskies.render.world.components.LightUniform.Companion.lightUniform
-import com.fracturedskies.render.world.components.WaterRenderer.Companion.waterRenderer
+import com.fracturedskies.render.world.components.WaterRenderer.Companion.water
 
 
 class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.worldRenderer(worldState: RenderWorldState, view: Matrix4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.world(worldState: RenderWorldState, view: Matrix4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           VIEW to view,
@@ -49,10 +49,10 @@ class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
 
         val worldState = props[WORLD_STATE]
         val sliceHeight = props[SLICE_HEIGHT]
-        blocksRenderer(worldState, sliceHeight)
-        colonistsRenderer(worldState, sliceHeight)
-        itemsRenderer(worldState, sliceHeight)
-        waterRenderer(worldState, sliceHeight)
+        blocks(worldState, sliceHeight)
+        colonists(worldState, sliceHeight)
+        items(worldState, sliceHeight)
+        water(worldState, sliceHeight)
       }
     }
   }

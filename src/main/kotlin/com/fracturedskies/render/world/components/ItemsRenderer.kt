@@ -16,7 +16,7 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.itemsRenderer(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.items(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ItemsRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           SLICE_HEIGHT to sliceHeight

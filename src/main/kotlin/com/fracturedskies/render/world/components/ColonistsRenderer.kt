@@ -15,7 +15,7 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.colonistsRenderer(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.colonists(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ColonistsRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           SLICE_HEIGHT to sliceHeight

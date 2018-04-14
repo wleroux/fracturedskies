@@ -4,9 +4,9 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.loadByteBuffer
-import com.fracturedskies.render.common.components.BorderImage.Companion.borderImage
+import com.fracturedskies.render.common.components.button.BorderImage.Companion.borderImage
 import com.fracturedskies.render.common.components.TextRenderer
-import com.fracturedskies.render.common.components.TextRenderer.Companion.textRenderer
+import com.fracturedskies.render.common.components.TextRenderer.Companion.text
 import com.fracturedskies.render.common.components.input.Input.InputState
 import com.fracturedskies.render.common.components.layout.Direction
 import com.fracturedskies.render.common.components.layout.Layout.Companion.layout
@@ -46,7 +46,7 @@ class Input(props: MultiTypeMap) : Component<InputState>(props, InputState(props
   private lateinit var material: Material
   override fun componentWillMount() {
     material = Material(StandardShaderProgram(), MultiTypeMap(
-        StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("com/fracturedskies/render/components/input/input_default.png", this@Input.javaClass))
+        StandardShaderProgram.ALBEDO to TextureArray(4, 4, 9, loadByteBuffer("com/fracturedskies/render/common/components/input/input_default.png", this@Input.javaClass))
     ))
   }
 
@@ -62,7 +62,7 @@ class Input(props: MultiTypeMap) : Component<InputState>(props, InputState(props
         } else {
           text
         }
-        textRenderer(displayText)
+        text(displayText)
       }
     }
   }

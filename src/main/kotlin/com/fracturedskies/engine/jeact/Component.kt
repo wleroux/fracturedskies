@@ -30,7 +30,6 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
       val component: Component<T> = if (reuseComponent) {
         prev!! as Component<T>
       } else {
-        if (prev != null) unmount(prev)
         mount(node.type, parent, node.props)
       }
       update(component, node.props, !reuseComponent)
@@ -82,6 +81,7 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
       if (forceUpdate || component.shouldComponentUpdate(nextProps, nextState)) {
         component.componentWillUpdate(nextProps, nextState)
 
+        var matchedChildren = mutableListOf<Component<*>>()
         val prevChildren = component.children
         component.props = nextProps
         component.state = nextState
@@ -109,7 +109,7 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
 
   var state: T = initialState
   var nextState: T? = null
-  var currentState = nextState ?: state
+  val currentState get() = nextState ?: state
 
   // Component Tree
   var parent: Component<*>? = null

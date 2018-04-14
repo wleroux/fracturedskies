@@ -4,7 +4,10 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.loadByteBuffer
-import com.fracturedskies.render.common.components.BorderImage.Companion.borderImage
+import com.fracturedskies.render.common.components.button.BorderImage.Companion.borderImage
+import com.fracturedskies.render.common.components.layout.ItemAlign
+import com.fracturedskies.render.common.components.layout.JustifyContent.CENTER
+import com.fracturedskies.render.common.components.layout.Layout.Companion.layout
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.common.shaders.*
 import com.fracturedskies.render.common.shaders.standard.StandardShaderProgram
@@ -26,7 +29,7 @@ class Button(props: MultiTypeMap) : Component<Boolean>(props, false) {
     set(value) {nextState = value}
 
   /* Attributes */
-  private val onClick get() = requireNotNull(props[ON_CLICK])
+  private val onClick get() = props[ON_CLICK]
 
   private lateinit var defaultMaterial: Material
   private lateinit var hoverMaterial: Material
@@ -41,7 +44,9 @@ class Button(props: MultiTypeMap) : Component<Boolean>(props, false) {
 
   override fun render() = nodes {
     borderImage(if (hover) hoverMaterial else defaultMaterial) {
-      nodes.addAll(super.render())
+      layout(justifyContent = CENTER, alignItems = ItemAlign.CENTER) {
+        nodes.addAll(super.render())
+      }
     }
   }
 

@@ -6,6 +6,7 @@ import com.fracturedskies.render.FpsRenderer.Companion.fpsRenderer
 import com.fracturedskies.render.common.components.layout.*
 import com.fracturedskies.render.common.components.layout.Layout.Companion.GROW
 import com.fracturedskies.render.common.components.layout.Layout.Companion.layout
+import com.fracturedskies.render.mainmenu.MainMenuRenderer.Companion.mainMenu
 import com.fracturedskies.render.world.components.WorldController.Companion.worldController
 import org.lwjgl.opengl.GL11.*
 
@@ -15,11 +16,30 @@ class Scene(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   }
   private val gameState get() = props[GAME_STATE]
 
+  var prevGameStarted = false
+  override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean {
+    if (super.shouldComponentUpdate(nextProps, nextState)) {
+      return true
+    } else {
+      if (prevGameStarted != gameState.gameStarted) return true
+      return false
+    }
+  }
+
+  override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: Unit) {
+    super.componentWillUpdate(nextProps, nextState)
+    prevGameStarted = nextProps[GAME_STATE].gameStarted
+  }
+
   override fun render() = nodes {
-    layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
-      worldController(gameState, MultiTypeMap(
-          GROW to 1.0
-      ))
+    if (!gameState.gameStarted) {
+      mainMenu()
+    } else {
+      layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
+        worldController(gameState, MultiTypeMap(
+            GROW to 1.0
+        ))
+      }
     }
     layout {
       fpsRenderer()

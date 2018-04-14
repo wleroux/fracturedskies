@@ -19,6 +19,7 @@ class TaskExecutionSystem(context: CoroutineContext) {
         initialized = true
       }
       is Update -> {
+        if (!initialized) return@MessageChannel
         state.behavior.entries.map { (colonist, behavior) ->
           async(context) {
             if (behavior.hasNext()) {

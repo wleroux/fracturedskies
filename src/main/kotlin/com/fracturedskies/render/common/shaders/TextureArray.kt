@@ -1,8 +1,7 @@
 package com.fracturedskies.render.common.shaders
 
 import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE
-import org.lwjgl.opengl.GL12.glTexSubImage3D
+import org.lwjgl.opengl.GL12.*
 import org.lwjgl.opengl.GL30.GL_TEXTURE_2D_ARRAY
 import org.lwjgl.opengl.GL42.glTexStorage3D
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
@@ -15,7 +14,7 @@ class TextureArray(width: Int, height: Int, layers: Int, rawImageBuffer: ByteBuf
 
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, internalFormat, width, height, layers)
     if (rawImageBuffer != null) {
-      val glImageBuffer = stbi_load_from_memory(rawImageBuffer, intArrayOf(width), intArrayOf(height * layers), intArrayOf(4), 4)
+      val glImageBuffer = stbi_load_from_memory(rawImageBuffer, intArrayOf(width), intArrayOf(height * layers), intArrayOf(4), 4)!!
       glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, layers, format, type, glImageBuffer)
     } else {
       glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, layers, format, type, 0)

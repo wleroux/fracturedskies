@@ -1,4 +1,4 @@
-package com.fracturedskies.render.common.components
+package com.fracturedskies.render.common.components.button
 
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -13,8 +13,8 @@ import org.lwjgl.opengl.GL11
 class BorderImage(props: MultiTypeMap) : Component<Boolean>(props, false) {
   companion object {
     val MATERIAL = TypedKey<Material>("material")
-    private val LAYER_WIDTH = 4
-    private val LAYER_HEIGHT = 4
+    private const val LAYER_WIDTH = 4
+    private const val LAYER_HEIGHT = 4
     fun Node.Builder<*>.borderImage(material: Material, additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.()->Unit = {}) {
       nodes.add(Node(::BorderImage, MultiTypeMap(
               MATERIAL to material

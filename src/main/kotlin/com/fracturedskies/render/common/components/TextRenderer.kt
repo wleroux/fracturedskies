@@ -4,7 +4,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.meshRenderer
+import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.mesh
 import com.fracturedskies.render.common.components.gl.GLShader.Companion.shader
 import com.fracturedskies.render.common.components.gl.GLUniform.Companion.uniform
 import com.fracturedskies.render.common.components.gl.GLViewport.Companion.viewport
@@ -22,7 +22,7 @@ class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
     val TEXT = TypedKey<String>("text")
     val COLOR = TypedKey<Color4>("color")
-    fun Node.Builder<*>.textRenderer(text: String, color: Color4 = Color4.WHITE) {
+    fun Node.Builder<*>.text(text: String, color: Color4 = Color4.WHITE) {
       nodes.add(Node(::TextRenderer, MultiTypeMap(
               TEXT to text,
               COLOR to color
@@ -75,7 +75,7 @@ class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     viewport {
       shader(program) {
         uniform(PROJECTION_LOCATION, projection)
-        meshRenderer(Mesh(
+        mesh(Mesh(
             vertices,
             indices,
             listOf(Attribute.POSITION, Attribute.COLOR)
