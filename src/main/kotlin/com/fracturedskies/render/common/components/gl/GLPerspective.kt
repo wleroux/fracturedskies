@@ -3,6 +3,7 @@ package com.fracturedskies.render.common.components.gl
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.Matrix4
+import com.fracturedskies.engine.math.Matrix4.Companion.perspective
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL20.glUniformMatrix4fv
 
@@ -34,9 +35,8 @@ class GLPerspective(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   private val mat4Buffer = BufferUtils.createFloatBuffer(16)
   private lateinit var projection: Matrix4
   override fun glRender(bounds: Bounds) {
-    if (bounds != this.bounds) {
-      projection = Matrix4.perspective(props[FIELD_OF_VIEW], bounds.width, bounds.height, props[NEAR], props[FAR])
-    }
+    if (bounds != this.bounds)
+      projection = perspective(props[FIELD_OF_VIEW], bounds.width, bounds.height, props[NEAR], props[FAR])
 
     projection.store(mat4Buffer)
     mat4Buffer.flip()

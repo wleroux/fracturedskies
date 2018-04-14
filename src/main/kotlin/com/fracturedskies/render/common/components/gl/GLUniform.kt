@@ -20,24 +20,31 @@ class GLUniform(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val VALUE = TypedKey<Any>("value")
   }
 
-  private val mat4Buffer = BufferUtils.createFloatBuffer(16)
+  override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean = false
+
   override fun glRender(bounds: Bounds) {
     val location = props[LOCATION]
     val value = props[VALUE]
-    when (value) {
-      is Matrix4 -> {
-        value.store(mat4Buffer)
-        mat4Buffer.flip()
-        glUniformMatrix4fv(location, false, mat4Buffer)
-      }
-      is IntBuffer -> {
-        glUniform4uiv(location, value)
-      }
-      is Vector3 -> {
-        glUniform3f(location, value.x, value.y, value.z)
-      }
-      else -> throw IllegalArgumentException("Unknown uniform type")
-    }
+    glUniform(location, value)
+
     super.glRender(bounds)
+  }
+}
+
+private val mat4Buffer = BufferUtils.createFloatBuffer(16)
+fun glUniform(location: Int, value: Any) {
+  when (value) {
+    is Matrix4 -> {
+      value.store(mat4Buffer)
+      mat4Buffer.flip()
+      glUniformMatrix4fv(location, false, mat4Buffer)
+    }
+    is IntBuffer -> {
+      glUniform4uiv(location, value)
+    }
+    is Vector3 -> {
+      glUniform3f(location, value.x, value.y, value.z)
+    }
+    else -> throw IllegalArgumentException("Unknown uniform type")
   }
 }

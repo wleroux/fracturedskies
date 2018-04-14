@@ -1,11 +1,11 @@
 package com.fracturedskies.gravity
 
+import com.fracturedskies.WorldState
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.task.WorldState
 import kotlin.coroutines.experimental.CoroutineContext
 
 
@@ -15,7 +15,7 @@ class GravitySystem(context: CoroutineContext) {
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        state = object: WorldState(message.dimension) {}
+        state = WorldState(message.dimension)
         initialized = true
       }
       is Update -> {

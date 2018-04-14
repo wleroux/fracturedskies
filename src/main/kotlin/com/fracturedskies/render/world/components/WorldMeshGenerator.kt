@@ -1,10 +1,10 @@
 package com.fracturedskies.render.world.components
 
+import com.fracturedskies.Block
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.world.*
-import com.fracturedskies.render.world.WorldState.Block
 import org.lwjgl.BufferUtils
 import java.util.*
 

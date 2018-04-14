@@ -2,6 +2,7 @@ package com.fracturedskies.engine.jeact
 
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
+import com.fracturedskies.engine.jeact.Node.Companion.NODE_KEY
 import com.fracturedskies.engine.jeact.event.*
 
 abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
@@ -85,15 +86,20 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
         component.props = nextProps
         component.state = nextState
         component.nextState = null
-        component.children = component.render().mapIndexed({ index, node ->
-          val prevChildComponent = component.children.getOrNull(index)
-          toComponent(node, prevChildComponent, component)
-        })
+        var keyCounter = 0
+        component.childKeys = component.render().map({ node ->
+          val key = node.props[NODE_KEY] ?: keyCounter ++
+          val prevChildComponent = component.childKeys[key]
+          key to toComponent(node, prevChildComponent, component)
+        }).toMap()
+        component.children = component.childKeys.values.toList()
 
         // Unmount discarded toNodes
         prevChildren.minus(component.children).forEach({ unmount(it) })
         component.componentDidUpdate(prevProps, prevState)
       } else {
+        component.props = nextProps
+        component.state = nextState
         component.children.forEach({ childComponent ->
           update(childComponent, childComponent.props)
         })
@@ -107,7 +113,8 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
 
   // Component Tree
   var parent: Component<*>? = null
-  var children: List<Component<*>> = listOf()
+  var children: List<Component<*>> = mutableListOf()
+  var childKeys: Map<Any, Component<*>> = mutableMapOf()
 
   // Mounting
   open fun componentWillMount() = Unit
@@ -124,7 +131,7 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
   open fun componentWillUnmount() = Unit
 
   // Rendering
-  open fun render(): List<Node<*>> = requireNotNull(props[NODES])
+  open fun render(): List<Node<*>> = props[NODES]
 
   // Event Handling
   open val handler: EventHandler = {}

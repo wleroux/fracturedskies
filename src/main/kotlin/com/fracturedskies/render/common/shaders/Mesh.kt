@@ -1,15 +1,12 @@
 package com.fracturedskies.render.common.shaders
 
-import org.lwjgl.opengl.GL11.GL_FLOAT
-import org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.glEnableVertexAttribArray
-import org.lwjgl.opengl.GL20.glVertexAttribPointer
+import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import java.lang.Byte
 import java.lang.Float
-
-data class Mesh(val vertices: FloatArray, val indices: IntArray, val attributes: List<Attribute>) {
+data class Mesh(val vertices: FloatArray = FloatArray(0), val indices: IntArray = IntArray(0), val attributes: List<Attribute> = emptyList()) {
   data class Attribute(val label: String, val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
     /**
      * Standard Vertex Attributes

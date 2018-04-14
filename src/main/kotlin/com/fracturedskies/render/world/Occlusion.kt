@@ -1,8 +1,8 @@
 package com.fracturedskies.render.world
 
+import com.fracturedskies.Block
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.render.world.WorldState.Block
 import java.util.*
 
 enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vector3i) {

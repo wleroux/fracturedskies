@@ -1,6 +1,6 @@
 package com.fracturedskies.task.api
 
-import com.fracturedskies.task.*
+import com.fracturedskies.*
 import com.fracturedskies.task.api.TaskPriority.AVERAGE
 
 interface PriorityComparator {

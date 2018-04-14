@@ -1,9 +1,9 @@
 package com.fracturedskies.task.behavior
 
+import com.fracturedskies.*
 import com.fracturedskies.api.ColonistMoved
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.*
-import com.fracturedskies.task.*
 import com.fracturedskies.task.behavior.BehaviorStatus.*
 import java.util.function.*
 import kotlin.coroutines.experimental.buildSequence
@@ -17,7 +17,7 @@ enum class BehaviorStatus {
 
 interface Behavior {
   fun execute(state: WorldState, colonist: Colonist): Sequence<BehaviorStatus>
-  fun cost(state: WorldState,colonist: Colonist): Int
+  fun cost(state: WorldState, colonist: Colonist): Int
   fun isPossible(state: WorldState, colonist: Colonist): Boolean
 }
 

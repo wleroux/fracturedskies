@@ -1,36 +1,33 @@
 package com.fracturedskies.worldgenerator
 
-import com.fracturedskies.engine.collections.Dimension
-import com.fracturedskies.engine.math.*
-import com.fracturedskies.api.BlockType
+import com.fracturedskies.api.*
 import com.fracturedskies.api.BlockType.*
+import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.math.*
+import com.fracturedskies.engine.messages.Cause
+import com.fracturedskies.engine.messages.MessageBus.send
 
 
 class WorldGenerator(private val dimension: Dimension, private val seed: Int) {
-  fun generate(): Map<Vector3i, BlockType> {
-    val blocks = mutableMapOf<Vector3i, BlockType>()
-    (0 until dimension.width).flatMap { x ->
-      (0 until dimension.depth).flatMap {  z ->
-        (0 until dimension.height).map { y ->
-          val pos = Vector3i(x, y, z)
-          pos to if (isBlock(pos)) BlockType.BLOCK else BlockType.AIR
+  fun generate() {
+    val blocks = ObjectMutableSpace(dimension, {BlockType.AIR})
+    (0 until dimension.width).forEach { x ->
+      (0 until dimension.depth).forEach {  z ->
+        (0 until dimension.height).forEach { y ->
+          val blockPos = Vector3i(x, y, z)
+          blocks[blockPos] = if (isBlock(blockPos)) BlockType.BLOCK else BlockType.AIR
         }
-      }
-    }.toMap(blocks)
 
-    // Convert to block to grass
-    (0 until dimension.width).forEach {x ->
-      (0 until dimension.depth).forEach {z ->
         val pos = highestBlock(blocks, x, z)
         if (blocks[pos] != AIR)
           blocks[pos] = GRASS
       }
     }
 
-    return blocks
+    send(BlocksGenerated(Vector3i(0, 0, 0), blocks, Cause.of(this)))
   }
 
-  private fun highestBlock(blockType: Map<Vector3i, BlockType>, x: Int, z: Int) =
+  private fun highestBlock(blockType: ObjectSpace<BlockType>, x: Int, z: Int) =
     Vector3i(x, (0 until dimension.height).reversed().firstOrNull { blockType[Vector3i(x, it, z)] != AIR } ?: 0, z)
 
   private fun isBlock(pos: Vector3i): Boolean {

@@ -61,13 +61,13 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   private val wrap get() = props[WRAP]
 
   override fun glPreferredWidth(parentWidth: Int, parentHeight: Int): Int {
-    val componentRows = wrap.split(children, direction, parentWidth, parentHeight)
+    val componentRows = wrap.split(children.toList(), direction, parentWidth, parentHeight)
     val maxMainSpace = maxMainSpace(componentRows, parentWidth, parentHeight)
     val maxCrossSpace = maxCrossSpace(componentRows, parentWidth, parentHeight)
     return direction.x(maxMainSpace, maxCrossSpace)
   }
   override fun glPreferredHeight(parentWidth: Int, parentHeight: Int): Int {
-    val componentRows = wrap.split(children, direction, parentWidth, parentHeight)
+    val componentRows = wrap.split(children.toList(), direction, parentWidth, parentHeight)
     val maxMainSpace = maxMainSpace(componentRows, parentWidth, parentHeight)
     val maxCrossSpace = maxCrossSpace(componentRows, parentWidth, parentHeight)
     return direction.y(maxMainSpace, maxCrossSpace)
@@ -96,7 +96,7 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val mainAxisSize = direction.main(bounds.width, bounds.height)
     val crossAxisSpace = direction.cross(bounds.width, bounds.height)
 
-    val componentRows = wrap.split(children, direction, bounds.width, bounds.height)
+    val componentRows = wrap.split(children.toList(), direction, bounds.width, bounds.height)
     val minCrossSpace = componentRows.sumBy({row ->
       row.map({it.cross(direction, bounds.width, bounds.height)}).max() ?: 0
     })

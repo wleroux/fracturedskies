@@ -1,7 +1,7 @@
 package com.fracturedskies.task.api
 
+import com.fracturedskies.*
 import com.fracturedskies.engine.Id
-import com.fracturedskies.task.*
 
 
 interface Condition {

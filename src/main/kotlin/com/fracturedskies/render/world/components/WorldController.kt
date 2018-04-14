@@ -12,8 +12,8 @@ import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.GameState
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
-import com.fracturedskies.render.world.WorldState.Block
-import com.fracturedskies.render.world.components.GLWorldRenderer.Companion.worldRenderer
+import com.fracturedskies.render.world.components.WorldRenderer.Companion.worldRenderer
+import com.fracturedskies.Block
 import com.fracturedskies.task.api.*
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import kotlinx.coroutines.experimental.*
@@ -56,11 +56,8 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   }
 
   private val gameState get() = props[GAME_STATE]
-  private val world get() = gameState.world!!
   private val initialized get() = gameState.initialized
-  private val workers get() = world.colonists
-  private val items get() = world.items
-  private val timeOfDay get() = world.timeOfDay
+  private val world get() = gameState.world!!
 
   private var firstBlock: Vector3i? = null
   private var focused = false
@@ -342,12 +339,9 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   override fun render() = nodes {
     if (initialized) {
       worldRenderer(
+        world,
         Matrix4(position = view, rotation = rotation).invert(),
-        timeOfDay,
-        world.blocks,
-        sliceHeight,
-        workers.values,
-        items.values
+        sliceHeight
       )
     }
   }

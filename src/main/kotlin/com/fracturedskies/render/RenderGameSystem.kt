@@ -1,6 +1,6 @@
 package com.fracturedskies.render
 
-import com.fracturedskies.engine.api.*
+import com.fracturedskies.engine.api.ShutdownRequested
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.Component.Companion.dispatch
@@ -18,15 +18,17 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryUtil.NULL
 import kotlin.coroutines.experimental.CoroutineContext
 
-class RenderGameSystem(context: CoroutineContext) {
-  private var nextGameState: GameState = GameState()
-  val channel = MessageChannel(context) { message ->
-    nextGameState = nextGameState.process(message)
-    if (message is Update)
-      gameState = nextGameState
+class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContext) {
+  private val renderChannel = MessageChannel(renderContext) {message ->
+    gameState.process(message)
   }
 
-  private var gameState = nextGameState
+  val channel = MessageChannel(context) { message ->
+    // Decouple the game loop updates from the render updates
+    renderChannel.send(message)
+  }
+
+  private var gameState = GameState()
   private lateinit var scene: Scene
   private lateinit var screenDimension: Bounds
 
@@ -95,6 +97,7 @@ class RenderGameSystem(context: CoroutineContext) {
         Scene.GAME_STATE to gameState
     ), false)
     scene.glRender(screenDimension)
+    gameState.clearDirty()
     glfwSwapBuffers(window)
   }
 

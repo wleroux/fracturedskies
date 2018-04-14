@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFW
 class Input(props: MultiTypeMap) : Component<InputState>(props, InputState(props[INITIAL_VALUE]
     ?: "")) {
   companion object {
-    val INITIAL_VALUE = TypedKey<String>("initialValue")
+    val INITIAL_VALUE = TypedKey<String?>("initialValue")
     val ON_TEXT_CHANGED = TypedKey<(String) -> Unit>("onTextChanged")
     fun Node.Builder<*>.input(initialValue: String = "", onTextChanged: (String) -> Unit = {}, additionalContext: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::Input, MultiTypeMap(

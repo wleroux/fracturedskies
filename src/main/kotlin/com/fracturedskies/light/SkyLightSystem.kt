@@ -111,6 +111,21 @@ fun skyLightSystem(context: CoroutineContext): MessageChannel {
       is NewGameRequested -> {
         light = SkyLightMap(message.dimension)
       }
+      is BlocksGenerated -> {
+        message.blocks.forEach { (blockIndex, blockType) ->
+          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          light.type[blockPos] = blockType
+        }
+
+        val lightUpdates = message.blocks.flatMap { (blockIndex, _) ->
+          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          updateSkylight(blockPos).toList()
+        }.toMap()
+
+        if (lightUpdates.isNotEmpty()) {
+          send(SkyLightUpdated(lightUpdates, message.cause, message.context))
+        }
+      }
       is BlockUpdated -> {
         message.updates.forEach { pos, type ->
           light.type[pos] = type

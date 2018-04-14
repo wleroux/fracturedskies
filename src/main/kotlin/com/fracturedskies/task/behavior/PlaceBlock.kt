@@ -1,12 +1,12 @@
 package com.fracturedskies.task.behavior
 
+import com.fracturedskies.*
 import com.fracturedskies.api.*
 import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.task.*
 import com.fracturedskies.task.behavior.BehaviorStatus.*
 import kotlin.coroutines.experimental.buildSequence
 

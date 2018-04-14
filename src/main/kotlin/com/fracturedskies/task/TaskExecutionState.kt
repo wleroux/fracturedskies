@@ -1,5 +1,6 @@
 package com.fracturedskies.task
 
+import com.fracturedskies.WorldState
 import com.fracturedskies.api.ColonistTaskSelected
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.Dimension

@@ -23,6 +23,21 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         pathFinder = WaterPathFinder(water)
         initialized = true
       }
+      is BlocksGenerated -> {
+        if (!initialized) return@MessageChannel
+        val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
+        message.blocks.forEach { (blockIndex, blockType) ->
+          val pos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          water.setOpaque(pos, blockType.opaque)
+          if (blockType.opaque && water.getLevel(pos) != 0.toByte()) {
+            water.setLevel(pos, 0)
+            waterLevelUpdates[pos] = 0
+          }
+        }
+        if (waterLevelUpdates.isNotEmpty()) {
+          send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
+        }
+      }
       is BlockUpdated -> {
         if (!initialized) return@MessageChannel
         val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()

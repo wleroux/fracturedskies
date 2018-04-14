@@ -6,6 +6,7 @@ import kotlin.reflect.jvm.*
 
 class Node<T> private constructor(val type: (MultiTypeMap) -> Component<T>, val props: MultiTypeMap) {
   companion object {
+    val NODE_KEY = TypedKey<Any?>("nodeKey")
     val NODES = TypedKey<List<Node<*>>>("nodes")
     operator fun <T> invoke(type: (MultiTypeMap) -> Component<T>, props: MultiTypeMap = MultiTypeMap(), block: Builder<T>.() -> Unit = {}) = Builder(type, props).apply(block).build()
   }
