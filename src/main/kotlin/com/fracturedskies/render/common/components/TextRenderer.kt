@@ -3,20 +3,21 @@ package com.fracturedskies.render.common.components
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
-import com.fracturedskies.engine.math.*
+import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.render.common.components.gl.GLMeshRenderer.Companion.mesh
+import com.fracturedskies.render.common.components.gl.GLOrthogonal.Companion.orthogonal
 import com.fracturedskies.render.common.components.gl.GLShader.Companion.shader
 import com.fracturedskies.render.common.components.gl.GLUniform.Companion.uniform
 import com.fracturedskies.render.common.components.gl.GLViewport.Companion.viewport
 import com.fracturedskies.render.common.events.Click
-import com.fracturedskies.render.common.shaders.Mesh
+import com.fracturedskies.render.common.shaders.*
 import com.fracturedskies.render.common.shaders.Mesh.Attribute
 import com.fracturedskies.render.common.shaders.text.TextShaderProgram
+import com.fracturedskies.render.common.shaders.text.TextShaderProgram.Companion.ALBEDO_LOCATION
 import com.fracturedskies.render.common.shaders.text.TextShaderProgram.Companion.PROJECTION_LOCATION
-import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.stb.STBEasyFont
-import org.lwjgl.stb.STBEasyFont.*
+import org.lwjgl.stb.STBEasyFont.stb_easy_font_width
+
 
 class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
@@ -33,53 +34,62 @@ class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   private val text get() = props[TEXT]
   private val color get() = props[COLOR]
 
-  override fun glPreferredWidth(parentWidth: Int, parentHeight: Int) = stb_easy_font_width(text)
-  override fun glPreferredHeight(parentWidth: Int, parentHeight: Int) = stb_easy_font_height(text)
+  override fun glPreferredWidth(parentWidth: Int, parentHeight: Int) = textWidth
+  override fun glPreferredHeight(parentWidth: Int, parentHeight: Int) = textHeight
 
-  lateinit var program: TextShaderProgram
+  lateinit var font: TrueTypeFont
+  lateinit var program: ShaderProgram
   override fun componentWillMount() {
     super.componentWillMount()
     program = TextShaderProgram()
+    font = TrueTypeFont("OpenSans-Regular.ttf", 24)
   }
 
   override fun componentWillUnmount() {
     super.componentWillUnmount()
     program.close()
+    mesh?.close()
   }
 
-  private val colorBuffer = BufferUtils.createByteBuffer(4)
-  private val buffer = BufferUtils.createByteBuffer(999990)
+  var textWidth: Int = 0
+  var textHeight: Int = 0
+  var mesh: Mesh? = null
   override fun render() = nodes {
-    colorBuffer.put(color.red.toByte())
-    colorBuffer.put(color.green.toByte())
-    colorBuffer.put(color.blue.toByte())
-    colorBuffer.put(color.alpha.toByte())
-    colorBuffer.flip()
-    val numQuads = STBEasyFont.stb_easy_font_print(0f, 0f, text, colorBuffer, buffer)
-    val floatBuffer = buffer.asFloatBuffer()
-    val vertices = FloatArray(numQuads * 4 * 4)
-    floatBuffer.get(vertices)
-    val indices = IntArray(numQuads * 6)
-    for (quad in 0 until numQuads) {
-      indices[(quad * 6) + 0] = (quad * 4) + 0
-      indices[(quad * 6) + 1] = (quad * 4) + 1
-      indices[(quad * 6) + 2] = (quad * 4) + 2
-      indices[(quad * 6) + 3] = (quad * 4) + 2
-      indices[(quad * 6) + 4] = (quad * 4) + 3
-      indices[(quad * 6) + 5] = (quad * 4) + 0
+    val textVertices = font.getVertices(text)
+    val vertices = FloatArray(textVertices.size * 7)
+    textVertices.forEachIndexed { index, (positionX, positionY, texCoordX, texCoordY) ->
+      vertices[index * 7 + 0] = positionX
+      vertices[index * 7 + 1] = positionY
+      vertices[index * 7 + 2] = 0f
+      vertices[index * 7 + 3] = texCoordX
+      vertices[index * 7 + 4] = texCoordY
+      vertices[index * 7 + 5] = 0f
+      vertices[index * 7 + 6] = color.toFloat()
     }
-    val textWidth = stb_easy_font_width(text)
-    val textHeight = stb_easy_font_height(text)
-    val projection = Matrix4.orthogonal(0f, textWidth.toFloat(), textHeight.toFloat(), 0f, -1f, 1000f)
+    val numQuads = (textVertices.size / 4)
+    val indices = IntArray(numQuads * 6)
+    (0 until numQuads).forEach { index ->
+      indices[index * 6 + 0] = index * 4 + 2
+      indices[index * 6 + 1] = index * 4 + 1
+      indices[index * 6 + 2] = index * 4 + 0
+      indices[index * 6 + 3] = index * 4 + 0
+      indices[index * 6 + 4] = index * 4 + 3
+      indices[index * 6 + 5] = index * 4 + 2
+    }
+    mesh?.close()
+    textWidth = font.getWidth(text)
+    textHeight = font.getHeight(text)
+    mesh = Mesh(
+        vertices,
+        indices,
+        listOf(Attribute.POSITION, Attribute.TEXCOORD, Attribute.COLOR)
+    )
 
     viewport {
       shader(program) {
-        uniform(PROJECTION_LOCATION, projection)
-        mesh(Mesh(
-            vertices,
-            indices,
-            listOf(Attribute.POSITION, Attribute.COLOR)
-        ))
+        orthogonal(PROJECTION_LOCATION, -1f, 1f)
+        uniform(ALBEDO_LOCATION, font.texture)
+        mesh(mesh!!)
       }
     }
   }

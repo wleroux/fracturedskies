@@ -13,8 +13,9 @@ import com.fracturedskies.render.common.events.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
-import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL43.*
 import org.lwjgl.system.MemoryUtil.NULL
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -45,6 +46,7 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE)
 
     // Window attributes hints
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
@@ -70,6 +72,7 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
     glfwMakeContextCurrent(window)
     GL.createCapabilities()
 
+    glDebugMessageCallback(this::debugMessageCallback, NULL)
     glfwShowWindow(window)
 
     // Initialize GL
@@ -77,7 +80,8 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_CULL_FACE)
-    glCullFace(GL_FRONT)
+    glCullFace(GL_BACK)
+    glFrontFace(GL_CCW)
 
     scene = mount(::Scene, null, MultiTypeMap(
         Scene.GAME_STATE to gameState
@@ -109,6 +113,23 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
 
     glfwTerminate()
     glfwSetErrorCallback(null)!!.free()
+  }
+
+  var lastMessage: Long = 0
+  private fun debugMessageCallback(source: Int, type: Int, id: Int, severity: Int, length: Int, message: Long, userParam: Long) {
+    val report = when (severity) {
+      GL_DEBUG_SEVERITY_HIGH -> true
+      GL_DEBUG_SEVERITY_MEDIUM -> true
+      GL_DEBUG_SEVERITY_LOW -> true
+      GL_DEBUG_SEVERITY_NOTIFICATION -> false
+      else -> true
+    }
+    if (report && lastMessage != message) {
+      lastMessage = message
+      System.err.println("[LWJGL] OpenGL debug message")
+      System.err.printf("  ID: %s\n", String.format("0x%X", id))
+      System.err.printf("  Message: %s\n", GLDebugMessageCallback.getMessage(length, message))
+    }
   }
 
   private var focus: Component<*>? = null

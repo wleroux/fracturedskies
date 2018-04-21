@@ -92,10 +92,10 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
       is NewGameRequested -> {
         light = BlockLightMap(message.dimension)
       }
-      is BlocksGenerated -> {
-        val blockLightUpdates = message.blocks.map { (blockIndex, blockType) ->
+      is WorldGenerated -> {
+        val blockLightUpdates = message.blocks.map { (blockIndex, block) ->
           val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
-          light.type[blockPos] = blockType
+          light.type[blockPos] = block.type
           updateBlockLight(blockPos)
         }.fold(mutableMapOf<Vector3i, Int>()) { acc, value ->
           acc.putAll(value)

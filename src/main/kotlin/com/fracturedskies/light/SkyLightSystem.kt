@@ -111,10 +111,10 @@ fun skyLightSystem(context: CoroutineContext): MessageChannel {
       is NewGameRequested -> {
         light = SkyLightMap(message.dimension)
       }
-      is BlocksGenerated -> {
-        message.blocks.forEach { (blockIndex, blockType) ->
+      is WorldGenerated -> {
+        message.blocks.forEach { (blockIndex, block) ->
           val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
-          light.type[blockPos] = blockType
+          light.type[blockPos] = block.type
         }
 
         val lightUpdates = message.blocks.flatMap { (blockIndex, _) ->

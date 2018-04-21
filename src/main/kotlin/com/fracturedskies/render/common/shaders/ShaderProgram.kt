@@ -1,13 +1,7 @@
 package com.fracturedskies.render.common.shaders
 
-import com.fracturedskies.engine.collections.MultiTypeMap
-import com.fracturedskies.engine.math.Matrix4
-import org.lwjgl.BufferUtils
-import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL13.*
+import org.lwjgl.opengl.GL11.GL_TRUE
 import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL30
-import org.lwjgl.opengl.GL30.glBindVertexArray
 
 abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: String) {
   val id = glCreateProgram()
@@ -49,35 +43,9 @@ abstract class ShaderProgram(vertexShaderSource: String, fragmentShaderSource: S
     glUseProgram(0)
   }
 
-  protected fun uniform(location: Int, mat4: Matrix4) {
-    val mat4Buffer = BufferUtils.createFloatBuffer(16)
-    mat4.store(mat4Buffer)
-    mat4Buffer.flip()
-    glUniformMatrix4fv(location, false, mat4Buffer)
-  }
-
-  protected fun uniform(location: Int, textureUnit: Int, textureArray: TextureArray) {
-    glUniform1i(location, textureUnit - GL_TEXTURE0)
-    glActiveTexture(textureUnit)
-    glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, textureArray.id)
-  }
-
-  protected fun uniform(location: Int, textureUnit: Int, texture: Texture) {
-    glUniform1i(location, textureUnit - GL_TEXTURE0)
-    glActiveTexture(textureUnit)
-    glBindTexture(GL_TEXTURE_2D, texture.id)
-  }
-
-  fun draw(mesh: Mesh) {
-    glBindVertexArray(mesh.vao)
-    glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0)
-  }
-
   fun close() {
     glDeleteProgram(id)
   }
 
   override fun toString(): String = this.javaClass.simpleName
-
-  abstract fun render(properties: MultiTypeMap, variables: MultiTypeMap, mesh: Mesh)
 }

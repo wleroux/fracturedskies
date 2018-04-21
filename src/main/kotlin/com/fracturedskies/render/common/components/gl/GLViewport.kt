@@ -2,11 +2,11 @@ package com.fracturedskies.render.common.components.gl
 
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
+import com.fracturedskies.render.common.style.Padding
 import org.lwjgl.opengl.GL11.*
 
 
 class GLViewport(props: MultiTypeMap) : Component<Unit>(props, Unit) {
-  data class Padding(val top: Int = 0, val right: Int = 0, val bottom: Int = 0, val left: Int = 0)
   companion object {
     fun Node.Builder<*>.viewport(padding: Padding = Padding(), additionalProps: MultiTypeMap = MultiTypeMap(), block: Node.Builder<Unit>.() -> (Unit) = {}) {
       nodes.add(Node(::GLViewport, MultiTypeMap(

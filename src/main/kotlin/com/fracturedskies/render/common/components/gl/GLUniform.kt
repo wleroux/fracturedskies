@@ -4,9 +4,12 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.Node.Builder
 import com.fracturedskies.engine.math.*
+import com.fracturedskies.render.common.shaders.*
 import org.lwjgl.BufferUtils
+import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL30.glUniform4uiv
+import org.lwjgl.opengl.GL30.*
 import java.nio.IntBuffer
 
 
@@ -44,6 +47,16 @@ fun glUniform(location: Int, value: Any) {
     }
     is Vector3 -> {
       glUniform3f(location, value.x, value.y, value.z)
+    }
+    is Texture -> {
+      glUniform1i(location, 0)
+      glActiveTexture(GL_TEXTURE0)
+      glBindTexture(GL_TEXTURE_2D, value.id)
+    }
+    is TextureArray -> {
+      glUniform1i(location, 0)
+      glActiveTexture(GL_TEXTURE0)
+      glBindTexture(GL_TEXTURE_2D_ARRAY, value.id)
     }
     else -> throw IllegalArgumentException("Unknown uniform type")
   }

@@ -24,7 +24,7 @@ data class GameState(
       super.process(message)
 
       when (message) {
-        is BlocksGenerated -> message.blocks.forEach { (blockIndex, _) ->
+        is WorldGenerated -> message.blocks.forEach { (blockIndex, _) ->
           val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
           chunks(blockPos).forEach { chunkPos -> blocksDirty[chunkPos] = true }
         }

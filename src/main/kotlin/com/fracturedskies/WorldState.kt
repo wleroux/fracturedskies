@@ -121,9 +121,9 @@ open class WorldState(val dimension: Dimension) {
     tasks.values.forEach { task -> task.process(message) }
     items.values.forEach { item -> item.process(message) }
     when (message) {
-      is BlocksGenerated -> { message.blocks.forEach { (blockIndex, blockType) ->
+      is WorldGenerated -> { message.blocks.forEach { (blockIndex, block) ->
         val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
-        this.blocks[blockPos].type = blockType
+        this.blocks[blockPos].type = block.type
       } }
       is BlockUpdated -> message.updates.forEach { pos, value -> this.blocks[pos].type = value }
       is BlockWaterLevelUpdated -> message.updates.forEach { pos, value -> this.blocks[pos].waterLevel = value}

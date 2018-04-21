@@ -6,11 +6,8 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import java.lang.Byte
 import java.lang.Float
-data class Mesh(val vertices: FloatArray = FloatArray(0), val indices: IntArray = IntArray(0), val attributes: List<Attribute> = emptyList()) {
+class Mesh(vertices: FloatArray = FloatArray(0), indices: IntArray = IntArray(0), val attributes: List<Attribute> = emptyList()) {
   data class Attribute(val label: String, val location: Int, val elementType: Int, val elements: Int, val elementSize: Int) {
-    /**
-     * Standard Vertex Attributes
-     */
     companion object {
       private val POSITION_LOCATION = 0
       private val TEXCOORD_LOCATION = 1

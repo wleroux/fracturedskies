@@ -81,7 +81,6 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
       if (forceUpdate || component.shouldComponentUpdate(nextProps, nextState)) {
         component.componentWillUpdate(nextProps, nextState)
 
-        var matchedChildren = mutableListOf<Component<*>>()
         val prevChildren = component.children
         component.props = nextProps
         component.state = nextState

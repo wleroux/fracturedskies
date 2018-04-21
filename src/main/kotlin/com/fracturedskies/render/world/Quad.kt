@@ -48,10 +48,10 @@ data class Quad(
   fun vertices(): FloatArray {
     val colorAsFloat = color.toFloat()
     return floatArrayOf(
-            x +        0f, y +        0f, z +        0f, colorAsFloat, topLeftSkyLight, topLeftBlockLight, topLeftOcclusion, nx, ny, nz,
-            x + dwx      , y + dwy      , z + dwz      , colorAsFloat, topRightSkyLight, topRightBlockLight, topRightOcclusion, nx, ny, nz,
-            x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, bottomRightSkyLight, bottomRightBlockLight, bottomRightOcclusion, nx, ny, nz,
-            x +       dhx, y +       dhy, z +       dhz, colorAsFloat, bottomLeftSkyLight, bottomLeftBlockLight, bottomLeftOcclusion, nx, ny, nz
+        x +       dhx, y +       dhy, z +       dhz, colorAsFloat, bottomLeftSkyLight, bottomLeftBlockLight, bottomLeftOcclusion, nx, ny, nz,
+        x + dwx + dhx, y + dwy + dhy, z + dwz + dhz, colorAsFloat, bottomRightSkyLight, bottomRightBlockLight, bottomRightOcclusion, nx, ny, nz,
+        x + dwx      , y + dwy      , z + dwz      , colorAsFloat, topRightSkyLight, topRightBlockLight, topRightOcclusion, nx, ny, nz,
+        x +        0f, y +        0f, z +        0f, colorAsFloat, topLeftSkyLight, topLeftBlockLight, topLeftOcclusion, nx, ny, nz
     )
   }
 
