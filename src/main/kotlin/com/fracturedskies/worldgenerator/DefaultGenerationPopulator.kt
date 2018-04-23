@@ -5,6 +5,7 @@ import com.fracturedskies.api.BlockType
 import com.fracturedskies.api.BlockType.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
+import java.lang.Integer.max
 
 
 class DefaultGenerationPopulator(private val seed: Int): GenerationPopulator {
@@ -13,10 +14,14 @@ class DefaultGenerationPopulator(private val seed: Int): GenerationPopulator {
       (0 until blocks.dimension.depth).forEach {  z ->
         (0 until blocks.dimension.height).forEach { y ->
           val blockPos = Vector3i(x, y, z)
-          blocks[blockPos].type = if (isBlock(blocks.dimension, blockPos)) BlockType.BLOCK else BlockType.AIR
+          blocks[blockPos].type = if (isBlock(blocks.dimension, blockPos)) BlockType.STONE else BlockType.AIR
         }
 
         val pos = highestBlock(blocks, x, z)
+        (max(0, pos.y - 6) until pos.y).forEach { newY ->
+          if (blocks[pos.x, newY, pos.z].type != AIR)
+            blocks[pos.x, newY, pos.z].type = DIRT
+        }
         if (blocks[pos].type != AIR)
           blocks[pos].type = GRASS
       }

@@ -271,7 +271,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
               if (!keyboard.isPressed(GLFW_KEY_LEFT_CONTROL)) {
                 val blockType = when {
                   keyboard.isPressed(GLFW_KEY_LEFT_SHIFT) -> BlockType.LIGHT
-                  else -> BlockType.BLOCK
+                  else -> BlockType.DIRT
                 }
 
                 val updates = xRange.flatMap { x ->
