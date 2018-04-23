@@ -8,7 +8,6 @@ import com.fracturedskies.engine.math.*
 import com.fracturedskies.task.api.*
 import com.fracturedskies.task.api.TaskPriority.AVERAGE
 import com.fracturedskies.task.behavior.*
-import java.util.function.Predicate
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 
@@ -112,7 +111,7 @@ open class WorldState(val dimension: Dimension) {
     override val dimension: Dimension = blocks.dimension
     override fun get(index: Int): Boolean = blocks[index].type.opaque
   }
-  val pathFinder = PathFinder(Predicate { pos -> !(blocked.has(pos) && !blocked[pos])})
+  val pathFinder = PathFinder(PathFinder.isNotOpaque(blocks))
   val items = mutableMapOf<Id, Item>()
   var timeOfDay = 0f
 

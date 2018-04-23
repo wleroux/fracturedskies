@@ -5,3 +5,4 @@ com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
 com.fracturedskies.task.TaskExecutionModLoader
 com.fracturedskies.task.TaskManagementModLoader
+com.fracturedskies.treefall.TreeFallModLoader

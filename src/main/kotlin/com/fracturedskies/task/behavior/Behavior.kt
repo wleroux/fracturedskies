@@ -5,7 +5,6 @@ import com.fracturedskies.api.ColonistMoved
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.task.behavior.BehaviorStatus.*
-import java.util.function.*
 import kotlin.coroutines.experimental.buildSequence
 
 
@@ -67,7 +66,8 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
     val path = positions
         .filter { state.blocked.has(it) }
         .filterNot { state.blocked[it] }
-        .mapNotNull { pos -> state.pathFinder.find(colonistPos, Predicate { it == pos }, ToIntFunction { it distanceTo pos}) }
+        .map { pos -> state.pathFinder.find(colonistPos, isTarget(pos), distanceToTarget(pos)) }
+        .filter { it.isNotEmpty() }
         .minBy { it.size }
     if (path == null) {
       // If there are not possible paths, fail
@@ -75,7 +75,7 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
       return@buildSequence
     }
 
-    for (step in path) {
+    for (step in path.drop(1)) {
       if (state.blocked[step]) {
         // If the path is blocked, see if we can find another
         yieldAll(MoveToPositionBehavior(*positions).execute(state, colonist))
@@ -98,5 +98,8 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
     }
     return min
   }
+
+  private fun distanceToTarget(target: Vector3i) = { pos: Vector3i -> pos distanceTo target }
+  private fun isTarget(target: Vector3i) = { pos: Vector3i -> pos == target }
   override fun isPossible(state: WorldState, colonist: Colonist) = cost(state, colonist) != Int.MAX_VALUE
 }

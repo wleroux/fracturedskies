@@ -28,11 +28,10 @@ class PutBlockBehavior(private val pos: Vector3i, private val blockType: BlockTy
     if (pos distanceTo colonist.position != 1) {
       yield(FAILURE)
     } else {
-      val previousBlockType = state.blockType[pos]
+      val blockDrop = state.blockType[pos].blockDrop
       send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
-      if (previousBlockType != BlockType.AIR) {
-        send(ItemSpawned(Id(), previousBlockType, colonist.position, Cause.of(this)))
-      }
+      if (blockDrop != null)
+        send(ItemSpawned(Id(), blockDrop, colonist.position, Cause.of(this)))
       yield(RUNNING)
       yield(SUCCESS)
     }

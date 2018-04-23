@@ -1,5 +1,7 @@
 package com.fracturedskies.engine.math
 
+import com.fracturedskies.Block
+import com.fracturedskies.engine.collections.ObjectSpace
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_X
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Y
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Z
@@ -10,16 +12,25 @@ import com.fracturedskies.engine.math.Vector3i.Companion.NEIGHBOURS
 import com.fracturedskies.engine.math.Vector3i.Companion.XY_PLANE_NEIGHBORS
 import com.fracturedskies.engine.math.Vector3i.Companion.Y_PLANE_NEIGHBORS
 import java.util.*
-import java.util.function.*
 
-class PathFinder(private val isBlocked: Predicate<Vector3i>){
+typealias IsTarget = (pos: Vector3i) -> Boolean
+typealias CostHeuristic = (pos: Vector3i) -> Int
+typealias IsTraversable = (fromPos: Vector3i, toPos: Vector3i) -> Boolean
+
+class PathFinder(private val isTraversable: IsTraversable){
+  companion object {
+    fun isNotOpaque(blocks: ObjectSpace<Block>): IsTraversable = { _, toPos -> blocks.has(toPos) && !blocks[toPos].type.opaque }
+    fun target(target: Vector3i): IsTarget = {pos: Vector3i -> pos == target }
+    fun targetDistanceHeuristic(target: Vector3i): CostHeuristic = {pos: Vector3i -> pos distanceTo target }
+  }
+
   private data class JumpNode(val pos: Vector3i, val dirs: List<Vector3i>)
 
-  fun find(initialPos: Vector3i, isTarget: Predicate<Vector3i>, costHeuristic: ToIntFunction<Vector3i>): List<Vector3i>? {
+  fun find(initialPos: Vector3i, isTarget: IsTarget, costHeuristic: CostHeuristic): List<Vector3i> {
     val cameFrom = HashMap<Vector3i, Vector3i?>()
     cameFrom[initialPos] = null
 
-    val costComparator = Comparator.comparing { it: JumpNode -> costHeuristic.applyAsInt(it.pos) }
+    val costComparator = Comparator.comparing { it: JumpNode -> costHeuristic(it.pos) }
     val unvisitedCells = PriorityQueue<JumpNode>(costComparator)
     unvisitedCells.add(JumpNode(initialPos, NEIGHBOURS))
 
@@ -28,7 +39,7 @@ class PathFinder(private val isBlocked: Predicate<Vector3i>){
       val nodePos = node.pos
 
       // Found the target!
-      if (isTarget.test(nodePos)) {
+      if (isTarget(nodePos)) {
         var currPos = nodePos
 
         val path = ArrayList<Vector3i>()
@@ -47,6 +58,7 @@ class PathFinder(private val isBlocked: Predicate<Vector3i>){
             currPos -= dir
           }
         }
+        path.add(initialPos)
         return path.reversed()
       }
 
@@ -58,17 +70,17 @@ class PathFinder(private val isBlocked: Predicate<Vector3i>){
       }
     }
 
-    return null
+    return emptyList()
   }
 
-  private fun successors(current: JumpNode, isTarget: Predicate<Vector3i>) =
+  private fun successors(current: JumpNode, isTarget: IsTarget) =
     current.dirs.map { jump(current.pos, it, isTarget) }
 
-  private tailrec fun jump(current: Vector3i, dir: Vector3i, isTarget: Predicate<Vector3i>): JumpNode {
+  private tailrec fun jump(current: Vector3i, dir: Vector3i, isTarget: IsTarget): JumpNode {
     val next = current + dir
     return when {
-      isBlocked.test(next) -> JumpNode(current, listOf())
-      isTarget.test(next) -> JumpNode(next, listOf())
+      !isTraversable(current, next) -> JumpNode(current, listOf())
+      isTarget(next) -> JumpNode(next, listOf())
       else -> when (dir) {
         AXIS_Y, AXIS_NEG_Y -> {
           JumpNode(next, Vector3i.XZ_PLANE_NEIGHBORS + dir)
@@ -88,5 +100,5 @@ class PathFinder(private val isBlocked: Predicate<Vector3i>){
     }
   }
   private fun forcedNeighbors(current: Vector3i, next: Vector3i, dirs: List<Vector3i>)
-          = dirs.filter { isBlocked.test(current + it) && !isBlocked.test(next + it) }
+          = dirs.filter { !isTraversable(current, current + it) && isTraversable(next, next + it) }
 }
