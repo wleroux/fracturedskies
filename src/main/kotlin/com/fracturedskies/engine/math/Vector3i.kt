@@ -19,6 +19,26 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
     val XY_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Y_PLANE_NEIGHBORS
     val XZ_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Z_PLANE_NEIGHBORS
 
+    fun xZRing(radius: Int): List<Vector3i> {
+      return if (radius == 0) {
+        listOf(Vector3i(0, 0, 0))
+      } else {
+        val ring = mutableListOf<Vector3i>()
+        (-radius..radius).forEach { dx ->
+          ring.add(Vector3i(dx, 0, radius))
+          ring.add(Vector3i(dx, 0, -radius))
+        }
+        ((-radius+1)..(radius-1)).forEach { dz ->
+          ring.add(Vector3i(radius, 0, dz))
+          ring.add(Vector3i(-radius, 0, dz))
+        }
+        ring
+      }
+    }
+    fun xZSpiral(radius: Int): List<Vector3i> {
+      return (0..radius).flatMap{ xZRing(it) }
+    }
+
     private const val CACHE_X_SIZE = 128
     private const val CACHE_Y_SIZE = 258
     private const val CACHE_Z_SIZE = 128
@@ -60,6 +80,7 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
   operator fun div(dimension: Dimension) = Vector3i(x / dimension.width, y / dimension.height, z / dimension.depth)
   operator fun rem(dimension: Dimension) = Vector3i(x % dimension.width, y % dimension.height, z % dimension.depth)
   operator fun times(dimension: Dimension) = Vector3i(x * dimension.width, y * dimension.height, z * dimension.depth)
+  operator fun times(s: Int): Vector3i = Vector3i(x * s, y * s, z * s)
 }
 
 infix fun Vector3i.distanceTo(o: Vector3i) =

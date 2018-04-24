@@ -10,6 +10,7 @@ import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_Z
 import com.fracturedskies.engine.math.Vector3i.Companion.NEIGHBOURS
 import com.fracturedskies.engine.math.Vector3i.Companion.XY_PLANE_NEIGHBORS
 import com.fracturedskies.engine.math.Vector3i.Companion.Y_PLANE_NEIGHBORS
+import com.fracturedskies.water.WaterMap.Companion.MAX_WATER_RANGE
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import java.util.*
 import java.util.function.ToIntFunction
@@ -101,7 +102,7 @@ class WaterPathFinder(private val water: WaterMap){
     return jump(next, dir, target)
   }
 
-  fun waterPotential(pos: Vector3i) = pos.y * (MAX_WATER_LEVEL + 1) + water.getLevel(pos)
+  fun waterPotential(pos: Vector3i) = pos.y * (MAX_WATER_LEVEL + MAX_WATER_RANGE + 1) + water.nearestWaterDrop[pos] + water.getLevel(pos)
   private fun forcedNeighbors(current: Vector3i, next: Vector3i, dirs: List<Vector3i>)
           = dirs.filter { isBlocking(current + it) && !isBlocking(next + it) }
   private fun isBlocking(pos: Vector3i)

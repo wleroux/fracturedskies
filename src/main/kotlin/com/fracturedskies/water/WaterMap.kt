@@ -5,6 +5,11 @@ import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
 class WaterMap(val dimension: Dimension) {
+  companion object {
+    const val MAX_WATER_RANGE = 4
+  }
+
+  val nearestWaterDrop = IntMutableSpace(dimension)
   val maxFlowOut = ByteMutableSpace(dimension)
   private val level = ByteMutableSpace(dimension)
   private val opaque = BooleanMutableSpace(dimension)
@@ -140,6 +145,7 @@ class WaterMap(val dimension: Dimension) {
   }
 
   fun shore(pos: Vector3i) = Vector3i.NEIGHBOURS.map { pos + it }.filter { has(it) && !opaque[it] }
+  fun getOpaque(pos: Vector3i) = opaque[pos]
   fun setOpaque(pos: Vector3i, value: Boolean) {
     opaque[pos] = value
     if (!value) {

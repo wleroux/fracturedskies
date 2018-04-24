@@ -3,10 +3,14 @@ package com.fracturedskies.water
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.collections.MultiTypeMap
-import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.engine.math.*
+import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_Y
+import com.fracturedskies.engine.math.Vector3i.Companion.xZSpiral
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.engine.messages.MessageBus.send
+import com.fracturedskies.water.WaterMap.Companion.MAX_WATER_RANGE
 import com.fracturedskies.water.api.MAX_WATER_LEVEL
+import java.lang.Integer.min
 import java.util.*
 import java.util.Comparator.comparingInt
 import java.util.function.ToIntFunction
@@ -34,6 +38,10 @@ class WaterSystem(coroutineContext: CoroutineContext) {
             waterLevelUpdates[pos] = 0
           }
         }
+        message.blocks.forEach { (blockIndex, _) ->
+          val pos = water.dimension.toVector3i(blockIndex)
+          water.nearestWaterDrop[pos] = calculateNearestWaterDrop(pos)
+        }
         if (waterLevelUpdates.isNotEmpty()) {
           send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
         }
@@ -47,6 +55,9 @@ class WaterSystem(coroutineContext: CoroutineContext) {
             water.setLevel(pos, 0)
             waterLevelUpdates[pos] = 0
           }
+        }
+        message.updates.forEach { (pos, _) ->
+          updateNearestWater(pos)
         }
         if (waterLevelUpdates.isNotEmpty()) {
           send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
@@ -71,6 +82,28 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         }
       }
     }
+  }
+
+  private fun updateNearestWater(pos: Vector3i) {
+    xZSpiral(MAX_WATER_RANGE)
+        .flatMap { listOf(pos + AXIS_Y + it, pos + it) }
+        .filter { water.dimension.has(it) }
+        .forEach {
+          val newValue = calculateNearestWaterDrop(it)
+          if (water.nearestWaterDrop[it] != newValue) {
+            water.nearestWaterDrop[it] = newValue
+            water.sea[it]?.disturbed = true
+          }
+        }
+  }
+
+  private fun calculateNearestWaterDrop(pos: Vector3i): Int {
+    if (water.getOpaque(pos)) return WaterMap.MAX_WATER_RANGE
+    return xZSpiral(MAX_WATER_RANGE).map { pos - AXIS_Y + it }
+        .filter { water.dimension.has(it) }
+        .filter { ! water.getOpaque(it) }
+        .map { min(it distanceTo (pos - Vector3i.AXIS_Y), MAX_WATER_RANGE) }
+        .min() ?: MAX_WATER_RANGE
   }
 
   private fun evaporation(): Map<Vector3i, Byte> {
