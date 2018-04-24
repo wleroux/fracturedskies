@@ -116,6 +116,7 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
   }
 
   var lastMessage: Long = 0
+  @Suppress("UNUSED_PARAMETER")
   private fun debugMessageCallback(source: Int, type: Int, id: Int, severity: Int, length: Int, message: Long, userParam: Long) {
     val report = when (severity) {
       GL_DEBUG_SEVERITY_HIGH -> true

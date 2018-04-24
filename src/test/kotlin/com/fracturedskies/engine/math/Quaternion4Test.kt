@@ -13,6 +13,7 @@ class Quaternion4Test {
     val AXIS_NEG_Y = Vector3(0f, -1f, 0f)
     val AXIS_NEG_Z = Vector3(0f, 0f, -1f)
     val AXIS_NONE = Vector3(0f, 0f, 0f)
+    val AXIS_NEIGHBORS = listOf(AXIS_POS_X, AXIS_POS_Y, AXIS_POS_Z, AXIS_NEG_X, AXIS_NEG_Y, AXIS_NEG_Z)
   }
 
   @Test
@@ -71,5 +72,15 @@ class Quaternion4Test {
 
       assertEquals(finalRotation, rotation1 * rotation2)
     })
+  }
+
+  @Test
+  fun rotationBetweenAxisRotates() {
+    AXIS_NEIGHBORS.forEach { v1 ->
+      AXIS_NEIGHBORS.forEach { v2 ->
+        val rotation = Quaternion4.fromToRotation(v1, v2)
+        assertEquals(v2, v1 * rotation, (v1 to v2).toString())
+      }
+    }
   }
 }

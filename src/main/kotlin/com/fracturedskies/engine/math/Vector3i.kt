@@ -1,9 +1,11 @@
 package com.fracturedskies.engine.math
 
 import com.fracturedskies.engine.collections.*
-import kotlin.math.abs
+import kotlin.math.*
 
 data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
+  val magnitude: Float get() = sqrt((x * x + y * y + z * z).toFloat())
+
   companion object {
     val AXIS_X = Vector3i(1, 0, 0)
     val AXIS_NEG_X = Vector3i(-1, 0, 0)

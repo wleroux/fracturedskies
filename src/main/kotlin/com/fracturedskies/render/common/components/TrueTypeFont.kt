@@ -92,6 +92,7 @@ class TrueTypeFont private constructor(private val font: String, private val fon
     return (getVertices(text).map { it.positionX }.max() ?: 0f).roundToInt()
   }
 
+  @Suppress("UNUSED_PARAMETER")
   fun getHeight(text: String): Int {
     return ((ascent - descent + lineGap) * heightScale).roundToInt()
   }

@@ -14,6 +14,7 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class Colonist(
     val id: Id,
     var position: Vector3i,
+    var direction: Vector3i,
     val categoryPriorities: MutableMap<TaskCategory, TaskPriority>,
     val rejectedTasks: MutableMap<Id, Int>,
     var assignedTask: Id?
@@ -26,7 +27,10 @@ class Colonist(
 
   fun process(message: Any) {
     when (message) {
-      is ColonistMoved -> if (message.id == id) { position = message.pos }
+      is ColonistMoved -> if (message.id == id) {
+        direction = message.direction
+        position = message.pos
+      }
       is ColonistTaskSelected -> if (message.colonist == id) { assignedTask = message.task }
       is ColonistRejectedTask -> {
         if (message.task == assignedTask) assignedTask = null
@@ -132,7 +136,7 @@ open class WorldState(val dimension: Dimension) {
       is TaskCompleted -> tasks.remove(message.id)
       is TaskCancelled -> tasks.remove(message.id)
       is ItemSpawned -> items[message.id] = Item(message.id, message.position, message.blockType)
-      is ColonistSpawned -> colonists[message.id] = Colonist(message.id, message.initialPos, mutableMapOf(), mutableMapOf(), null)
+      is ColonistSpawned -> colonists[message.id] = Colonist(message.id, message.initialPos, Vector3i.AXIS_Z, mutableMapOf(), mutableMapOf(), null)
       is TimeUpdated -> timeOfDay = message.time
     }
   }

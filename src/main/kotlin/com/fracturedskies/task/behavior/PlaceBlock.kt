@@ -28,6 +28,17 @@ class PutBlockBehavior(private val pos: Vector3i, private val blockType: BlockTy
     if (pos distanceTo colonist.position != 1) {
       yield(FAILURE)
     } else {
+      // Look at block position
+      val deltaPosition = pos - colonist.position
+      if (deltaPosition.x != 0 || deltaPosition.z != 0) {
+        val newDirection = (deltaPosition.toVector3() / deltaPosition.magnitude).toVector3i()
+        if (newDirection != colonist.direction) {
+          send(ColonistMoved(colonist.id, colonist.position, newDirection, Cause.of(this)))
+          yield(RUNNING)
+        }
+      }
+
+
       val blockDrop = state.blockType[pos].blockDrop
       send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
       if (blockDrop != null)

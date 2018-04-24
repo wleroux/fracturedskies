@@ -1,6 +1,7 @@
 package com.fracturedskies.engine.math
 
 import java.lang.Math.sqrt
+import kotlin.math.roundToInt
 
 data class Vector3(var x: Float, var y: Float, var z: Float) {
   val magnitude: Float
@@ -39,6 +40,7 @@ data class Vector3(var x: Float, var y: Float, var z: Float) {
     )
   }
   operator fun times(s: Float) = Vector3(this.x * s, this.y * s, this.z * s)
+  operator fun div(s: Float) = Vector3(this.x / s, this.y / s, this.z / s)
   operator fun times(q: Quaternion4): Vector3 {
     val x2 = q.x * 2f
     val y2 = q.y * 2f
@@ -60,4 +62,7 @@ data class Vector3(var x: Float, var y: Float, var z: Float) {
     )
   }
   fun normalize() = times(1f / magnitude)
+  fun toVector3i() = Vector3i(x.roundToInt(), y.roundToInt(), z.roundToInt())
+  infix fun cross(o: Vector3) = Vector3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x)
+  infix fun dot(o: Vector3) = (x * o.x + y * o.y + z * o.z)
 }

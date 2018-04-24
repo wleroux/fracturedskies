@@ -35,15 +35,13 @@ class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val sliceHeight = props[SLICE_HEIGHT]
     props[WORLD_STATE].colonists
         .filterValues { it.position.y <= sliceHeight }
-        .map { (_, colonist) -> colonistMesh(colonist) to colonist.position }
-        .groupBy({it.component1()}, {it.component2()})
-        .forEach { mesh, positions ->
+        .forEach { _, colonist ->
+          val mesh = colonistMesh(colonist)
+          val rotation = Quaternion4.fromToRotation(Vector3.AXIS_Z, colonist.direction.toVector3())
+          val modelPosition = colonist.position.toVector3() + Vector3(0.5f, 0f, 0.5f)
           glBindVertexArray(mesh.vao)
-          positions.distinct().forEach { position ->
-            val modelPosition = position.toVector3() + Vector3(0.5f, 0f, 0.5f)
-            glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4(position = modelPosition))
-            glDrawElements(GL11.GL_TRIANGLES, mesh.indexCount, GL11.GL_UNSIGNED_INT, 0)
-          }
+          glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4(position = modelPosition, rotation = rotation))
+          glDrawElements(GL11.GL_TRIANGLES, mesh.indexCount, GL11.GL_UNSIGNED_INT, 0)
         }
   }
 

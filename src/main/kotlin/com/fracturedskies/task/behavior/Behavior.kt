@@ -82,7 +82,12 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
         return@buildSequence
       } else {
         // Step towards the path
-        MessageBus.send(ColonistMoved(colonist.id, step, Cause.of(this)))
+        val deltaPosition = step - colonist.position
+        val newDirection = if (deltaPosition.x != 0 || deltaPosition.z != 0)
+          (deltaPosition.toVector3() / deltaPosition.magnitude).toVector3i()
+        else colonist.direction
+
+        MessageBus.send(ColonistMoved(colonist.id, step, newDirection, Cause.of(this)))
         yield(RUNNING)
       }
     }

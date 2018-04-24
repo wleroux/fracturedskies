@@ -19,7 +19,7 @@ data class BlockLightUpdated(val updates: Map<Vector3i, Int>, override val cause
 data class TimeUpdated(val time: Float, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 
 data class ColonistSpawned(val id: Id, val initialPos: Vector3i, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
-data class ColonistMoved(val id: Id, val pos: Vector3i, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
+data class ColonistMoved(val id: Id, val pos: Vector3i, val direction: Vector3i, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 
 data class ColonistTaskSelected(val colonist: Id, val task: Id?, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
 data class ColonistRejectedTask(val colonist: Id, val task: Id, override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message

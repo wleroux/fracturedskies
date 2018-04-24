@@ -1,5 +1,7 @@
 package com.fracturedskies.engine.math
 
+import kotlin.math.acos
+
 data class Quaternion4(var w: Float, var x: Float, var y: Float, var z: Float) {
   companion object {
     operator fun invoke(axis: Vector3, angle: Float): Quaternion4 {
@@ -9,6 +11,12 @@ data class Quaternion4(var w: Float, var x: Float, var y: Float, var z: Float) {
       val y = axis.y * s
       val z = axis.z * s
       return Quaternion4(w, x, y, z).normalize()
+    }
+
+    fun fromToRotation(v1: Vector3, v2: Vector3): Quaternion4 {
+      val cross = v1 cross v2
+      val angle = acos((v1 dot v2) / (v1.magnitude * v2.magnitude))
+      return invoke(if (cross.magnitude != 0f) cross else Vector3(v1.y, v1.z, v1.x), angle)
     }
   }
 
