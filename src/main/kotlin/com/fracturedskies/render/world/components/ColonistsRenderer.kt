@@ -5,6 +5,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.GameState.RenderWorldState
+import com.fracturedskies.render.colonist.ObjMeshParser
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -39,7 +40,8 @@ class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         .forEach { mesh, positions ->
           glBindVertexArray(mesh.vao)
           positions.distinct().forEach { position ->
-            glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4(position = position.toVector3()))
+            val modelPosition = position.toVector3() + Vector3(0.5f, 0f, 0.5f)
+            glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4(position = modelPosition))
             glDrawElements(GL11.GL_TRIANGLES, mesh.indexCount, GL11.GL_UNSIGNED_INT, 0)
           }
         }
@@ -51,10 +53,14 @@ class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val blockLight = block.blockLight
     val skyLight = block.skyLight
     return cache.computeIfAbsent(skyLight to blockLight, { _ ->
-      generateBlock(Color4.WHITE, skyLight.toFloat(), blockLight.toFloat(),
-          Vector3(0.25f, 0.00f, 0.25f),
-          Vector3(0.50f, 0.50f, 0.50f)
-      ).invoke()
+      ObjMeshParser.generateMesh("colonist.obj", 1f/16f, listOf(
+          Color4(216, 28, 31, 255), // shoes
+          Color4(79, 55, 39, 255), // brown
+          Color4(193, 138, 38, 255), // upper-beak
+          Color4(255, 177, 27, 255), // lower-beak
+          Color4(11, 16, 19, 255), // pupil
+          Color4(238, 238, 238, 255) // eyes
+      ), skyLight.toFloat(), blockLight.toFloat())
     })
   }
 }
