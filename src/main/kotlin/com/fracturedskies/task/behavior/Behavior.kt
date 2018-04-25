@@ -65,7 +65,7 @@ class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
   override fun execute(state: WorldState, colonist: Colonist): Sequence<BehaviorStatus> = buildSequence {
     val colonistPos = colonist.position
 
-    val path = state.pathFinder.find(colonistPos, targets(positions), targetsDistanceHeuristic(positions))
+    val path = state.pathFinder.find(colonistPos, targets(positions), targetsDistanceHeuristic(positions)).path
     if (path.isEmpty()) {
       // If there are no possible paths, fail
       yield(FAILURE)

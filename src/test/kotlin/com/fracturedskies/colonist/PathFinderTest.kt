@@ -15,7 +15,7 @@ class PathFinderTest {
   @Test
   fun itFindsPath() {
     val targetPos = Vector3i(7, 0, 0)
-    val path = pathFinder.find(Vector3i(0, 0, 0), target(targetPos), targetDistanceHeuristic(targetPos))
+    val path = pathFinder.find(Vector3i(0, 0, 0), target(targetPos), targetDistanceHeuristic(targetPos)).path
 
     assertEquals(listOf(
         Vector3i(0, 0, 0),
@@ -33,7 +33,7 @@ class PathFinderTest {
   fun itDoesNotGoThroughBlocks() {
     blocked[Vector3i(3, 0, 0)] = true
     val targetPos = Vector3i(7, 0, 0)
-    val path = pathFinder.find(Vector3i(0, 0, 0), target(targetPos), targetDistanceHeuristic(targetPos))
+    val path = pathFinder.find(Vector3i(0, 0, 0), target(targetPos), targetDistanceHeuristic(targetPos)).path
 
     assertEquals(listOf(
         Vector3i(0, 0, 0),

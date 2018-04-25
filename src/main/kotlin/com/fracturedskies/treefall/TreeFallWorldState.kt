@@ -33,8 +33,8 @@ class TreeFallWorldState(dimension: Dimension) : WorldState(dimension) {
     val block = blocks[pos]
     block.type == DIRT || block.type == GRASS
   }
-  private fun treeCostHeuristic(): CostHeuristic = { pos: Vector3i ->
-    when (blocks[pos].type) {
+  private fun treeCostHeuristic(): CostHeuristic = { cost: Int, pos: Vector3i ->
+    cost + when (blocks[pos].type) {
       DIRT -> pos.y
       GRASS -> pos.y
       WOOD -> pos.y
@@ -58,7 +58,7 @@ class TreeFallWorldState(dimension: Dimension) : WorldState(dimension) {
     val preExistingTree = treeSpace[pos]
     if (preExistingTree == null) {
       if (blockType == LEAVE || blockType == WOOD) {
-        val treeRootPath = treePathFinder.find(pos, isTreeRoot(), treeCostHeuristic())
+        val treeRootPath = treePathFinder.find(pos, isTreeRoot(), treeCostHeuristic()).path
         if (treeRootPath.isNotEmpty()) {
           val treeRootPos = treeRootPath.last()
           val tree = treeSpace[treeRootPos] ?: Tree(treeRootPos, mutableListOf())
@@ -81,7 +81,7 @@ class TreeFallWorldState(dimension: Dimension) : WorldState(dimension) {
         val decayNodes = preExistingTree.nodes.filter { node ->
           val nodeBlockType = blocks[node].type
           if (nodeBlockType == WOOD || nodeBlockType == LEAVE) {
-            val pathToRoot = treePathFinder.find(node, target(preExistingTree.rootPos), treeCostHeuristic())
+            val pathToRoot = treePathFinder.find(node, target(preExistingTree.rootPos), treeCostHeuristic()).path
             pathToRoot.isEmpty()
           } else {
             false

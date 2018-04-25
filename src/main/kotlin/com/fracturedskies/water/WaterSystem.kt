@@ -19,12 +19,12 @@ import kotlin.coroutines.experimental.CoroutineContext
 class WaterSystem(coroutineContext: CoroutineContext) {
   private var initialized = false
   private lateinit var water: WaterMap
-  private lateinit var pathFinder: WaterPathFinder
+  private lateinit var pathFinder: PathFinder
   val channel = MessageChannel(coroutineContext) { message ->
     when (message) {
       is NewGameRequested -> {
         water = WaterMap(message.dimension)
-        pathFinder = WaterPathFinder(water)
+        pathFinder = PathFinder({_, toPos -> water.has(toPos) && water.maxFlowOut[toPos] != 0.toByte()})
         initialized = true
       }
       is WorldGenerated -> {
@@ -146,12 +146,13 @@ class WaterSystem(coroutineContext: CoroutineContext) {
           continue
         }
 
-        val path = pathFinder.find(targetLocation)
+        val targetWaterPotential = waterPotential(targetLocation) + 2
+        val results = pathFinder.find(targetLocation, { waterPotential(it) >= targetWaterPotential}, { _, it -> -waterPotential(it)}, true)
+        val path = results.path
         if (!path.isEmpty()) {
-          for (i in 0 until path.size - 1)
-            water.maxFlowOut[path[i]]--
+          path.stream().skip(1).forEach { water.maxFlowOut[it]-- }
 
-          val sourceLocation = path[0]
+          val sourceLocation = path.last()
           val sourceWaterLevel = water.getLevel(sourceLocation)
 
           originalWaterLevel.putIfAbsent(sourceLocation, sourceWaterLevel)
@@ -167,6 +168,27 @@ class WaterSystem(coroutineContext: CoroutineContext) {
           candidates.add(sourceLocation)
           if (targetWaterLevel != MAX_WATER_LEVEL)
             candidates.add(targetLocation)
+        } else {
+          for (entry in results.cameFrom) {
+            val to = entry.key
+            var from = entry.value
+            if (from != null) {
+              val dir = when {
+                to.x > from.x -> Vector3i.AXIS_X
+                to.x < from.x -> Vector3i.AXIS_NEG_X
+                to.y > from.y -> AXIS_Y
+                to.y < from.y -> Vector3i.AXIS_NEG_Y
+                to.z > from.z -> Vector3i.AXIS_Z
+                else -> Vector3i.AXIS_NEG_Z
+              }
+
+              while (from != to) {
+                water.maxFlowOut[from] = 0
+                from += dir
+              }
+            }
+            water.maxFlowOut[to] = 0
+          }
         }
       }
     }
@@ -178,5 +200,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
     return waterLevelUpdates.filter { (pos, waterLevel) -> originalWaterLevel[pos] != waterLevel }
   }
 
-  private val waterPotentialComparator = comparingInt(ToIntFunction<Vector3i> { pathFinder.waterPotential(it) })
+  private fun waterPotential(pos: Vector3i) = pos.y * (MAX_WATER_LEVEL + MAX_WATER_RANGE + 1) + water.nearestWaterDrop[pos] + water.getLevel(pos)
+
+  private val waterPotentialComparator = comparingInt(ToIntFunction<Vector3i> { waterPotential(it) })
 }
