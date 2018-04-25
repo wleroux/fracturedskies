@@ -3,6 +3,8 @@ package com.fracturedskies.task.behavior
 import com.fracturedskies.*
 import com.fracturedskies.api.ColonistMoved
 import com.fracturedskies.engine.math.*
+import com.fracturedskies.engine.math.PathFinder.Companion.targets
+import com.fracturedskies.engine.math.PathFinder.Companion.targetsDistanceHeuristic
 import com.fracturedskies.engine.messages.*
 import com.fracturedskies.task.behavior.BehaviorStatus.*
 import kotlin.coroutines.experimental.buildSequence
@@ -59,18 +61,13 @@ class InOrderBehavior(private vararg val behaviors: Behavior): Behavior {
   }
 }
 
-class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
+class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
   override fun execute(state: WorldState, colonist: Colonist): Sequence<BehaviorStatus> = buildSequence {
     val colonistPos = colonist.position
 
-    val path = positions
-        .filter { state.blocked.has(it) }
-        .filterNot { state.blocked[it] }
-        .map { pos -> state.pathFinder.find(colonistPos, isTarget(pos), distanceToTarget(pos)) }
-        .filter { it.isNotEmpty() }
-        .minBy { it.size }
-    if (path == null) {
-      // If there are not possible paths, fail
+    val path = state.pathFinder.find(colonistPos, targets(positions), targetsDistanceHeuristic(positions))
+    if (path.isEmpty()) {
+      // If there are no possible paths, fail
       yield(FAILURE)
       return@buildSequence
     }
@@ -78,7 +75,7 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
     for (step in path.drop(1)) {
       if (state.blocked[step]) {
         // If the path is blocked, see if we can find another
-        yieldAll(MoveToPositionBehavior(*positions).execute(state, colonist))
+        yieldAll(MoveToPositionBehavior(positions).execute(state, colonist))
         return@buildSequence
       } else {
         // Step towards the path
@@ -104,7 +101,5 @@ class MoveToPositionBehavior(private vararg val positions: Vector3i): Behavior {
     return min
   }
 
-  private fun distanceToTarget(target: Vector3i) = { pos: Vector3i -> pos distanceTo target }
-  private fun isTarget(target: Vector3i) = { pos: Vector3i -> pos == target }
   override fun isPossible(state: WorldState, colonist: Colonist) = cost(state, colonist) != Int.MAX_VALUE
 }

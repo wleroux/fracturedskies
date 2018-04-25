@@ -12,12 +12,12 @@ import kotlin.coroutines.experimental.buildSequence
 
 
 fun placeBlock(pos: Vector3i, blockType: BlockType) = InOrderBehavior(
-    MoveToPositionBehavior(*(Vector3i.NEIGHBOURS.map { pos + it }.toTypedArray())),
+    MoveToPositionBehavior(Vector3i.NEIGHBOURS.map { pos + it }),
     PutBlockBehavior(pos, blockType)
 )
 
 fun removeBlock(pos: Vector3i) = InOrderBehavior(
-    MoveToPositionBehavior(*(Vector3i.NEIGHBOURS.map { pos + it }.toTypedArray())),
+    MoveToPositionBehavior(Vector3i.NEIGHBOURS.map { pos + it }),
     PutBlockBehavior(pos, AIR)
 )
 
