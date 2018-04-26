@@ -7,7 +7,7 @@ import com.fracturedskies.render.common.components.layout.*
 import com.fracturedskies.render.common.components.layout.Layout.Companion.GROW
 import com.fracturedskies.render.common.components.layout.Layout.Companion.layout
 import com.fracturedskies.render.mainmenu.MainMenuRenderer.Companion.mainMenu
-import com.fracturedskies.render.world.components.WorldController.Companion.worldController
+import com.fracturedskies.render.world.controller.WorldController.Companion.worldController
 import org.lwjgl.opengl.GL11.*
 
 class Scene(props: MultiTypeMap) : Component<Unit>(props, Unit) {

@@ -21,6 +21,16 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
     val XY_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Y_PLANE_NEIGHBORS
     val XZ_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Z_PLANE_NEIGHBORS
 
+    fun area(xRange: IntRange, yRange: IntRange, zRange: IntRange): List<Vector3i> {
+      return xRange.flatMap { x ->
+        zRange.flatMap { z ->
+          yRange.map { y ->
+            Vector3i(x, y, z)
+          }
+        }
+      }
+    }
+
     fun xZRing(radius: Int): List<Vector3i> {
       return if (radius == 0) {
         listOf(Vector3i(0, 0, 0))

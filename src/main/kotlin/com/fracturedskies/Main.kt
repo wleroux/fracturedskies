@@ -1,7 +1,7 @@
 package com.fracturedskies
 
 import com.fracturedskies.api.*
-import com.fracturedskies.api.GameSpeed.UNLIMITED
+import com.fracturedskies.api.GameSpeed.NORMAL
 import com.fracturedskies.engine.ModLoader
 import com.fracturedskies.engine.api.*
 import com.fracturedskies.engine.collections.Dimension
@@ -29,7 +29,7 @@ enum class GameSize(val dimension: Dimension) {
 fun main(args: Array<String>) = runBlocking {
   // Listen for Shutdown request
   val shutdownRequested = AtomicBoolean(false)
-  val gameSpeed = AtomicReference<GameSpeed>(UNLIMITED)
+  val gameSpeed = AtomicReference<GameSpeed>(NORMAL)
   register(MessageChannel(coroutineContext) { message ->
     if (message is ShutdownRequested) shutdownRequested.set(true)
     if (message is GameSpeedUpdated) gameSpeed.set(message.gameSpeed)

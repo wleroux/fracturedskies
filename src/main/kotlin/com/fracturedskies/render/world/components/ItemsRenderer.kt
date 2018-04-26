@@ -55,8 +55,8 @@ class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         .computeIfAbsent(blockType, { mutableMapOf() })
         .computeIfAbsent(skyLight to blockLight, {
           generateBlock(blockType.color, skyLight.toFloat(), blockLight.toFloat(),
-              Vector3(0.25f, 0.00f, 0.25f),
-              Vector3(0.50f, 0.50f, 0.50f)
+              Vector3(0.375f, 0.00f, 0.375f),
+              Vector3(0.25f, 0.25f, 0.25f)
           ).invoke()
         })
   }

@@ -1,9 +1,9 @@
-package com.fracturedskies.render.world.components
+package com.fracturedskies.render.world.controller
 
 import com.fracturedskies.Block
 import com.fracturedskies.api.*
+import com.fracturedskies.api.BlockType.*
 import com.fracturedskies.api.GameSpeed.*
-import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
@@ -14,11 +14,8 @@ import com.fracturedskies.render.GameState
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.world.components.WorldRenderer.Companion.world
-import com.fracturedskies.task.api.*
-import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW.*
-import java.lang.Integer.*
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.math.roundToInt
 
@@ -45,6 +42,16 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     private const val ROTATE_DOWN = (Math.PI / 4f).toFloat()
     private const val SPEED = 1f
 
+    private fun screenPos(bounds: Bounds, mousePos: Point): Pair<Float, Float> {
+      val mx = mousePos.x.toFloat() - bounds.x.toFloat()
+      val my = mousePos.y.toFloat() - bounds.y.toFloat()
+      val sw = bounds.width.toFloat()
+      val sh = bounds.height.toFloat()
+      val sx = -((sw - mx) / sw - 0.5f) * 2f
+      val sy = (my / sh - 0.5f) * 2f
+      return sx to sy
+    }
+
     private fun heightAt(world: Space<Block>, x: Int, z: Int, yRange: IntRange): Int {
       val clampedX = clamp(x, 0 until world.dimension.width)
       val clampedZ = clamp(z, 0 until world.dimension.depth)
@@ -56,10 +63,8 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   }
 
   private val gameState get() = props[GAME_STATE]
-  private val initialized get() = gameState.gameStarted
   private val world get() = gameState.world!!
 
-  private var firstBlock: Vector3i? = null
   private var focused = false
   private val sliceHeight: Int
     get() = world.blocks.dimension.height - clamp(slice, 0 until world.blocks.dimension.height)
@@ -95,24 +100,23 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   private val view get() = viewCenter + viewOffset
   private val viewOffset get() = Vector3(0f, 0f, -1f).times(rotation).times(zoomLevel)
 
-  @Suppress("UNUSED_PARAMETER")
-  private fun scroll(xOffset: Double, yOffset: Double) {
-    if (keyboard.isPressed(GLFW_KEY_LEFT_CONTROL)) {
-      slice += clamp(yOffset.roundToInt(), -1..1)
-    } else {
-      zoomLevel = clamp(zoomLevel + 5f * yOffset.toFloat(), 5f..100f)
-    }
-  }
-
   private fun onUpdate(dt: Float) {
-    // Game Speed
     when {
+      // Game Speed
       keyboard.isPressed(GLFW_KEY_SPACE) -> send(GameSpeedUpdated(PAUSE, Cause.of(this)))
       keyboard.isPressed(GLFW_KEY_1) -> send(GameSpeedUpdated(SLOW, Cause.of(this)))
       keyboard.isPressed(GLFW_KEY_2) -> send(GameSpeedUpdated(NORMAL, Cause.of(this)))
       keyboard.isPressed(GLFW_KEY_3) -> send(GameSpeedUpdated(FAST, Cause.of(this)))
       keyboard.isPressed(GLFW_KEY_4) -> send(GameSpeedUpdated(UNLIMITED, Cause.of(this)))
+
+      // World Action Controller
+      keyboard.isPressed(GLFW_KEY_C) -> worldActionController = SpawnColonistActionController
+      keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(DIRT)
+      keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(LIGHT)
+      keyboard.isPressed(GLFW_KEY_Z) -> worldActionController = RemoveBlockBlockActionController
+      keyboard.isPressed(GLFW_KEY_V) -> worldActionController = AddWaterBlockActionController
     }
+    worldActionController.onUpdate(world, dt)
 
     // Perspective
     val lookUp = (keyboard.isPressed(GLFW_KEY_UP) or keyboard.isPressed(GLFW_KEY_W)) and keyboard.isPressed(GLFW_KEY_LEFT_SHIFT)
@@ -178,171 +182,95 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: WorldControllerState) {
     super.componentWillUpdate(nextProps, nextState)
 
-    if (initialized) {
-      viewCenter.y = run {
-        val yRange = (0 until sliceHeight)
-        val viewHeight = heightAt(world.blocks, view.x.toInt(), view.z.toInt(), yRange).toFloat()
-        val viewCenterHeight = heightAt(world.blocks, viewCenter.x.toInt(), viewCenter.z.toInt(), yRange).toFloat()
-        val minimumHeight = viewHeight + 5f
-        val desiredHeight = viewCenterHeight + viewOffset.y
+    viewCenter.y = run {
+      val yRange = (0 until sliceHeight)
+      val viewHeight = heightAt(world.blocks, view.x.toInt(), view.z.toInt(), yRange).toFloat()
+      val viewCenterHeight = heightAt(world.blocks, viewCenter.x.toInt(), viewCenter.z.toInt(), yRange).toFloat()
+      val minimumHeight = viewHeight + 5f
+      val desiredHeight = viewCenterHeight + viewOffset.y
 
-        Math.max(minimumHeight, desiredHeight) - viewOffset.y
-      }
+      Math.max(minimumHeight, desiredHeight) - viewOffset.y
     }
   }
 
-  override val handler = EventHandlers(on(Key::class) { key ->
-    if (key.action == GLFW_PRESS) {
-      keyboard = keyboard.press(key.key)
-    } else if (key.action == GLFW_RELEASE){
-      keyboard = keyboard.release(key.key)
+  override val handler = EventHandlers(
+      on(Key::class, handler = this::onKey),
+      on(Focus::class, handler = this::onFocus),
+      on(Unfocus::class, handler = this::onUnfocus),
+      on(Scroll::class, handler = this::onScroll),
+      on(Click::class, handler = this::onClick),
+      on(MouseMove::class, handler = this::onMouseMove)
+  )
+
+
+  private fun onScroll(event: Scroll) {
+    val yOffset = event.yOffset
+    if (keyboard.isPressed(GLFW_KEY_LEFT_CONTROL)) {
+      slice += clamp(yOffset.roundToInt(), -1..1)
+    } else {
+      zoomLevel = clamp(zoomLevel + 5f * yOffset.toFloat(), 5f..100f)
     }
-  }, on(Focus::class) {
-    focused = true
-  }, on(Unfocus::class) {
-    focused = false
-    keyboard = Keyboard()
-  }, on(Scroll::class) { event ->
-    scroll(event.xOffset, event.yOffset)
-  },on(Click::class) { event->
-    if (!focused) {
-      return@on
-    }
-    if (event.action != GLFW_PRESS && event.action != GLFW_RELEASE) {
-      return@on
-    }
+  }
+
+  var worldActionController: WorldActionController = NoopActionController
+
+  private fun onClick(event: Click) {
+    if (!focused)
+      return
+    if (event.action != GLFW_PRESS && event.action != GLFW_RELEASE)
+      return
     event.stopPropogation = true
 
-    val mx = event.mousePos.x.toFloat() - this.bounds.x.toFloat()
-    val my = event.mousePos.y.toFloat() - this.bounds.y.toFloat()
-    val sw = this.bounds.width.toFloat()
-    val sh = this.bounds.height.toFloat()
-    val sx = -((sw - mx) / sw - 0.5f) * 2
-    val sy = (my / sh - 0.5f) * 2
+    val (worldPos, worldDirection) = worldPosDirection(event.mousePos)
+    worldActionController.onClick(WorldMouseClick(world, worldPos, worldDirection, event.action, event.button, event.mods), sliceHeight)
+  }
+
+  private fun onMouseMove(event: MouseMove) {
+    val (worldPos, worldDirection) = worldPosDirection(event.mousePos)
+    worldActionController.onMove(WorldMouseMove(world, worldPos, worldDirection), sliceHeight)
+  }
+
+  private fun onKey(event: Key) {
+    if (event.action == GLFW_PRESS) {
+      keyboard = keyboard.press(event.key)
+    } else if (event.action == GLFW_RELEASE){
+      keyboard = keyboard.release(event.key)
+    }
+  }
+
+  @Suppress("UNUSED_PARAMETER")
+  private fun onFocus(event: Focus) {
+    focused = true
+  }
+
+  @Suppress("UNUSED_PARAMETER")
+  private fun onUnfocus(event: Unfocus) {
+    focused = false
+    keyboard = Keyboard()
+  }
+
+  private fun worldPosDirection(mousePos: Point): Pair<Vector3, Vector3> {
+    val (sx, sy) = screenPos(this.bounds, mousePos)
 
     val perspectiveInverse = Matrix4.perspective(Math.PI.toFloat() / 4, this.bounds.width, this.bounds.height, 0.03f, 1000f).invert()
     val viewInverse = Matrix4(view, rotation)
 
     var rayStart4 = Vector4(sx, sy, -1f, 1f) * perspectiveInverse * viewInverse
     rayStart4 *= (1f / rayStart4.w)
-    val rayStart3 = Vector3(rayStart4) - Vector3.ZERO
+    val rayStart3 = Vector3(rayStart4)
 
     var rayEnd4 = Vector4(sx, sy, 1f, 1f) * perspectiveInverse * viewInverse
     rayEnd4 *= (1f / rayEnd4.w)
-    val rayEnd3 = Vector3(rayEnd4) - Vector3.ZERO
+    val rayEnd3 = Vector3(rayEnd4)
     val direction = (rayEnd3 - rayStart3).normalize()
-
-    val selectedBlock = raycast(world.blocks, rayStart3, direction)
-            .filter { it.position.y < sliceHeight }
-            .filterNot { it.obj.type == BlockType.AIR }
-            .firstOrNull()
-    if (selectedBlock == null) {
-      firstBlock = null
-    } else {
-      when (event.action) {
-        GLFW_PRESS -> {
-          // Add Blocks or Add Water
-          if (event.button == GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
-            firstBlock = selectedBlock.position + selectedBlock.faces.first()
-          }
-          // Add Water or Remove Blocks
-          else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
-            firstBlock = selectedBlock.position
-          }
-        }
-        GLFW_RELEASE -> {
-          if (firstBlock != null) {
-            // Add Blocks
-            var secondBlock: Vector3i? = null
-            if (event.button == GLFW_MOUSE_BUTTON_LEFT || event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
-              secondBlock = selectedBlock.position + selectedBlock.faces.first()
-            }
-            // Add Water or Remove Blocks
-            else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
-              secondBlock = selectedBlock.position
-            }
-
-            val xRange = min(firstBlock!!.x, secondBlock!!.x)..max(firstBlock!!.x, secondBlock.x)
-            val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
-            val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
-
-            // Add Blocks
-            if (event.button == GLFW_MOUSE_BUTTON_LEFT) {
-              if (!keyboard.isPressed(GLFW_KEY_LEFT_CONTROL)) {
-                val blockType = when {
-                  keyboard.isPressed(GLFW_KEY_LEFT_SHIFT) -> BlockType.LIGHT
-                  else -> BlockType.DIRT
-                }
-
-                val updates = xRange.flatMap { x ->
-                  zRange.flatMap { z ->
-                    yRange.flatMap { y ->
-                      if (world.blocks.has(x, y, z) && !world.blocks[x, y, z].type.opaque)
-                        listOf(Vector3i(x, y, z) to blockType)
-                      else listOf()
-                    }
-                  }
-                }.toMap()
-                updates.forEach { update ->
-                  send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, PlaceBlock(update.key, update.value), Cause.of(this)))
-                }
-              } else {
-                send(ColonistSpawned(Id(), Vector3i(xRange.start, yRange.start, zRange.start), Cause.of(this)))
-              }
-            }
-            // Remove Blocks
-            else if (event.button == GLFW_MOUSE_BUTTON_RIGHT) {
-              val updates = xRange.flatMap { x ->
-                zRange.flatMap { z ->
-                  yRange.flatMap { y ->
-                    if (world.blocks.has(x, y, z) && world.blocks[x, y, z].type.opaque)
-                      listOf(Vector3i(x, y, z) to BlockType.AIR)
-                    else listOf()
-                  }
-                }
-              }.toMap()
-              updates.forEach { update ->
-                send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, RemoveBlock(update.key), Cause.of(this)))
-              }
-            }
-            // Add Water
-            else if (event.button == GLFW_MOUSE_BUTTON_MIDDLE) {
-              val updates = xRange.flatMap { x ->
-                zRange.flatMap { z ->
-                  yRange.flatMap { y ->
-                    if (world.blocks.has(x, y, z) && !world.blocks[x, y, z].type.opaque) {
-                      if (event.button == GLFW_MOUSE_BUTTON_1) {
-                        val waterLevel = world.blocks[x, y, z].waterLevel
-                        if (waterLevel > 0.toByte()) {
-                          listOf(Vector3i(x, y, z) to waterLevel.dec())
-                        } else listOf()
-                      } else {
-                        val waterLevel = world.blocks[x, y, z].waterLevel
-                        if (waterLevel < MAX_WATER_LEVEL) {
-                          listOf(Vector3i(x, y, z) to MAX_WATER_LEVEL)
-                        } else listOf()
-                      }
-                    } else listOf()
-                  }
-                }
-              }.toMap()
-
-              send(BlockWaterLevelUpdated(updates, Cause.of(this)))
-            }
-          }
-          firstBlock = null
-        }
-      }
-    }
-  })
+    return rayStart3 to direction
+  }
 
   override fun render() = nodes {
-    if (initialized) {
-      world(
-        world,
-        Matrix4(position = view, rotation = rotation).invert(),
-        sliceHeight
-      )
-    }
+    world(
+      world,
+      Matrix4(position = view, rotation = rotation).invert(),
+      sliceHeight
+    )
   }
 }

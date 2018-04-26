@@ -158,6 +158,8 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
         dispatch(nextHover, Hover(nextHover))
       hover = nextHover
     }
+    if (hover != null)
+      dispatch(hover!!, MouseMove(hover!!, mousePos))
   }
   @Suppress("UNUSED_PARAMETER") private fun mouseButtonCallback(window: Long, button: Int, action: Int, mods: Int) {
     val nextFocus = scene.glComponentFromPoint(mousePos)
