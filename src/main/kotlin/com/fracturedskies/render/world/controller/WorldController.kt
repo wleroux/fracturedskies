@@ -24,7 +24,9 @@ data class WorldControllerState(
     val slice: Int = 0,
     val viewAngle: Float = (Math.PI / 3f).toFloat(),
     val rotationAngle: Float = 0f,
-    val viewCenter: Vector3 = Vector3(0f, 0f, 0f)
+    val viewCenter: Vector3 = Vector3(0f, 0f, 0f),
+    val area: Pair<Vector3i, Vector3i>? = null,
+    val areaColor: Color4 = Color4(255, 255, 255, 48)
 )
 class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(props, WorldControllerState()) {
 
@@ -117,6 +119,13 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
       keyboard.isPressed(GLFW_KEY_V) -> worldActionController = AddWaterBlockActionController
     }
     worldActionController.onUpdate(world, dt)
+    val newArea = worldActionController.area(world)
+    if (newArea != state.area) {
+      nextState = currentState.copy(
+          area = worldActionController.area(world),
+          areaColor = worldActionController.areaColor(world)
+      )
+    }
 
     // Perspective
     val lookUp = (keyboard.isPressed(GLFW_KEY_UP) or keyboard.isPressed(GLFW_KEY_W)) and keyboard.isPressed(GLFW_KEY_LEFT_SHIFT)
@@ -212,8 +221,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     }
   }
 
-  var worldActionController: WorldActionController = NoopActionController
-
+  private var worldActionController: WorldActionController = NoopActionController
   private fun onClick(event: Click) {
     if (!focused)
       return
@@ -270,6 +278,8 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     world(
       world,
       Matrix4(position = view, rotation = rotation).invert(),
+      state.area,
+      state.areaColor,
       sliceHeight
     )
   }

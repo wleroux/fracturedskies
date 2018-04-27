@@ -20,6 +20,8 @@ interface WorldActionController {
   fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) = Unit
   fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) = Unit
   fun onUpdate(world: WorldState, dt: Float) = Unit
+  fun area(world: WorldState): Pair<Vector3i, Vector3i>? = null
+  fun areaColor(world: WorldState): Color4 = Color4(255, 255, 255, 48)
 }
 
 object NoopActionController: WorldActionController
@@ -43,65 +45,105 @@ object SpawnColonistActionController : WorldActionController {
 }
 
 // Add Block
-class AddBlockActionController(val blockType: BlockType): WorldActionController {
-  var firstBlock: Vector3i? = null
+class AddBlockActionController(private val blockType: BlockType): WorldActionController {
+  private var firstBlock: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
-    val (world, worldPos, worldDir, action, _, _) = worldMouseClick
+    val (world, _, _, action, _, _) = worldMouseClick
+    if (action == GLFW_PRESS) {
+      firstBlock = position
+    } else if (action == GLFW_RELEASE) {
+      if (firstBlock != null && position != null) {
+        val secondBlock = position!!
+        val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
+        val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
+        val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
+        area(xRange, yRange, zRange)
+            .filter { world.blocks.has(it) && world.blocks[it].type == AIR }
+            .forEach {
+              send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, PlaceBlock(it, blockType), Cause.of(this)))
+            }
+      }
+      firstBlock = null
+    }
+  }
+
+  private var position: Vector3i? = null
+  override fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) {
+    val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
         .filter { it.obj.type != AIR }
         .firstOrNull()
-    if (raycastHit == null) {
-      firstBlock = null
-    } else if (action == GLFW_PRESS) {
-      firstBlock = raycastHit.position + raycastHit.faces.first()
-    } else if (firstBlock != null && action == GLFW_RELEASE) {
-      val secondBlock = raycastHit.position + raycastHit.faces.first()
+    position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
+  }
+
+  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+    return if (firstBlock != null && position != null) {
+      val secondBlock = position!!
       val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
       val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
       val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
-      area(xRange, yRange, zRange)
-          .filter { world.blocks.has(it) && world.blocks[it].type == AIR }
-          .forEach {
-            send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, PlaceBlock(it, blockType), Cause.of(this)))
-          }
-      firstBlock = null
+      Vector3i(xRange.start, yRange.start, zRange.start) to Vector3i(xRange.endInclusive + 1, yRange.endInclusive + 1, zRange.endInclusive + 1)
+    } else {
+      super.area(world)
     }
   }
+
+  override fun areaColor(world: WorldState): Color4 = Color4(128, 255, 128, 64)
 }
 
 // Remove Block
 object RemoveBlockBlockActionController: WorldActionController {
-  var firstBlock: Vector3i? = null
+  private var firstBlock: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
-    val (world, worldPos, worldDir, action, _, _) = worldMouseClick
+    val (world, _, _, action, _, _) = worldMouseClick
+    if (action == GLFW_PRESS) {
+      firstBlock = position
+    } else if (action == GLFW_RELEASE) {
+      if (firstBlock != null && position != null) {
+        val secondBlock = position!!
+        val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
+        val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
+        val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
+        area(xRange, yRange, zRange)
+            .filter { world.blocks.has(it) && world.blocks[it].type != AIR }
+            .forEach {
+              send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, RemoveBlock(it), Cause.of(this)))
+            }
+      }
+      firstBlock = null
+    }
+  }
+
+  private var position: Vector3i? = null
+  override fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) {
+    val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
         .filter { it.obj.type != AIR }
         .firstOrNull()
-    if (raycastHit == null) {
-      firstBlock = null
-    } else if (action == GLFW_PRESS) {
-      firstBlock = raycastHit.position
-    } else if (firstBlock != null && action == GLFW_RELEASE) {
-      val secondBlock = raycastHit.position
+    position = raycastHit?.let { raycastHit.position }
+  }
+
+  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+    return if (firstBlock != null && position != null) {
+      val secondBlock = position!!
       val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
       val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
       val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
-      area(xRange, yRange, zRange)
-          .filter { world.blocks.has(it) && world.blocks[it].type != AIR }
-          .forEach {
-            send(TaskCreated(Id(), TaskCategory.MINE, TaskPriority.AVERAGE, SingleAssigneeCondition, RemoveBlock(it), Cause.of(this)))
-          }
-      firstBlock = null
+      Vector3i(xRange.start, yRange.start, zRange.start) to Vector3i(xRange.endInclusive + 1, yRange.endInclusive + 1, zRange.endInclusive + 1)
+    } else {
+      super.area(world)
     }
   }
+
+  override fun areaColor(world: WorldState): Color4 = Color4(255, 128, 128, 64)
 }
 
 // Add Water
 object AddWaterBlockActionController: WorldActionController {
-  var isOn = false
-  var position: Vector3i? = null
+  private var isOn = false
+  private var position: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
     val (world, worldPos, worldDir, action, _, _) = worldMouseClick
     isOn = (action == GLFW_PRESS)
@@ -126,5 +168,15 @@ object AddWaterBlockActionController: WorldActionController {
       }
     }
   }
+
+  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+    return if (position != null) {
+      position!! to (position!! + Vector3i(1,1,1))
+    } else {
+      super.area(world)
+    }
+  }
+
+  override fun areaColor(world: WorldState): Color4 = Color4(128, 128, 255, 64)
 }
 
