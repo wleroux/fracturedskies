@@ -1,7 +1,6 @@
 package com.fracturedskies.render.world.components
 
-import com.fracturedskies.Item
-import com.fracturedskies.api.BlockType
+import com.fracturedskies.api.ItemType
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
@@ -33,8 +32,11 @@ class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     super.glRender(bounds)
     val sliceHeight = props[SLICE_HEIGHT]
     props[WORLD_STATE].items
-        .filterValues { it.position.y <= sliceHeight }
-        .map { (_, item) -> itemMesh(item) to item.position}
+        .filterValues { it.position != null }
+        .filterValues { it.position!!.y <= sliceHeight }
+        .map { (_, item) ->
+          val block = props[WORLD_STATE].blocks[item.position!!]
+          itemMesh(item.itemType, block.skyLight, block.blockLight) to item.position!!}
         .groupBy( {it.component1()}, {it.component2()} )
         .forEach { mesh, positions ->
           glBindVertexArray(mesh.vao)
@@ -45,16 +47,12 @@ class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         }
   }
 
-  var cache = mutableMapOf<BlockType, MutableMap<Pair<Int, Int>, Mesh>>()
-  private fun itemMesh(item: Item): Mesh {
-    val blockType = item.blockType
-    val block = props[WORLD_STATE].blocks[item.position]
-    val skyLight = block.skyLight
-    val blockLight = block.blockLight
+  var cache = mutableMapOf<ItemType, MutableMap<Pair<Int, Int>, Mesh>>()
+  private fun itemMesh(itemType: ItemType, skyLight: Int, blockLight: Int): Mesh {
     return cache
-        .computeIfAbsent(blockType, { mutableMapOf() })
+        .computeIfAbsent(itemType, { mutableMapOf() })
         .computeIfAbsent(skyLight to blockLight, {
-          generateBlock(blockType.color, skyLight.toFloat(), blockLight.toFloat(),
+          generateBlock(itemType.color, skyLight.toFloat(), blockLight.toFloat(),
               Vector3(0.375f, 0.00f, 0.375f),
               Vector3(0.25f, 0.25f, 0.25f)
           ).invoke()

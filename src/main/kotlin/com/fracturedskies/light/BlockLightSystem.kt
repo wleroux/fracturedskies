@@ -1,7 +1,6 @@
 package com.fracturedskies.light
 
 import com.fracturedskies.api.*
-import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.MessageBus.send
@@ -12,7 +11,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 fun blockLightSystem(context: CoroutineContext): MessageChannel {
   class BlockLightMap(val dimension: Dimension) {
     val level = IntMutableSpace(dimension)
-    val type = ObjectMutableSpace(dimension, { AIR })
+    val type = ObjectMutableSpace<BlockType>(dimension, { BlockAir })
 
     fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
     fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
@@ -43,7 +42,7 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
 
   fun updateBlockLight(initialPos: Vector3i): Map<Vector3i, Int> {
     val lightUpdates = mutableMapOf<Vector3i, Int>()
-    if (light.type[initialPos].blockLight == 0) {
+    if (light.type[initialPos].light == 0) {
       // Remove BlockLight
       if (light.level[initialPos] != 0) {
         lightUpdates[initialPos] = 0
@@ -75,7 +74,7 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
       lightUpdates.putAll(propagateBlockLight(lightPos))
       return lightUpdates
     } else {
-      val blockLightLevel = light.type[initialPos].blockLight
+      val blockLightLevel = light.type[initialPos].light
       lightUpdates[initialPos] = blockLightLevel
       light.level[initialPos] = blockLightLevel
       val blockLightPos = LinkedList(Vector3i.NEIGHBOURS

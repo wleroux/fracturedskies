@@ -1,7 +1,7 @@
 package com.fracturedskies.render.world.components
 
 import com.fracturedskies.Block
-import com.fracturedskies.api.BlockType
+import com.fracturedskies.api.BlockAir
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
@@ -22,7 +22,7 @@ fun generateWaterMesh(
       for (z in zRange) {
         val pos = Vector3i(x, y, z)
         val block = world[pos]
-        if (block.type !== BlockType.AIR) {
+        if (block.type !== BlockAir) {
           continue
         }
 
@@ -237,5 +237,5 @@ private fun waterHeight(waterLevel: Byte): Float {
 }
 
 private fun isEmpty(world: Space<Block>, pos: Vector3i): Boolean {
-  return if (!world.has(pos)) true else world[pos].type === BlockType.AIR
+  return if (!world.has(pos)) true else world[pos].type === BlockAir
 }

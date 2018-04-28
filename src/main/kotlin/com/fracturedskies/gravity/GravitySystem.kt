@@ -20,8 +20,10 @@ class GravitySystem(context: CoroutineContext) {
       }
       is Update -> {
         if (initialized) {
-          state.items.forEach { id, item ->
-            val belowPos = item.position - Vector3i.AXIS_Y
+          state.items
+              .filterValues { it.position != null }
+              .forEach { id, item ->
+            val belowPos = item.position!! - Vector3i.AXIS_Y
             if (state.blocked.has(belowPos) && !state.blocked[belowPos]) {
               send(ItemMoved(id, belowPos, Cause.of(this)))
             }

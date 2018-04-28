@@ -17,31 +17,31 @@ enum class BehaviorStatus {
 }
 
 interface Behavior {
-  fun execute(state: WorldState, colonist: Colonist): Sequence<BehaviorStatus>
-  fun cost(state: WorldState, colonist: Colonist): Int
-  fun isPossible(state: WorldState, colonist: Colonist): Boolean
+  fun execute(world: WorldState, colonist: Colonist): Sequence<BehaviorStatus>
+  fun cost(world: WorldState, colonist: Colonist): Int
+  fun isPossible(world: WorldState, colonist: Colonist): Boolean
 }
 
-object NoopBehavior: Behavior {
-  override fun cost(state: WorldState, colonist: Colonist) = 0
-  override fun isPossible(state: WorldState, colonist: Colonist) = true
-  override fun execute(state: WorldState, colonist: Colonist) = buildSequence {
+object BehaviorSuccess: Behavior {
+  override fun cost(world: WorldState, colonist: Colonist) = 0
+  override fun isPossible(world: WorldState, colonist: Colonist) = true
+  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
     yield(SUCCESS)
   }
 }
 
-class InOrderBehavior(private vararg val behaviors: Behavior): Behavior {
-  override fun cost(state: WorldState, colonist: Colonist): Int {
+class BehaviorInOrder(private vararg val behaviors: Behavior): Behavior {
+  override fun cost(world: WorldState, colonist: Colonist): Int {
     var sum = 0
     for (behavior in behaviors) {
-      sum += behavior.cost(state, colonist)
+      sum += behavior.cost(world, colonist)
     }
     return sum
   }
-  override fun isPossible(state: WorldState, colonist: Colonist) = behaviors.all { it.isPossible(state, colonist) }
-  override fun execute(state: WorldState, colonist: Colonist) = buildSequence {
+  override fun isPossible(world: WorldState, colonist: Colonist) = behaviors.all { it.isPossible(world, colonist) }
+  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
     for (behavior in behaviors) {
-      loop@ for (status in behavior.execute(state, colonist)) {
+      loop@ for (status in behavior.execute(world, colonist)) {
         when (status) {
           SUCCESS -> {
             continue@loop
@@ -61,11 +61,11 @@ class InOrderBehavior(private vararg val behaviors: Behavior): Behavior {
   }
 }
 
-class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
-  override fun execute(state: WorldState, colonist: Colonist): Sequence<BehaviorStatus> = buildSequence {
+class BehaviorMoveToPosition(private val positions: (WorldState, Colonist) -> List<Vector3i>): Behavior {
+  override fun execute(world: WorldState, colonist: Colonist): Sequence<BehaviorStatus> = buildSequence {
     val colonistPos = colonist.position
 
-    val path = state.pathFinder.find(colonistPos, targets(positions), targetsDistanceHeuristic(positions)).path
+    val path = world.pathFinder.find(colonistPos, targets(positions(world, colonist)), targetsDistanceHeuristic(positions(world, colonist))).path
     if (path.isEmpty()) {
       // If there are no possible paths, fail
       yield(FAILURE)
@@ -73,9 +73,9 @@ class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
     }
 
     for (step in path.drop(1)) {
-      if (state.blocked[step]) {
+      if (world.blocked[step]) {
         // If the path is blocked, see if we can find another
-        yieldAll(MoveToPositionBehavior(positions).execute(state, colonist))
+        yieldAll(BehaviorMoveToPosition(positions).execute(world, colonist))
         return@buildSequence
       } else {
         // Step towards the path
@@ -90,10 +90,10 @@ class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
     }
     yield(SUCCESS)
   }
-  override fun cost(state: WorldState, colonist: Colonist): Int {
+  override fun cost(world: WorldState, colonist: Colonist): Int {
     val colonistPos = colonist.position
     var min = Int.MAX_VALUE
-    for (pos in positions) {
+    for (pos in positions(world, colonist)) {
       val dist = pos distanceTo colonistPos
       if (dist < min)
         min = dist
@@ -101,5 +101,5 @@ class MoveToPositionBehavior(private val positions: List<Vector3i>): Behavior {
     return min
   }
 
-  override fun isPossible(state: WorldState, colonist: Colonist) = cost(state, colonist) != Int.MAX_VALUE
+  override fun isPossible(world: WorldState, colonist: Colonist) = cost(world, colonist) != Int.MAX_VALUE
 }

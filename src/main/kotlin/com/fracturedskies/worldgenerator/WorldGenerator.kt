@@ -1,7 +1,7 @@
 package com.fracturedskies.worldgenerator
 
 import com.fracturedskies.Block
-import com.fracturedskies.api.BlockType.AIR
+import com.fracturedskies.api.BlockAir
 import com.fracturedskies.engine.collections.*
 
 
@@ -12,7 +12,7 @@ class WorldGenerator(
 ) {
   fun generate(dimension: Dimension): ObjectMutableSpace<Block> {
     val biomes = biomeGenerator.generateBiomes(dimension.width, dimension.depth)
-    val blocks = ObjectMutableSpace(dimension, { Block(AIR) })
+    val blocks = ObjectMutableSpace(dimension, { Block(BlockAir) })
     generationPopulator.populate(blocks, biomes)
     populators.forEach { populator ->
       populator.populate(blocks, biomes)

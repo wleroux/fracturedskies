@@ -33,7 +33,7 @@ class TaskManagementSystem(context: CoroutineContext) {
             .mapValues { entry ->
               when {
                 entry.key != null && entry.value.size > 1 ->
-                  listOf(entry.value.minBy { colonist -> entry.key?.behavior?.cost(state, colonist) ?: 0 }!!)
+                  listOf(entry.value.minBy { colonist -> entry.key?.details?.behavior?.cost(state, colonist) ?: 0 }!!)
                 else -> entry.value
               }
             }
@@ -48,12 +48,12 @@ class TaskManagementSystem(context: CoroutineContext) {
   }
 }
 
-fun getDesiredTask(state: WorldState, colonist: Colonist, tasks: Collection<Task<*>>): Task<*>? {
-  val comparator = colonistPriorityComparator(state)
+fun getDesiredTask(world: WorldState, colonist: Colonist, tasks: Collection<Task>): Task? {
+  val comparator = colonistPriorityComparator(world)
 
-  var desiredTask: Task<*>? = null
+  var desiredTask: Task? = null
   for (task in tasks) {
-    if (!task.condition.matches(colonist, task))
+    if (!task.details.condition.matches(world, colonist, task))
       continue
 
     if (desiredTask == null) {

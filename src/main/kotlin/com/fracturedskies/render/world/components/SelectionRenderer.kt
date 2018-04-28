@@ -11,27 +11,27 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 
 
-class AreaRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class SelectionRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.area(area: Pair<Vector3i, Vector3i>?, color: Color4 = Color4(255, 255, 255, 48), additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::AreaRenderer, MultiTypeMap(
-          AREA to area,
+    fun Node.Builder<*>.selection(selection: Pair<Vector3i, Vector3i>?, color: Color4 = Color4(255, 255, 255, 48), additionalProps: MultiTypeMap = MultiTypeMap()) {
+      nodes.add(Node(::SelectionRenderer, MultiTypeMap(
+          SELECTION to selection,
           COLOR to color
       ).with(additionalProps)))
     }
 
     private val COLOR = TypedKey<Color4>("color")
-    private val AREA = TypedKey<Pair<Vector3i,Vector3i>?>("area")
+    private val SELECTION = TypedKey<Pair<Vector3i,Vector3i>?>("selection")
   }
 
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean = false
 
   override fun glRender(bounds: Bounds) {
     super.glRender(bounds)
-    val area = props[AREA]
+    val selection = props[SELECTION]
     val color = props[COLOR]
-    if (area != null) {
-      val (start, end) = area
+    if (selection != null) {
+      val (start, end) = selection
       val dimension = end - start
       val mesh = generateBlock(color, MAX_LIGHT_LEVEL.toFloat(), MAX_LIGHT_LEVEL.toFloat(), Vector3.ZERO, dimension.toVector3()).invoke()
       glDisable(GL_DEPTH_TEST)

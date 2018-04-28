@@ -3,6 +3,5 @@ com.fracturedskies.water.WaterModLoader
 com.fracturedskies.gravity.GravityModLoader
 com.fracturedskies.time.TimeModLoader
 com.fracturedskies.worldgenerator.WorldGeneratorModLoader
-com.fracturedskies.task.TaskExecutionModLoader
-com.fracturedskies.task.TaskManagementModLoader
+com.fracturedskies.task.TaskModLoader
 com.fracturedskies.treefall.TreeFallModLoader

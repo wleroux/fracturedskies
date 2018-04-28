@@ -2,7 +2,6 @@ package com.fracturedskies.task.behavior
 
 import com.fracturedskies.*
 import com.fracturedskies.api.*
-import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.messages.Cause
@@ -11,20 +10,10 @@ import com.fracturedskies.task.behavior.BehaviorStatus.*
 import kotlin.coroutines.experimental.buildSequence
 
 
-fun placeBlock(pos: Vector3i, blockType: BlockType) = InOrderBehavior(
-    MoveToPositionBehavior(Vector3i.NEIGHBOURS.map { pos + it }),
-    PutBlockBehavior(pos, blockType)
-)
-
-fun removeBlock(pos: Vector3i) = InOrderBehavior(
-    MoveToPositionBehavior(Vector3i.NEIGHBOURS.map { pos + it }),
-    PutBlockBehavior(pos, AIR)
-)
-
-class PutBlockBehavior(private val pos: Vector3i, private val blockType: BlockType): Behavior {
-  override fun cost(state: WorldState, colonist: Colonist) = 1
-  override fun isPossible(state: WorldState, colonist: Colonist) = true
-  override fun execute(state: WorldState, colonist: Colonist) = buildSequence {
+class BehaviorPutBlock(private val pos: Vector3i, private val blockType: BlockType): Behavior {
+  override fun cost(world: WorldState, colonist: Colonist) = 1
+  override fun isPossible(world: WorldState, colonist: Colonist) = true
+  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
     if (pos distanceTo colonist.position != 1) {
       yield(FAILURE)
     } else {
@@ -38,11 +27,11 @@ class PutBlockBehavior(private val pos: Vector3i, private val blockType: BlockTy
         }
       }
 
-
-      val blockDrop = state.blockType[pos].blockDrop
+      val itemDrop = world.blockType[pos].itemDrop
       send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
-      if (blockDrop != null)
-        send(ItemSpawned(Id(), blockDrop, colonist.position, Cause.of(this)))
+      if (itemDrop != null) {
+        send(ItemSpawned(Id(), itemDrop, colonist.position, Cause.of(this)))
+      }
       yield(RUNNING)
       yield(SUCCESS)
     }

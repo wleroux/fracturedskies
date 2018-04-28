@@ -1,7 +1,6 @@
 package com.fracturedskies.light
 
 import com.fracturedskies.api.*
-import com.fracturedskies.api.BlockType.AIR
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.engine.messages.MessageBus.send
@@ -13,7 +12,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 fun skyLightSystem(context: CoroutineContext): MessageChannel {
   class SkyLightMap(val dimension: Dimension) {
     val level = IntMutableSpace(dimension)
-    val type = ObjectMutableSpace(dimension, { AIR })
+    val type = ObjectMutableSpace<BlockType>(dimension, { BlockAir })
 
     fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
     fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)

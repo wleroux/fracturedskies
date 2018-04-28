@@ -19,7 +19,7 @@ class TaskExecutionState(dimension: Dimension): WorldState(dimension) {
           behavior.remove(message.colonist)
         } else {
           val selectedTask = tasks[message.task]!!
-          behavior[colonist.id] = selectedTask.behavior.execute(this, colonist).iterator()
+          behavior[colonist.id] = selectedTask.details.behavior.execute(this, colonist).iterator()
         }
       }
     }

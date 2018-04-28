@@ -2,7 +2,6 @@ package com.fracturedskies.render.world.controller
 
 import com.fracturedskies.Block
 import com.fracturedskies.api.*
-import com.fracturedskies.api.BlockType.*
 import com.fracturedskies.api.GameSpeed.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
@@ -59,7 +58,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
       val clampedZ = clamp(z, 0 until world.dimension.depth)
       return yRange
           .reversed()
-          .firstOrNull { world[clampedX, it, clampedZ].type != BlockType.AIR }
+          .firstOrNull { world[clampedX, it, clampedZ].type != BlockAir }
           ?: 0
     }
   }
@@ -113,10 +112,11 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
 
       // World Action Controller
       keyboard.isPressed(GLFW_KEY_C) -> worldActionController = SpawnColonistActionController
-      keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(DIRT)
-      keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(LIGHT)
+      keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(BlockDirt)
+      keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(BlockLight)
       keyboard.isPressed(GLFW_KEY_Z) -> worldActionController = RemoveBlockBlockActionController
       keyboard.isPressed(GLFW_KEY_V) -> worldActionController = AddWaterBlockActionController
+      keyboard.isPressed(GLFW_KEY_N) -> worldActionController = AddZoneActionController
     }
     worldActionController.onUpdate(world, dt)
     val newArea = worldActionController.area(world)
