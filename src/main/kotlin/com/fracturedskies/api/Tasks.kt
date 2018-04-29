@@ -94,7 +94,10 @@ class TaskDepositItem(colonistId: Id, itemId: Id): TaskType() {
   )
   override val behavior = BehaviorInOrder(
       BehaviorMoveToPosition({ world, _ ->
-        world.zones.flatMap { it.value.positions }
+        world.zones.values
+            .flatMap { it.positions }
+            .filter { world.blocks[it].type == BlockAir }
+            .filter { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockAir }
       }),
       DropItem(itemId)
   )
