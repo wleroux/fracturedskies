@@ -1,6 +1,6 @@
 package com.fracturedskies.render.world.controller
 
-import com.fracturedskies.WorldState
+import com.fracturedskies.World
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.math.*
@@ -13,14 +13,14 @@ import org.lwjgl.glfw.GLFW.*
 import java.lang.Integer.*
 
 // Actions
-data class WorldMouseClick(val world: WorldState, val worldPos: Vector3, val worldDir: Vector3, val action: Int, val button: Int, val mods: Int)
-data class WorldMouseMove(val world: WorldState, val worldPos: Vector3, val worldDir: Vector3)
+data class WorldMouseClick(val world: World, val worldPos: Vector3, val worldDir: Vector3, val action: Int, val button: Int, val mods: Int)
+data class WorldMouseMove(val world: World, val worldPos: Vector3, val worldDir: Vector3)
 interface WorldActionController {
   fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) = Unit
   fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) = Unit
-  fun onUpdate(world: WorldState, dt: Float) = Unit
-  fun area(world: WorldState): Pair<Vector3i, Vector3i>? = null
-  fun areaColor(world: WorldState): Color4 = Color4(255, 255, 255, 48)
+  fun onUpdate(world: World, dt: Float) = Unit
+  fun area(world: World): Pair<Vector3i, Vector3i>? = null
+  fun areaColor(world: World): Color4 = Color4(255, 255, 255, 48)
 }
 
 object NoopActionController: WorldActionController
@@ -36,7 +36,7 @@ object SpawnColonistActionController : WorldActionController {
           .firstOrNull()
       if (raycastHit != null) {
         val pos = raycastHit.position + raycastHit.faces.first()
-        if (world.dimension.has(pos) && world.blocks[pos].type == BlockAir)
+        if (world.has(pos) && world.blocks[pos].type == BlockAir)
           send(ColonistSpawned(Id(), pos, Cause.of(this)))
       }
     }
@@ -76,7 +76,7 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
 
-  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+  override fun area(world: World): Pair<Vector3i, Vector3i>? {
     return if (firstBlock != null && position != null) {
       val secondBlock = position!!
       val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
@@ -88,7 +88,7 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
     }
   }
 
-  override fun areaColor(world: WorldState): Color4 = Color4(128, 255, 128, 64)
+  override fun areaColor(world: World): Color4 = Color4(128, 255, 128, 64)
 }
 
 // Remove Block
@@ -124,7 +124,7 @@ object RemoveBlockBlockActionController: WorldActionController {
     position = raycastHit?.let { raycastHit.position }
   }
 
-  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+  override fun area(world: World): Pair<Vector3i, Vector3i>? {
     return if (firstBlock != null && position != null) {
       val secondBlock = position!!
       val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
@@ -136,7 +136,7 @@ object RemoveBlockBlockActionController: WorldActionController {
     }
   }
 
-  override fun areaColor(world: WorldState): Color4 = Color4(255, 128, 128, 64)
+  override fun areaColor(world: World): Color4 = Color4(255, 128, 128, 64)
 }
 
 // Add Water
@@ -158,7 +158,7 @@ object AddWaterBlockActionController: WorldActionController {
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
 
-  override fun onUpdate(world: WorldState, dt: Float) {
+  override fun onUpdate(world: World, dt: Float) {
     if (isOn) {
       position?.let { position ->
         if (!world.blocks.has(position) || world.blocks[position].type != BlockAir) return
@@ -168,7 +168,7 @@ object AddWaterBlockActionController: WorldActionController {
     }
   }
 
-  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+  override fun area(world: World): Pair<Vector3i, Vector3i>? {
     return if (position != null) {
       position!! to (position!! + Vector3i(1,1,1))
     } else {
@@ -176,7 +176,7 @@ object AddWaterBlockActionController: WorldActionController {
     }
   }
 
-  override fun areaColor(world: WorldState): Color4 = Color4(128, 128, 255, 64)
+  override fun areaColor(world: World): Color4 = Color4(128, 128, 255, 64)
 }
 
 // Add Zone
@@ -208,7 +208,7 @@ object AddZoneActionController: WorldActionController {
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
 
-  override fun area(world: WorldState): Pair<Vector3i, Vector3i>? {
+  override fun area(world: World): Pair<Vector3i, Vector3i>? {
     return if (firstBlock != null && position != null) {
       val secondBlock = position!!
       val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
@@ -220,5 +220,5 @@ object AddZoneActionController: WorldActionController {
     }
   }
 
-  override fun areaColor(world: WorldState): Color4 = Color4(255, 255, 255, 64)
+  override fun areaColor(world: World): Color4 = Color4(255, 255, 255, 64)
 }

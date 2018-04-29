@@ -23,7 +23,7 @@ class Colonist(
     else -> false
   }
 
-  fun process(state: WorldState, message: Any) {
+  fun process(state: World, message: Any) {
     when (message) {
       is ColonistMoved -> if (message.id == id) {
         direction = message.direction
@@ -62,7 +62,7 @@ class Task(
     return "Task[id=$id; details=$details; priority=$priority; assigned=$assigned]"
   }
 
-  fun process(state: WorldState, message: Any) {
+  fun process(state: World, message: Any) {
     when (message) {
       is ColonistRejectedTask -> {
         if (message.taskId == id)
@@ -85,7 +85,7 @@ class Item(
     var colonist: Id?,
     val itemType: ItemType
 ) {
-  fun process(state: WorldState, message: Any) {
+  fun process(state: World, message: Any) {
     when (message) {
       is ItemMoved -> {
         if (message.id == id)
@@ -119,7 +119,7 @@ class Zone(
     val positions: Collection<Vector3i>
 )
 
-open class WorldState(val dimension: Dimension) {
+open class World(override val dimension: Dimension): HasDimension {
   val colonists = mutableMapOf<Id, Colonist>()
   val tasks = mutableMapOf<Id, Task>()
   val blocks = ObjectMutableSpace(dimension, { Block() })
@@ -136,6 +136,7 @@ open class WorldState(val dimension: Dimension) {
   val zones = mutableMapOf<Id, Zone>()
   var timeOfDay = 0f
 
+  // Process events
   open fun process(message: Any) {
     colonists.values.forEach { colonist -> colonist.process(this, message)}
     tasks.values.forEach { task -> task.process(this, message) }
@@ -143,7 +144,7 @@ open class WorldState(val dimension: Dimension) {
     when (message) {
       is WorldGenerated -> {
         message.blocks.forEach { (blockIndex, block) ->
-          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
           this.blocks[blockPos].type = block.type
         }
       }

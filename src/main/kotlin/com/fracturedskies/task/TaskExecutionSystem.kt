@@ -11,11 +11,11 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class TaskExecutionSystem(context: CoroutineContext) {
   var initialized = false
-  lateinit var state: TaskExecutionState
+  lateinit var state: TaskExecution
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        state = TaskExecutionState(message.dimension)
+        state = TaskExecution(message.dimension)
         initialized = true
       }
       is Update -> {

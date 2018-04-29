@@ -1,6 +1,6 @@
 package com.fracturedskies.treefall
 
-import com.fracturedskies.WorldState
+import com.fracturedskies.World
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
@@ -10,7 +10,7 @@ import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 
 
-class TreeFallWorldState(dimension: Dimension) : WorldState(dimension) {
+class TreeFallWorld(dimension: Dimension) : World(dimension) {
   private data class Tree(val rootPos: Vector3i, val nodes: MutableList<Vector3i>)
   private val treeSpace = ObjectMutableSpace<Tree?>(dimension, { null })
   private val treePathFinder = PathFinder({ fromPos, toPos ->
@@ -45,7 +45,7 @@ class TreeFallWorldState(dimension: Dimension) : WorldState(dimension) {
     super.process(message)
     when (message) {
       is WorldGenerated -> message.blocks.forEach { (blockIndex, block) ->
-        checkTree(dimension.toVector3i(blockIndex), block.type)
+        checkTree(vector3i(blockIndex), block.type)
       }
       is BlockUpdated -> message.updates.forEach { blockIndex, blockType ->
         checkTree(blockIndex, blockType)

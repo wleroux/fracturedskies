@@ -10,18 +10,18 @@ import com.fracturedskies.task.api.colonistPriorityComparator
 import kotlinx.coroutines.experimental.async
 import kotlin.coroutines.experimental.CoroutineContext
 
-class TaskManagementState(dimension: Dimension): WorldState(dimension)
+class TaskManagement(dimension: Dimension): World(dimension)
 
 /**
  * This system is responsible for assigning the colonist to the desired task every tick
  */
 class TaskManagementSystem(context: CoroutineContext) {
-  lateinit var state: TaskManagementState
+  lateinit var state: TaskManagement
   var initialized = false
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        state = TaskManagementState(message.dimension)
+        state = TaskManagement(message.dimension)
         initialized = true
       }
       is Update -> {
@@ -48,7 +48,7 @@ class TaskManagementSystem(context: CoroutineContext) {
   }
 }
 
-fun getDesiredTask(world: WorldState, colonist: Colonist, tasks: Collection<Task>): Task? {
+fun getDesiredTask(world: World, colonist: Colonist, tasks: Collection<Task>): Task? {
   val comparator = colonistPriorityComparator(world)
 
   var desiredTask: Task? = null

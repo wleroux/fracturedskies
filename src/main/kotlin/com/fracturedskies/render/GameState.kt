@@ -1,15 +1,15 @@
 package com.fracturedskies.render
 
-import com.fracturedskies.WorldState
+import com.fracturedskies.World
 import com.fracturedskies.api.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 
 data class GameState(
     var gameStarted: Boolean = false,
-    var world: RenderWorldState? = null
+    var world: RenderWorld? = null
 ) {
-  class RenderWorldState(dimension: Dimension) : WorldState(dimension) {
+  class RenderWorld(dimension: Dimension) : World(dimension) {
     val blocksDirty = BooleanMutableSpace(dimension / CHUNK_DIMENSION, { false })
     var itemsDirty = false
     var colonistsDirty = false
@@ -25,7 +25,7 @@ data class GameState(
 
       when (message) {
         is WorldGenerated -> message.blocks.forEach { (blockIndex, _) ->
-          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
           chunks(blockPos).forEach { chunkPos -> blocksDirty[chunkPos] = true }
         }
         is BlockUpdated -> message.updates.forEach { pos, _ -> chunks(pos).forEach { chunkPos -> blocksDirty[chunkPos] = true } }
@@ -42,7 +42,7 @@ data class GameState(
     when (message) {
       is NewGameRequested -> {
         gameStarted = true
-        world = RenderWorldState(message.dimension)
+        world = RenderWorld(message.dimension)
       }
       else -> {
         if (gameStarted)

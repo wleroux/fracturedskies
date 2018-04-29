@@ -3,7 +3,7 @@ package com.fracturedskies.render.world.components
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorldState
+import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.GLPerspective.Companion.perspective
 import com.fracturedskies.render.common.components.gl.GLShader.Companion.shader
 import com.fracturedskies.render.common.components.gl.GLUniform.Companion.uniform
@@ -23,7 +23,7 @@ import com.fracturedskies.render.world.components.ZonesRenderer.Companion.zones
 
 class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.world(worldState: RenderWorldState, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.world(worldState: RenderWorld, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           VIEW to view,
@@ -36,7 +36,7 @@ class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
     val AREA_COLOR = TypedKey<Color4>("areaColor")
     val SELECTION = TypedKey<Pair<Vector3i, Vector3i>?>("selection")
     val VIEW = TypedKey<Matrix4>("view")
-    val WORLD_STATE = TypedKey<RenderWorldState>("worldState")
+    val WORLD_STATE = TypedKey<RenderWorld>("worldState")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 

@@ -6,11 +6,11 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class TreeFallSystem(context: CoroutineContext) {
   var initialized = false
-  lateinit var world: TreeFallWorldState
+  lateinit var world: TreeFallWorld
   val channel = MessageChannel(context) { message ->
     when (message) {
       is NewGameRequested -> {
-        world = TreeFallWorldState(message.dimension)
+        world = TreeFallWorld(message.dimension)
         initialized = true
       }
       else -> if (initialized) world.process(message)

@@ -31,7 +31,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
         if (!initialized) return@MessageChannel
         val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
         message.blocks.forEach { (blockIndex, block) ->
-          val pos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val pos = message.offset + message.blocks.vector3i(blockIndex)
           water.setOpaque(pos, block.type.opaque)
           if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
             water.setLevel(pos, 0)
@@ -39,7 +39,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
           }
         }
         message.blocks.forEach { (blockIndex, _) ->
-          val pos = water.dimension.toVector3i(blockIndex)
+          val pos = water.vector3i(blockIndex)
           water.nearestWaterDrop[pos] = calculateNearestWaterDrop(pos)
         }
         if (waterLevelUpdates.isNotEmpty()) {
@@ -87,7 +87,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
   private fun updateNearestWater(pos: Vector3i) {
     xZSpiral(MAX_WATER_RANGE)
         .flatMap { listOf(pos + AXIS_Y + it, pos + it) }
-        .filter { water.dimension.has(it) }
+        .filter { water.has(it) }
         .forEach {
           val newValue = calculateNearestWaterDrop(it)
           if (water.nearestWaterDrop[it] != newValue) {
@@ -100,7 +100,7 @@ class WaterSystem(coroutineContext: CoroutineContext) {
   private fun calculateNearestWaterDrop(pos: Vector3i): Int {
     if (water.getOpaque(pos)) return WaterMap.MAX_WATER_RANGE
     return xZSpiral(MAX_WATER_RANGE).map { pos - AXIS_Y + it }
-        .filter { water.dimension.has(it) }
+        .filter { water.has(it) }
         .filter { ! water.getOpaque(it) }
         .map { min(it distanceTo (pos - Vector3i.AXIS_Y), MAX_WATER_RANGE) }
         .min() ?: MAX_WATER_RANGE

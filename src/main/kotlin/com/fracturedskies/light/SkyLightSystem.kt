@@ -10,12 +10,9 @@ import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun skyLightSystem(context: CoroutineContext): MessageChannel {
-  class SkyLightMap(val dimension: Dimension) {
+  class SkyLightMap(override val dimension: Dimension): HasDimension {
     val level = IntMutableSpace(dimension)
     val type = ObjectMutableSpace<BlockType>(dimension, { BlockAir })
-
-    fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
-    fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   }
   lateinit var light: SkyLightMap
 
@@ -112,12 +109,12 @@ fun skyLightSystem(context: CoroutineContext): MessageChannel {
       }
       is WorldGenerated -> {
         message.blocks.forEach { (blockIndex, block) ->
-          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
           light.type[blockPos] = block.type
         }
 
         val lightUpdates = message.blocks.flatMap { (blockIndex, _) ->
-          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
           updateSkylight(blockPos).toList()
         }.toMap()
 

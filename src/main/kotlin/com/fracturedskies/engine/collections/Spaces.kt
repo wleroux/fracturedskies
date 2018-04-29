@@ -4,17 +4,10 @@ import com.fracturedskies.engine.math.Vector3i
 import org.lwjgl.BufferUtils
 import java.util.*
 
-interface Space<out K>: Iterable<Pair<Int, K>> {
-  val dimension: Dimension
-  val width get() = dimension.width
-  val height get() = dimension.height
-  val depth get() = dimension.depth
+interface Space<out K>: Iterable<Pair<Int, K>>, HasDimension {
   operator fun get(index: Int): K
-  operator fun get(pos: Vector3i) = get(dimension(pos))
-  operator fun get(x: Int, y: Int, z: Int) = get(dimension(x, y, z))
-  fun has(index: Int) = dimension.has(index)
-  fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
-  fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
+  operator fun get(pos: Vector3i) = get(index(pos))
+  operator fun get(x: Int, y: Int, z: Int) = get(index(x, y, z))
   override fun iterator(): Iterator<Pair<Int, K>> {
     val indexIterator = dimension.indices().iterator()
     return object : Iterator<Pair<Int, K>> {
@@ -28,8 +21,8 @@ interface Space<out K>: Iterable<Pair<Int, K>> {
 }
 interface MutableSpace<K>: Space<K> {
   operator fun set(index: Int, value: K)
-  operator fun set(pos: Vector3i, value: K) = set(dimension(pos), value)
-  operator fun set(x: Int, y: Int, z: Int, value: K) = set(dimension(x, y, z), value)
+  operator fun set(pos: Vector3i, value: K) = set(index(pos), value)
+  operator fun set(x: Int, y: Int, z: Int, value: K) = set(index(x, y, z), value)
 }
 
 open class BooleanSpace(final override val dimension: Dimension, init: (Int) -> Boolean = { false }): Space<Boolean> {

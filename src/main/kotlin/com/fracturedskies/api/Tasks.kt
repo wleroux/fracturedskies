@@ -3,6 +3,7 @@ package com.fracturedskies.api
 import com.fracturedskies.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.math.*
+import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Y
 import com.fracturedskies.engine.messages.Cause
 import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.task.api.*
@@ -56,17 +57,17 @@ class TaskPickItem(itemId: Id): TaskType() {
 }
 const val MAX_INVENTORY_SIZE = 10
 object InventoryIsNotFull: Condition {
-  override fun matches(world: WorldState, colonist: Colonist, task: Task): Boolean {
+  override fun matches(world: World, colonist: Colonist, task: Task): Boolean {
     return colonist.inventory.size < MAX_INVENTORY_SIZE
   }
 }
 
 class BehaviorPickItem(private val itemId: Id): Behavior {
-  override fun cost(world: WorldState, colonist: Colonist) = 1
-  override fun isPossible(world: WorldState, colonist: Colonist): Boolean {
+  override fun cost(world: World, colonist: Colonist) = 1
+  override fun isPossible(world: World, colonist: Colonist): Boolean {
     return colonist.inventory.contains(itemId) || world.items[itemId]!!.position != null
   }
-  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
+  override fun execute(world: World, colonist: Colonist) = buildSequence {
     if (colonist.inventory.contains(itemId)) {
       yield(SUCCESS)
     } else {
@@ -100,15 +101,19 @@ class TaskDepositItem(colonistId: Id, itemId: Id): TaskType() {
 }
 
 object DepositZoneExists: Condition {
-  override fun matches(world: WorldState, colonist: Colonist, task: Task): Boolean {
-    return world.zones.isNotEmpty()
+  override fun matches(world: World, colonist: Colonist, task: Task): Boolean {
+    return world.zones.values.firstOrNull {
+      it.positions
+          .filter { world.blocks[it].type == BlockAir }
+          .firstOrNull { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockAir } != null
+    } != null
   }
 }
 
 class DropItem(private val itemId: Id): Behavior {
-  override fun cost(world: WorldState, colonist: Colonist) = 1
-  override fun isPossible(world: WorldState, colonist: Colonist) = colonist.inventory.isNotEmpty()
-  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
+  override fun cost(world: World, colonist: Colonist) = 1
+  override fun isPossible(world: World, colonist: Colonist) = colonist.inventory.isNotEmpty()
+  override fun execute(world: World, colonist: Colonist) = buildSequence {
     if (colonist.inventory.contains(itemId)) {
       send(ColonistDroppedItem(colonist.id, itemId, Cause.of(this)))
       yield(RUNNING)

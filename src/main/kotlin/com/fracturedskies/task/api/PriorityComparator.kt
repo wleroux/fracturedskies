@@ -7,7 +7,7 @@ interface PriorityComparator {
   fun compare(colonist: Colonist, o1: Task, o2: Task): Int
 }
 
-fun colonistPriorityComparator(world: WorldState) = CompoundPriorityComparator(
+fun colonistPriorityComparator(world: World) = CompoundPriorityComparator(
     CategoryPriorityComparator,
     TaskPriorityComparator,
     FocusBiasPriorityComparator,
@@ -23,7 +23,7 @@ object RejectionComparator: PriorityComparator {
   }
 }
 
-class CostComparator(private val state: WorldState): PriorityComparator {
+class CostComparator(private val state: World): PriorityComparator {
   override fun compare(colonist: Colonist, o1: Task, o2: Task): Int {
     val cost1 = o1.details.behavior.cost(state, colonist)
     val cost2 = o2.details.behavior.cost(state, colonist)

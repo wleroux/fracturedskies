@@ -9,12 +9,9 @@ import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun blockLightSystem(context: CoroutineContext): MessageChannel {
-  class BlockLightMap(val dimension: Dimension) {
+  class BlockLightMap(override val dimension: Dimension): HasDimension {
     val level = IntMutableSpace(dimension)
     val type = ObjectMutableSpace<BlockType>(dimension, { BlockAir })
-
-    fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
-    fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   }
   lateinit var light: BlockLightMap
 
@@ -31,7 +28,7 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
             val neighborPos = blockPos + neighborVector
             val propagateLightValue = light.level[blockPos] - 1
             if (!light.type[neighborPos].opaque && light.level[neighborPos] < propagateLightValue) {
-              lightUpdates.put(neighborPos, propagateLightValue)
+              lightUpdates[neighborPos] = propagateLightValue
               light.level[neighborPos] = propagateLightValue
               lightPropagation.addLast(neighborPos)
             }
@@ -93,7 +90,7 @@ fun blockLightSystem(context: CoroutineContext): MessageChannel {
       }
       is WorldGenerated -> {
         val blockLightUpdates = message.blocks.map { (blockIndex, block) ->
-          val blockPos = message.offset + message.blocks.dimension.toVector3i(blockIndex)
+          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
           light.type[blockPos] = block.type
           updateBlockLight(blockPos)
         }.fold(mutableMapOf<Vector3i, Int>()) { acc, value ->

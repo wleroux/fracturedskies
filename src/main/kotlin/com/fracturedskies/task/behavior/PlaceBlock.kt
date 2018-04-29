@@ -11,9 +11,9 @@ import kotlin.coroutines.experimental.buildSequence
 
 
 class BehaviorPutBlock(private val pos: Vector3i, private val blockType: BlockType): Behavior {
-  override fun cost(world: WorldState, colonist: Colonist) = 1
-  override fun isPossible(world: WorldState, colonist: Colonist) = true
-  override fun execute(world: WorldState, colonist: Colonist) = buildSequence {
+  override fun cost(world: World, colonist: Colonist) = 1
+  override fun isPossible(world: World, colonist: Colonist) = true
+  override fun execute(world: World, colonist: Colonist) = buildSequence {
     if (pos distanceTo colonist.position != 1) {
       yield(FAILURE)
     } else {

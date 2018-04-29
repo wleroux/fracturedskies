@@ -7,7 +7,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
-import com.fracturedskies.render.GameState.RenderWorldState
+import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -19,14 +19,14 @@ import java.lang.Integer.*
 
 class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.zones(world: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.zones(world: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ZonesRenderer, MultiTypeMap(
           WORLD to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD = TypedKey<RenderWorldState>("world")
+    private val WORLD = TypedKey<RenderWorld>("world")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -57,7 +57,7 @@ class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         generateWorldMesh(object : Space<Block> {
           override val dimension: Dimension = world.dimension
           override fun get(index: Int): Block {
-            val pos = dimension.toVector3i(index)
+            val pos = vector3i(index)
             return if (zone.positions.contains(pos)) {
               Block(ZoneBlockType, MAX_LIGHT_LEVEL, MAX_LIGHT_LEVEL, 0.toByte())
             } else {

@@ -1,13 +1,13 @@
 package com.fracturedskies.task
 
-import com.fracturedskies.WorldState
+import com.fracturedskies.World
 import com.fracturedskies.api.ColonistTaskSelected
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.task.behavior.BehaviorStatus
 
 
-class TaskExecutionState(dimension: Dimension): WorldState(dimension) {
+class TaskExecution(dimension: Dimension): World(dimension) {
   val behavior = mutableMapOf<Id, Iterator<BehaviorStatus>>()
 
   override fun process(message: Any) {

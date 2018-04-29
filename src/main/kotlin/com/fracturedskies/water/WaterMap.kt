@@ -4,7 +4,7 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
 
-class WaterMap(val dimension: Dimension) {
+class WaterMap(override val dimension: Dimension): HasDimension {
   companion object {
     const val MAX_WATER_RANGE = 4
   }
@@ -16,9 +16,6 @@ class WaterMap(val dimension: Dimension) {
   val sea = ObjectMutableSpace<Sea?>(dimension, {null})
   val seas = mutableSetOf<Sea>()
   val evaporationCandidates = hashSetOf<Vector3i>()
-
-  fun has(pos: Vector3i) = has(pos.x, pos.y, pos.z)
-  fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
 
   class Sea {
     var providence = mutableListOf<Vector3i>()

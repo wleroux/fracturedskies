@@ -4,7 +4,7 @@ import com.fracturedskies.api.ItemType
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorldState
+import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -15,14 +15,14 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.items(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.items(worldState: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ItemsRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD_STATE = TypedKey<RenderWorldState>("worldState")
+    private val WORLD_STATE = TypedKey<RenderWorld>("worldState")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 

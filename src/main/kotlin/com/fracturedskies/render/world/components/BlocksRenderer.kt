@@ -4,7 +4,7 @@ import com.fracturedskies.api.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorldState
+import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -20,14 +20,14 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   private val chunksSliceMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
 
   companion object {
-    fun Node.Builder<*>.blocks(worldState: RenderWorldState, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.blocks(worldState: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::BlocksRenderer, MultiTypeMap(
           WORLD_STATE to worldState,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD_STATE = TypedKey<RenderWorldState>("blocks")
+    private val WORLD_STATE = TypedKey<RenderWorld>("blocks")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -42,7 +42,7 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     val sliceHeight = props[SLICE_HEIGHT]
     val chunks = worldState.dimension / CHUNK_DIMENSION
     chunks.forEach { chunkIndex ->
-      val chunkPos = chunks.toVector3i(chunkIndex)
+      val chunkPos = chunks.vector3i(chunkIndex)
       val shouldChunkUpdate = shouldChunkUpdate(chunkPos)
       val mesh = if (shouldChunkUpdate) {
         val prevMesh = chunksMesh[chunkIndex]
