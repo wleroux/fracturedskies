@@ -1,7 +1,6 @@
 package com.fracturedskies.worldgenerator
 
-import com.fracturedskies.Block
-import com.fracturedskies.api.BlockAir
+import com.fracturedskies.api.block.*
 import com.fracturedskies.engine.collections.*
 
 

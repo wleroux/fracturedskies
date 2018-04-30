@@ -1,22 +1,30 @@
 package com.fracturedskies.treefall
 
-import com.fracturedskies.World
 import com.fracturedskies.api.*
+import com.fracturedskies.api.block.*
 import com.fracturedskies.engine.Id
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.math.PathFinder.Companion.target
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus.send
+import javax.enterprise.event.Observes
+import javax.inject.*
 
 
-class TreeFallWorld(dimension: Dimension) : World(dimension) {
+@Singleton
+class TreeFallSystem {
+
+  @Inject
+  lateinit var world: World
+
   private data class Tree(val rootPos: Vector3i, val nodes: MutableList<Vector3i>)
-  private val treeSpace = ObjectMutableSpace<Tree?>(dimension, { null })
+
+  private var initialized = false
+  private lateinit var treeSpace: ObjectMutableSpace<Tree?>
   private val treePathFinder = PathFinder({ fromPos, toPos ->
     val fromTree = treeSpace[fromPos]
-    val fromBlockType = blocks[fromPos].type
-    val toBlockType = blocks[toPos].type
+    val fromBlockType = world.blocks[fromPos].type
+    val toBlockType = world.blocks[toPos].type
     val toTree = treeSpace[toPos]
     when {
       fromTree !== null && fromTree !== toTree -> false
@@ -29,28 +37,34 @@ class TreeFallWorld(dimension: Dimension) : World(dimension) {
     }
   })
   private fun isTreeRoot(): IsTarget = {pos: Vector3i ->
-    val block = blocks[pos]
+    val block = world.blocks[pos]
     block.type == BlockDirt || block.type == BlockGrass
   }
   private fun treeCostHeuristic(): CostHeuristic = { cost: Int, pos: Vector3i ->
-    cost + when (blocks[pos].type) {
+    cost + when (world.blocks[pos].type) {
       BlockDirt -> pos.y
       BlockGrass -> pos.y
       BlockWood -> pos.y
-      else -> dimension.height
+      else -> world.height
     }
   }
 
-  override fun process(message: Any) {
-    super.process(message)
-    when (message) {
-      is WorldGenerated -> message.blocks.forEach { (blockIndex, block) ->
-        checkTree(vector3i(blockIndex), block.type)
-      }
-      is BlockUpdated -> message.updates.forEach { blockIndex, blockType ->
-        checkTree(blockIndex, blockType)
-      }
+  fun onWorldGenerated(@Observes worldGenerated: WorldGenerated) {
+    if (!initialized) {
+      treeSpace = ObjectMutableSpace(world.dimension, { null })
+      initialized = true
     }
+
+    worldGenerated.blocks.forEach { (blockPos, block) -> checkTree(blockPos, block.type) }
+  }
+
+  fun onBlocksUpdated(@Observes blocksUpdated: BlocksUpdated) {
+    if (!initialized) {
+      treeSpace = ObjectMutableSpace(world.dimension, { null })
+      initialized = true
+    }
+
+    blocksUpdated.blocks.forEach { blockPos, block -> checkTree(blockPos, block.type) }
   }
 
   private fun checkTree(pos: Vector3i, blockType: BlockType) {
@@ -78,7 +92,7 @@ class TreeFallWorld(dimension: Dimension) : World(dimension) {
         // Nothing to be concerned about.
       } else {
         val decayNodes = preExistingTree.nodes.filter { node ->
-          val nodeBlockType = blocks[node].type
+          val nodeBlockType = world.blocks[node].type
           if (nodeBlockType == BlockWood || nodeBlockType == BlockLeaves) {
             val pathToRoot = treePathFinder.find(node, target(preExistingTree.rootPos), treeCostHeuristic()).path
             pathToRoot.isEmpty()
@@ -88,23 +102,25 @@ class TreeFallWorld(dimension: Dimension) : World(dimension) {
         }
 
         val drops = decayNodes.flatMap {
-          val itemDrop = blocks[it].type.itemDrop
+          val itemDrop = world.blocks[it].type.itemDrop
           if (itemDrop != null) listOf(it to itemDrop) else emptyList()
         }.toMap()
-        val blockUpdates = decayNodes.map { it to BlockAir }.toMap()
-        send(BlockUpdated(blockUpdates, Cause.of(this)))
+        val blockUpdates = decayNodes.map { it to Block(BlockAir) }.toMap()
+
+        world.updateBlocks(blockUpdates, Cause.of(this))
         drops.forEach { dropPos, itemType ->
-          send(ItemSpawned(Id(), itemType, dropPos, Cause.of(this)))
+          world.spawnItem(Id(), itemType, dropPos, Cause.of(this))
         }
       }
     }
   }
 
   private fun remove(pos: Vector3i) {
-    val blockType = blocks[pos].type
+    val blockType = world.blocks[pos].type
     val itemDrop = blockType.itemDrop
-    send(BlockUpdated(mapOf(pos to BlockAir), Cause.of(this)))
+
+    world.updateBlock(pos, Block(BlockAir), Cause.of(this))
     if (itemDrop != null)
-      send(ItemSpawned(Id(), itemDrop, pos, Cause.of(this)))
+      world.spawnItem(Id(), itemDrop, pos, Cause.of(this))
   }
 }

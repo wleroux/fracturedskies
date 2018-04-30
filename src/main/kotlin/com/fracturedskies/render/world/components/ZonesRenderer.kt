@@ -1,13 +1,12 @@
 package com.fracturedskies.render.world.components
 
-import com.fracturedskies.Block
 import com.fracturedskies.api.*
+import com.fracturedskies.api.block.*
+import com.fracturedskies.api.block.data.*
 import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
-import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -19,14 +18,14 @@ import java.lang.Integer.*
 
 class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.zones(world: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.zones(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ZonesRenderer, MultiTypeMap(
           WORLD to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD = TypedKey<RenderWorld>("world")
+    private val WORLD = TypedKey<World>("world")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -59,9 +58,9 @@ class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
           override fun get(index: Int): Block {
             val pos = vector3i(index)
             return if (zone.positions.contains(pos)) {
-              Block(ZoneBlockType, MAX_LIGHT_LEVEL, MAX_LIGHT_LEVEL, 0.toByte())
+              Block(ZoneBlockType).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             } else {
-              Block(BlockAir, MAX_LIGHT_LEVEL, MAX_LIGHT_LEVEL, 0.toByte())
+              Block(BlockAir).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             }
           }
         }, false, (minX - 1 .. maxX + 1), (minY - 1 .. maxY + 1), (minZ - 1 .. maxZ + 2)).invoke()

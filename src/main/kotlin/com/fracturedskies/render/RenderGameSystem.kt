@@ -1,14 +1,13 @@
 package com.fracturedskies.render
 
-import com.fracturedskies.engine.api.ShutdownRequested
+import com.fracturedskies.api.World
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.Component.Companion.dispatch
 import com.fracturedskies.engine.jeact.Component.Companion.mount
 import com.fracturedskies.engine.jeact.Component.Companion.unmount
 import com.fracturedskies.engine.jeact.Component.Companion.update
-import com.fracturedskies.engine.messages.*
-import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.common.events.*
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
@@ -17,19 +16,17 @@ import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL43.*
 import org.lwjgl.system.MemoryUtil.NULL
-import kotlin.coroutines.experimental.CoroutineContext
+import javax.inject.*
 
-class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContext) {
-  private val renderChannel = MessageChannel(renderContext) {message ->
-    gameState.process(message)
-  }
+@Singleton
+class RenderGameSystem {
 
-  val channel = MessageChannel(context) { message ->
-    // Decouple the game loop updates from the render updates
-    renderChannel.send(message)
-  }
+  @Inject
+  lateinit var world: World
 
-  private var gameState = GameState()
+  @Inject
+  lateinit var dirtyFlags: DirtyFlags
+
   private lateinit var scene: Scene
   private lateinit var screenDimension: Bounds
 
@@ -84,10 +81,12 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
     glFrontFace(GL_CCW)
 
     scene = mount(::Scene, null, MultiTypeMap(
-        Scene.GAME_STATE to gameState
+        Scene.WORLD to world,
+        Scene.DIRTY_FLAGS to dirtyFlags
     ))
     update(scene, MultiTypeMap(
-        Scene.GAME_STATE to gameState
+        Scene.WORLD to world,
+        Scene.DIRTY_FLAGS to dirtyFlags
     ), true)
   }
 
@@ -98,10 +97,11 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
   fun glRender() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
     update(scene, MultiTypeMap(
-        Scene.GAME_STATE to gameState
+        Scene.WORLD to world,
+        Scene.DIRTY_FLAGS to dirtyFlags
     ), false)
     scene.glRender(screenDimension)
-    gameState.clearDirty()
+    dirtyFlags.clear()
     glfwSwapBuffers(window)
   }
 
@@ -186,6 +186,6 @@ class RenderGameSystem(context: CoroutineContext, renderContext: CoroutineContex
     screenDimension = Bounds(0, 0, width, height)
   }
   @Suppress("UNUSED_PARAMETER") private fun windowCloseCallback(window: Long) {
-    send(ShutdownRequested(Cause.of(this@RenderGameSystem), MultiTypeMap()))
+    world.requestShutdown(Cause.of(this@RenderGameSystem))
   }
 }

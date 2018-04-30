@@ -1,10 +1,11 @@
 package com.fracturedskies.render.world.components
 
-import com.fracturedskies.Colonist
+import com.fracturedskies.api.World
+import com.fracturedskies.api.block.data.*
+import com.fracturedskies.api.entity.Colonist
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.colonist.ObjMeshParser
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
@@ -16,14 +17,14 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.colonists(worldState: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.colonists(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ColonistsRenderer, MultiTypeMap(
-          WORLD_STATE to worldState,
+          WORLD_STATE to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    val WORLD_STATE = TypedKey<RenderWorld>("worldState")
+    val WORLD_STATE = TypedKey<World>("world")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -48,8 +49,8 @@ class ColonistsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   var cache = mutableMapOf<Pair<Int, Int>, Mesh>()
   private fun colonistMesh(colonist: Colonist): Mesh {
     val block = props[WORLD_STATE].blocks[colonist.position]
-    val blockLight = block.blockLight
-    val skyLight = block.skyLight
+    val blockLight = block[BlockLight::class]!!.value
+    val skyLight = block[SkyLight::class]!!.value
     return cache.computeIfAbsent(skyLight to blockLight, { _ ->
       ObjMeshParser.generateMesh("colonist.obj", 1f/16f, listOf(
           Color4(216, 28, 31, 255), // shoes

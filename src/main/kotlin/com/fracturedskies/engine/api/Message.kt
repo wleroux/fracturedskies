@@ -1,4 +1,4 @@
-package com.fracturedskies.engine.messages
+package com.fracturedskies.engine.api
 
 import com.fracturedskies.engine.collections.MultiTypeMap
 

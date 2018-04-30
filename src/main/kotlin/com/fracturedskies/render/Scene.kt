@@ -1,5 +1,6 @@
 package com.fracturedskies.render
 
+import com.fracturedskies.api.World
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.FpsRenderer.Companion.fpsRenderer
@@ -12,31 +13,31 @@ import org.lwjgl.opengl.GL11.*
 
 class Scene(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    val GAME_STATE = TypedKey<GameState>("gameState")
+    val WORLD = TypedKey<World>("world")
+    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
   }
-  private val gameState get() = props[GAME_STATE]
 
-  var prevGameStarted = false
+  private var prevGameStarted = false
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean {
     if (super.shouldComponentUpdate(nextProps, nextState)) {
       return true
     } else {
-      if (prevGameStarted != gameState.gameStarted) return true
+      if (prevGameStarted != props[WORLD].started) return true
       return false
     }
   }
 
   override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: Unit) {
     super.componentWillUpdate(nextProps, nextState)
-    prevGameStarted = nextProps[GAME_STATE].gameStarted
+    prevGameStarted = nextProps[WORLD].started
   }
 
   override fun render() = nodes {
-    if (!gameState.gameStarted) {
-      mainMenu()
+    if (!props[WORLD].started) {
+      mainMenu(props[WORLD])
     } else {
       layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
-        worldController(gameState, MultiTypeMap(
+        worldController(props[WORLD], props[DIRTY_FLAGS], MultiTypeMap(
             GROW to 1.0
         ))
       }

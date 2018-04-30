@@ -1,7 +1,6 @@
 package com.fracturedskies.worldgenerator
 
-import com.fracturedskies.Block
-import com.fracturedskies.api.*
+import com.fracturedskies.api.block.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
 import java.lang.Integer.max
@@ -13,16 +12,16 @@ class DefaultGenerationPopulator(private val seed: Int): GenerationPopulator {
       (0 until blocks.dimension.depth).forEach {  z ->
         (0 until blocks.dimension.height).forEach { y ->
           val blockPos = Vector3i(x, y, z)
-          blocks[blockPos].type = if (isBlock(blocks.dimension, blockPos)) BlockStone else BlockAir
+          blocks[blockPos] = Block(if (isBlock(blocks.dimension, blockPos)) BlockStone else BlockAir)
         }
 
         val pos = highestBlock(blocks, x, z)
         (max(0, pos.y - 6) until pos.y).forEach { newY ->
           if (blocks[pos.x, newY, pos.z].type != BlockAir)
-            blocks[pos.x, newY, pos.z].type = BlockDirt
+            blocks[pos.x, newY, pos.z] = Block(BlockDirt)
         }
         if (blocks[pos].type != BlockAir)
-          blocks[pos].type = BlockGrass
+          blocks[pos] = Block(BlockGrass)
       }
     }
   }

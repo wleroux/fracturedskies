@@ -1,21 +1,21 @@
 package com.fracturedskies.task
 
-
-
 import com.fracturedskies.api.*
+import com.fracturedskies.api.task.TaskPickItem
+import com.fracturedskies.api.task.TaskPriority.AVERAGE
 import com.fracturedskies.engine.Id
-import com.fracturedskies.engine.messages.*
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.task.api.TaskPriority.AVERAGE
-import kotlin.coroutines.experimental.CoroutineContext
+import com.fracturedskies.engine.api.Cause
+import javax.enterprise.event.Observes
+import javax.inject.*
 
 
-class PickItemsSystem(context: CoroutineContext) {
-  val channel = MessageChannel(context) { message ->
-    when (message) {
-      is ItemSpawned -> {
-        send(TaskCreated(Id(), TaskPickItem(message.id), AVERAGE, Cause.of(this)))
-      }
-    }
+@Singleton
+class PickItemsSystem {
+
+  @Inject
+  lateinit var world: World
+
+  fun onItemSpawned(@Observes itemSpawned: ItemSpawned) {
+    world.createTask(Id(), TaskPickItem(itemSpawned.itemId), AVERAGE, Cause.of(this))
   }
 }

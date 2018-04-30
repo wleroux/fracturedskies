@@ -1,12 +1,12 @@
-package com.fracturedskies.task.behavior
+package com.fracturedskies.api.task
 
-import com.fracturedskies.*
-import com.fracturedskies.api.ColonistMoved
+import com.fracturedskies.api.World
+import com.fracturedskies.api.entity.Colonist
+import com.fracturedskies.api.task.BehaviorStatus.*
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.math.PathFinder.Companion.targets
 import com.fracturedskies.engine.math.PathFinder.Companion.targetsDistanceHeuristic
-import com.fracturedskies.engine.messages.*
-import com.fracturedskies.task.behavior.BehaviorStatus.*
 import kotlin.coroutines.experimental.buildSequence
 
 
@@ -73,7 +73,7 @@ class BehaviorMoveToPosition(private val positions: (World, Colonist) -> List<Ve
     }
 
     for (step in path.drop(1)) {
-      if (world.blocked[step]) {
+      if (world.blocks[step].type.opaque) {
         // If the path is blocked, see if we can find another
         yieldAll(BehaviorMoveToPosition(positions).execute(world, colonist))
         return@buildSequence
@@ -84,7 +84,7 @@ class BehaviorMoveToPosition(private val positions: (World, Colonist) -> List<Ve
           (deltaPosition.toVector3() / deltaPosition.magnitude).toVector3i()
         else colonist.direction
 
-        MessageBus.send(ColonistMoved(colonist.id, step, newDirection, Cause.of(this)))
+        world.moveColonist(colonist.id, step, newDirection, Cause.of(this))
         yield(RUNNING)
       }
     }

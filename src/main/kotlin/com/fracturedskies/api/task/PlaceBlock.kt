@@ -1,12 +1,12 @@
-package com.fracturedskies.task.behavior
+package com.fracturedskies.api.task
 
-import com.fracturedskies.*
-import com.fracturedskies.api.*
+import com.fracturedskies.api.World
+import com.fracturedskies.api.block.*
+import com.fracturedskies.api.entity.Colonist
+import com.fracturedskies.api.task.BehaviorStatus.*
 import com.fracturedskies.engine.Id
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.task.behavior.BehaviorStatus.*
 import kotlin.coroutines.experimental.buildSequence
 
 
@@ -22,15 +22,16 @@ class BehaviorPutBlock(private val pos: Vector3i, private val blockType: BlockTy
       if (deltaPosition.x != 0 || deltaPosition.z != 0) {
         val newDirection = (deltaPosition.toVector3() / deltaPosition.magnitude).toVector3i()
         if (newDirection != colonist.direction) {
-          send(ColonistMoved(colonist.id, colonist.position, newDirection, Cause.of(this)))
+          world.moveColonist(colonist.id, colonist.position, newDirection, Cause.of(this))
           yield(RUNNING)
         }
       }
 
-      val itemDrop = world.blockType[pos].itemDrop
-      send(BlockUpdated(mapOf(pos to blockType), Cause.of(this)))
+      val prevBlock = world.blocks[pos].type
+      val itemDrop = prevBlock.itemDrop
+      world.updateBlock(pos, Block(blockType), Cause.of(this))
       if (itemDrop != null) {
-        send(ItemSpawned(Id(), itemDrop, colonist.position, Cause.of(this)))
+        world.spawnItem(Id(), itemDrop, colonist.position, Cause.of(this))
       }
       yield(RUNNING)
       yield(SUCCESS)

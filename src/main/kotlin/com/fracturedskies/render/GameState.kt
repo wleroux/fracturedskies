@@ -1,61 +1,56 @@
 package com.fracturedskies.render
 
-import com.fracturedskies.World
 import com.fracturedskies.api.*
+import com.fracturedskies.engine.api.Message
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
+import javax.enterprise.event.Observes
+import javax.inject.Singleton
 
-data class GameState(
-    var gameStarted: Boolean = false,
-    var world: RenderWorld? = null
-) {
-  class RenderWorld(dimension: Dimension) : World(dimension) {
-    val blocksDirty = BooleanMutableSpace(dimension / CHUNK_DIMENSION, { false })
-    var itemsDirty = false
-    var colonistsDirty = false
+@Singleton
+class DirtyFlags{
+  var blocksDirty: BooleanMutableSpace = BooleanMutableSpace(Dimension(0, 0, 0))
+    private set
+  var itemsDirty: Boolean = false
+    private set
+  var colonistsDirty: Boolean = false
+    private set
 
-    private fun chunks(pos: Vector3i) = (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
-        .map { it + pos }
-        .map { it / CHUNK_DIMENSION }
-        .toSet()
-        .filter { blocksDirty.has(it) }
+  private fun chunks(pos: Vector3i) = (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
+      .map(pos::plus)
+      .map(this::chunkPos)
+      .toSet()
+      .filter(blocksDirty::has)
 
-    override fun process(message: Any) {
-      super.process(message)
+  private fun chunkPos(pos: Vector3i) = (pos / CHUNK_DIMENSION)
 
-      when (message) {
-        is WorldGenerated -> message.blocks.forEach { (blockIndex, _) ->
-          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
-          chunks(blockPos).forEach { chunkPos -> blocksDirty[chunkPos] = true }
-        }
-        is BlockUpdated -> message.updates.forEach { pos, _ -> chunks(pos).forEach { chunkPos -> blocksDirty[chunkPos] = true } }
-        is BlockWaterLevelUpdated -> message.updates.forEach { pos, _ -> chunks(pos).forEach { chunkPos -> blocksDirty[chunkPos] = true } }
-        is SkyLightUpdated -> message.updates.forEach { pos, _ -> chunks(pos).forEach { chunkPos -> blocksDirty[chunkPos] = true } }
-        is BlockLightUpdated -> message.updates.forEach { pos, _ -> chunks(pos).forEach { chunkPos -> blocksDirty[chunkPos] = true } }
-        is ColonistSpawned -> colonistsDirty = true
-        is ItemSpawned -> itemsDirty = true
-      }
-    }
+  fun clear() {
+    blocksDirty.clear()
+    itemsDirty = false
+    colonistsDirty = false
   }
 
-  fun process(message: Any) {
+  fun process(@Observes message: Message) {
     when (message) {
       is NewGameRequested -> {
-        gameStarted = true
-        world = RenderWorld(message.dimension)
+        blocksDirty = BooleanMutableSpace(message.dimension, { true })
+        itemsDirty = true
+        colonistsDirty = true
       }
-      else -> {
-        if (gameStarted)
-          world!!.process(message)
+      is WorldGenerated -> {
+        val blocks = message.blocks
+        blocks
+            .flatMap { chunks(it.key) }
+            .forEach { blocksDirty[it] = true }
       }
-    }
-  }
-
-  fun clearDirty() {
-    if (gameStarted) {
-      world!!.blocksDirty.clear()
-      world!!.itemsDirty = false
-      world!!.colonistsDirty = false
+      is BlocksUpdated -> {
+        val blocks = message.blocks
+        blocks
+            .flatMap { chunks(it.key) }
+            .forEach { blocksDirty[it] = true }
+      }
+      is ColonistSpawned -> colonistsDirty = true
+      is ItemSpawned -> itemsDirty = true
     }
   }
 }

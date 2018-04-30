@@ -1,7 +1,8 @@
-package com.fracturedskies.task.api
+package com.fracturedskies.api.task
 
-import com.fracturedskies.*
-import com.fracturedskies.task.api.TaskPriority.AVERAGE
+import com.fracturedskies.api.World
+import com.fracturedskies.api.entity.Colonist
+import com.fracturedskies.api.task.TaskPriority.AVERAGE
 
 interface PriorityComparator {
   fun compare(colonist: Colonist, o1: Task, o2: Task): Int

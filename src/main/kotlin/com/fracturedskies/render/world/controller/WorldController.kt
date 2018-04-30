@@ -1,15 +1,14 @@
 package com.fracturedskies.render.world.controller
 
-import com.fracturedskies.Block
-import com.fracturedskies.api.*
 import com.fracturedskies.api.GameSpeed.*
+import com.fracturedskies.api.World
+import com.fracturedskies.api.block.*
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.render.GameState
+import com.fracturedskies.render.DirtyFlags
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.world.components.WorldRenderer.Companion.world
@@ -30,12 +29,15 @@ data class WorldControllerState(
 class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(props, WorldControllerState()) {
 
   companion object {
-    fun Node.Builder<*>.worldController(gameState: GameState, additionalContext: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.worldController(world: World, dirtyFlags: DirtyFlags, additionalContext: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldController, additionalContext.with(
-          GAME_STATE to gameState)))
+          WORLD to world,
+          DIRTY_FLAGS to dirtyFlags
+      )))
     }
 
-    val GAME_STATE = TypedKey<GameState>("wcGameState")
+    val WORLD = TypedKey<World>("world")
+    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
 
     private const val ROTATE_LEFT = (Math.PI / 32f).toFloat()
     private const val ROTATE_RIGHT = (-Math.PI / 32f).toFloat()
@@ -63,8 +65,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
     }
   }
 
-  private val gameState get() = props[GAME_STATE]
-  private val world get() = gameState.world!!
+  private val world get() = props[WORLD]
 
   private var focused = false
   private val sliceHeight: Int
@@ -104,16 +105,16 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   private fun onUpdate(dt: Float) {
     when {
       // Game Speed
-      keyboard.isPressed(GLFW_KEY_SPACE) -> send(GameSpeedUpdated(PAUSE, Cause.of(this)))
-      keyboard.isPressed(GLFW_KEY_1) -> send(GameSpeedUpdated(SLOW, Cause.of(this)))
-      keyboard.isPressed(GLFW_KEY_2) -> send(GameSpeedUpdated(NORMAL, Cause.of(this)))
-      keyboard.isPressed(GLFW_KEY_3) -> send(GameSpeedUpdated(FAST, Cause.of(this)))
-      keyboard.isPressed(GLFW_KEY_4) -> send(GameSpeedUpdated(UNLIMITED, Cause.of(this)))
+      keyboard.isPressed(GLFW_KEY_SPACE) -> world.updateSpeed(PAUSE, Cause.of(this))
+      keyboard.isPressed(GLFW_KEY_1) -> world.updateSpeed(SLOW, Cause.of(this))
+      keyboard.isPressed(GLFW_KEY_2) -> world.updateSpeed(NORMAL, Cause.of(this))
+      keyboard.isPressed(GLFW_KEY_3) -> world.updateSpeed(FAST, Cause.of(this))
+      keyboard.isPressed(GLFW_KEY_4) -> world.updateSpeed(UNLIMITED, Cause.of(this))
 
       // World Action Controller
       keyboard.isPressed(GLFW_KEY_C) -> worldActionController = SpawnColonistActionController
       keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(BlockDirt)
-      keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(BlockLight)
+      keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(BlockTypeLight)
       keyboard.isPressed(GLFW_KEY_Z) -> worldActionController = RemoveBlockBlockActionController
       keyboard.isPressed(GLFW_KEY_V) -> worldActionController = AddWaterBlockActionController
       keyboard.isPressed(GLFW_KEY_N) -> worldActionController = AddZoneActionController
@@ -277,6 +278,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
   override fun render() = nodes {
     world(
       world,
+      props[DIRTY_FLAGS],
       Matrix4(position = view, rotation = rotation).invert(),
       state.area,
       state.areaColor,

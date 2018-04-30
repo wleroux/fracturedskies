@@ -1,140 +1,131 @@
 package com.fracturedskies.light
 
 import com.fracturedskies.api.*
+import com.fracturedskies.api.block.Block
+import com.fracturedskies.api.block.data.SkyLight
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
 import java.util.*
-import kotlin.coroutines.experimental.CoroutineContext
+import javax.enterprise.event.Observes
+import javax.inject.*
 
-fun skyLightSystem(context: CoroutineContext): MessageChannel {
-  class SkyLightMap(override val dimension: Dimension): HasDimension {
-    val level = IntMutableSpace(dimension)
-    val type = ObjectMutableSpace<BlockType>(dimension, { BlockAir })
-  }
-  lateinit var light: SkyLightMap
+@Singleton
+class SkyLightSystem {
 
-  fun propagateSkyLight(lightPropagation: LinkedList<Vector3i>): Map<Vector3i, Int> {
-    val lightUpdates = mutableMapOf<Vector3i, Int>()
-    while (lightPropagation.isNotEmpty()) {
-      val blockPos = lightPropagation.pollFirst()
-      if (light.level[blockPos] == 0)
-        continue
+  @Inject
+  lateinit var world: World
 
-      Vector3i.NEIGHBOURS.forEach { neighborVector ->
-        val neighborPos = blockPos + neighborVector
-        if (light.has(neighborPos)) {
-          val propagateLightValue = if (light.level[blockPos] == MAX_LIGHT_LEVEL && neighborVector == Vector3i.AXIS_NEG_Y) {
-            MAX_LIGHT_LEVEL
-          } else if (neighborPos.y + 1 == light.dimension.height) {
-            MAX_LIGHT_LEVEL
-          } else {
-            light.level[blockPos] - 1
-          }
+  private var initialized = false
+  private lateinit var light: IntMutableSpace
+  private lateinit var opaque: BooleanMutableSpace
 
-          if (!light.type[neighborPos].opaque && light.level[neighborPos] < propagateLightValue) {
-            lightUpdates[neighborPos] = propagateLightValue
-            light.level[neighborPos] = propagateLightValue
-            lightPropagation.addLast(neighborPos)
-          }
-        }
+  fun onWorldGenerated(@Observes message: WorldGenerated) {
+    message.blocks.forEach(this::updateLocalCache)
+
+    val sky = mutableListOf<Vector3i>()
+    (0 until world.width).forEach { x ->
+      (0 until world.depth).forEach { z ->
+        sky.add(Vector3i(x, world.height - 1, z))
       }
     }
-    return lightUpdates
+    refresh(sky)
   }
 
-  fun updateSkylight(initialPos: Vector3i): Map<Vector3i, Int> {
-    val lightUpdates = mutableMapOf<Vector3i, Int>()
-    if (light.type[initialPos].opaque) {
-      // Remove Skylight
-      if (light.level[initialPos] == 0)
-        return lightUpdates
+  fun onBlocksUpdated(@Observes message: BlocksUpdated) {
+    message.blocks.forEach(this::updateLocalCache)
+    refresh(message.blocks.keys)
+  }
 
-      lightUpdates[initialPos] = 0
-      light.level[initialPos] = 0
-      val lightPos = LinkedList<Vector3i>()
-      val skyunlitPos = LinkedList<Vector3i>(Vector3i.NEIGHBOURS
-          .map { initialPos + it }
-          .filter { light.has(it) })
-      while (skyunlitPos.isNotEmpty()) {
-        val blockPos = skyunlitPos.pollFirst()
-        if (light.level[blockPos] == 0 || light.type[blockPos].opaque)
-          continue
-        val lit = (blockPos.y == light.dimension.height - 1) || Vector3i.NEIGHBOURS
-            .filter { light.has(blockPos + it) }
-            .any {
-              if (it == Vector3i.AXIS_Y &&
-                  light.level[blockPos + it] == MAX_LIGHT_LEVEL &&
-                  light.level[blockPos] <= light.level[blockPos + it]) {
-                true
-              } else {
-                (light.level[blockPos] < light.level[blockPos + it])
-              }
-            }
-        if (lit) {
-          lightPos.add(blockPos)
-        } else {
-          lightUpdates[blockPos] = 0
-          light.level[blockPos] = 0
-          Vector3i.NEIGHBOURS.forEach { neighborVector ->
-            val neighborPos = blockPos + neighborVector
-            if (light.has(neighborPos)) {
-              skyunlitPos.addLast(neighborPos)
-            }
-          }
-        }
-      }
+  private fun updateLocalCache(update: Map.Entry<Vector3i, Block>) {
+    if (!initialized) {
+      light = IntMutableSpace(world.dimension, {0})
+      opaque = BooleanMutableSpace(world.dimension, {false})
+      initialized = true
+    }
 
-      lightUpdates.putAll(propagateSkyLight(lightPos))
-      return lightUpdates
-    } else {
-      val skyLightLevel = if (initialPos.y + 1 == light.dimension.height) MAX_LIGHT_LEVEL else 0
-      lightUpdates[initialPos] = skyLightLevel
-      light.level[initialPos] = skyLightLevel
-      val skylightPos = LinkedList(Vector3i.NEIGHBOURS
-          .map { initialPos + it }
-          .filter { light.has(it) })
-      skylightPos.addFirst(initialPos)
-      lightUpdates.putAll(propagateSkyLight(skylightPos))
-      return lightUpdates
+    light[update.key] = update.value[SkyLight::class]!!.value
+    opaque[update.key] = update.value.type.opaque
+  }
+
+  private fun refresh(positions: Collection<Vector3i>) {
+    val lightSources = mutableListOf<Vector3i>()
+
+    // If not opaque, propagate the light!
+    positions
+        .filter { !opaque[it] }
+        .toCollection(lightSources)
+
+    // If opaque, any blocks that may have been lighted by this one are updated to zero...
+    // Then any adjacent lights that may have lighted them are added to the list of light propagators
+    val darkenedCells = darken(positions.filter { opaque[it] })
+
+    darkenedCells
+        .flatMap(light::neighbors)
+        .toCollection(lightSources)
+    darkenedCells
+        .filter { it.y == light.height - 1 }
+        .toCollection(lightSources)
+
+    // Any position that is acting as a light source should propagate the light!
+    val lightenedCells = lighten(lightSources.filter { !opaque[it] })
+
+    // Update the world
+    val blocks = (darkenedCells + lightenedCells)
+        .filter { light[it] != world.blocks[it][SkyLight::class]!!.value }
+        .distinct()
+        .map { it to world.blocks[it].with(SkyLight(light[it])) }
+        .toMap()
+    if (blocks.isNotEmpty()) {
+      world.updateBlocks(blocks, Cause.of(this))
     }
   }
 
-  return MessageChannel(context) { message ->
-    when (message) {
-      is NewGameRequested -> {
-        light = SkyLightMap(message.dimension)
-      }
-      is WorldGenerated -> {
-        message.blocks.forEach { (blockIndex, block) ->
-          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
-          light.type[blockPos] = block.type
-        }
+  private fun darken(initialPositions: List<Vector3i>): List<Vector3i> {
+    val darkenedCells = LinkedList<Vector3i>()
+    val unvisitedCells = LinkedList<Vector3i>()
+    initialPositions.flatMap(light::neighbors)
+        .toCollection(unvisitedCells)
+    while (unvisitedCells.isNotEmpty()) {
+      val pos = unvisitedCells.remove()
+      if (light[pos] == 0) continue
 
-        val lightUpdates = message.blocks.flatMap { (blockIndex, _) ->
-          val blockPos = message.offset + message.blocks.vector3i(blockIndex)
-          updateSkylight(blockPos).toList()
-        }.toMap()
+      light.neighbors(pos)
+          .filter { light[pos] > light[it] }
+          .toCollection(unvisitedCells)
 
-        if (lightUpdates.isNotEmpty()) {
-          send(SkyLightUpdated(lightUpdates, message.cause, message.context))
-        }
-      }
-      is BlockUpdated -> {
-        message.updates.forEach { pos, type ->
-          light.type[pos] = type
-        }
-
-        val lightUpdates = message.updates.flatMap { (pos, _) ->
-          updateSkylight(pos).toList()
-        }.toMap()
-
-        if (lightUpdates.isNotEmpty()) {
-          send(SkyLightUpdated(lightUpdates, message.cause, message.context))
-        }
-      }
+      darkenedCells.add(pos)
+      light[pos] = 0
     }
+
+    return darkenedCells
+  }
+
+  private fun lighten(initialPositions: List<Vector3i>): List<Vector3i> {
+    val lightenedCells = LinkedList<Vector3i>()
+    val unvisitedCells = LinkedList<Vector3i>()
+    initialPositions.toCollection(unvisitedCells)
+    while (unvisitedCells.isNotEmpty()) {
+      val pos = unvisitedCells.remove()
+
+      val topPos = light.top(pos)
+      val targetLight = when {
+        topPos == null -> MAX_LIGHT_LEVEL
+        light[topPos] == MAX_LIGHT_LEVEL -> MAX_LIGHT_LEVEL
+        else -> (light.neighbors(pos).map {light[it]}.max() ?: 0) - 1
+      }
+
+      if (light[pos] >= targetLight) continue
+
+      light[pos] = targetLight
+      world.neighbors(pos)
+          .filter { !opaque[it] }
+          .filter { light[pos] > light[it] }
+          .toCollection(unvisitedCells)
+
+      lightenedCells.add(pos)
+    }
+
+    return lightenedCells
   }
 }

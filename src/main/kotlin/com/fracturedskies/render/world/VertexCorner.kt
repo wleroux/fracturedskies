@@ -3,7 +3,7 @@ package com.fracturedskies.render.world
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.Vector3i
 import com.fracturedskies.render.world.Occlusion.*
-import com.fracturedskies.Block
+import com.fracturedskies.api.block.Block
 import java.util.*
 
 enum class VertexCorner(private val side1: Occlusion, private val side2: Occlusion, private val corner: Occlusion) {

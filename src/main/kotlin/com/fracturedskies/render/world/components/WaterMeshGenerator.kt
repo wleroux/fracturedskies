@@ -1,13 +1,13 @@
 package com.fracturedskies.render.world.components
 
-import com.fracturedskies.Block
-import com.fracturedskies.api.BlockAir
+import com.fracturedskies.api.MAX_WATER_LEVEL
+import com.fracturedskies.api.block.*
+import com.fracturedskies.api.block.data.WaterLevel
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.world.*
 import com.fracturedskies.render.world.VertexCorner.*
-import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import org.lwjgl.BufferUtils.*
 
 
@@ -26,7 +26,7 @@ fun generateWaterMesh(
           continue
         }
 
-        val curWaterLevel = block.waterLevel
+        val curWaterLevel = waterLevel(block)
         if (curWaterLevel == 0.toByte()) {
           continue
         }
@@ -39,7 +39,7 @@ fun generateWaterMesh(
         // north
         val northPos =  pos + Vector3i.AXIS_NEG_Z
         if (!sliceMesh && isEmpty(world, northPos)) {
-          val adjWaterLevel = if (!world.has(northPos)) 0 else world[northPos].waterLevel
+          val adjWaterLevel = if (!world.has(northPos)) 0 else waterLevel(world[northPos])
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
@@ -69,7 +69,7 @@ fun generateWaterMesh(
         // up
         val upPos = pos + Vector3i.AXIS_Y
         if (sliceMesh || isEmpty(world, upPos) || curWaterLevel != MAX_WATER_LEVEL) {
-          val adjWaterLevel = if (world.has(upPos)) world[upPos].waterLevel else 0
+          val adjWaterLevel = if (world.has(upPos)) waterLevel(world[upPos]) else 0
           val drawMesh = when (sliceMesh) {
             true -> curWaterLevel == MAX_WATER_LEVEL
             false -> curWaterLevel != MAX_WATER_LEVEL || adjWaterLevel == 0.toByte()
@@ -99,7 +99,7 @@ fun generateWaterMesh(
         // west
         val westPos = pos + Vector3i.AXIS_NEG_X
         if (!sliceMesh && isEmpty(world, westPos)) {
-          val adjWaterLevel = if (world.has(westPos)) world[westPos].waterLevel else 0
+          val adjWaterLevel = if (world.has(westPos)) waterLevel(world[westPos]) else 0
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
@@ -127,7 +127,7 @@ fun generateWaterMesh(
         // east
         val eastPos = pos + Vector3i.AXIS_X
         if (!sliceMesh && isEmpty(world, eastPos)) {
-          val adjWaterLevel = if (world.has(eastPos)) world[eastPos].waterLevel else 0
+          val adjWaterLevel = if (world.has(eastPos)) waterLevel(world[eastPos]) else 0
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
@@ -155,7 +155,7 @@ fun generateWaterMesh(
         // down
         val downPos = pos + Vector3i.AXIS_NEG_Y
         if (!sliceMesh && isEmpty(world, downPos)) {
-          val adjWaterLevel = if (world.has(downPos)) world[downPos].waterLevel else 0
+          val adjWaterLevel = if (world.has(downPos)) waterLevel(world[downPos]) else 0
           if (adjWaterLevel != MAX_WATER_LEVEL) {
             val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_Z) }
             val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, Vector3i.AXIS_X, Vector3i.AXIS_Z) }
@@ -182,7 +182,7 @@ fun generateWaterMesh(
         // south
         val southPos = pos + Vector3i.AXIS_Z
         if (!sliceMesh && isEmpty(world, southPos)) {
-          val adjWaterLevel = if (world.has(southPos)) world[southPos].waterLevel else 0
+          val adjWaterLevel = if (world.has(southPos)) waterLevel(world[southPos]) else 0
           val adjWaterHeight = waterHeight(adjWaterLevel)
 
           if (adjWaterHeight < curWaterHeight) {
@@ -230,6 +230,10 @@ fun generateWaterMesh(
   indicesBuffer.get(indices)
 
   return { Mesh(vertices, indices, Quad.Attributes) }
+}
+
+private fun waterLevel(block: Block): Byte {
+  return block[WaterLevel::class]!!.value
 }
 
 private fun waterHeight(waterLevel: Byte): Float {

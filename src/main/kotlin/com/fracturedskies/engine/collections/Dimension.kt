@@ -1,6 +1,9 @@
 package com.fracturedskies.engine.collections
 
 import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Y
+import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_Y
+import com.fracturedskies.engine.math.Vector3i.Companion.NEIGHBOURS
 
 class Dimension(val width: Int, val height: Int, val depth: Int) {
   val size = width * height * depth
@@ -38,4 +41,13 @@ interface HasDimension {
   fun has(pos: Vector3i) = dimension.has(pos)
   fun has(x: Int, y: Int, z: Int) = dimension.has(x, y, z)
   fun has(index: Int) = dimension.has(index)
+
+  // Helper Functions
+  fun neighbors(position: Vector3i) = NEIGHBOURS.map { position + it }.filter { has(it) }
+  fun top(position: Vector3i) = offset(position, AXIS_Y)
+  fun bottom(position: Vector3i) = offset(position, AXIS_NEG_Y)
+  private fun offset(position: Vector3i, delta: Vector3i): Vector3i? {
+    val newPosition = position + delta
+    return if (has(newPosition)) newPosition else null
+  }
 }

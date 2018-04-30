@@ -1,10 +1,11 @@
 package com.fracturedskies.render.world.components
 
-import com.fracturedskies.api.ItemType
+import com.fracturedskies.api.World
+import com.fracturedskies.api.block.data.*
+import com.fracturedskies.api.entity.ItemType
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorld
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -15,14 +16,14 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 
 class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.items(worldState: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.items(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::ItemsRenderer, MultiTypeMap(
-          WORLD_STATE to worldState,
+          WORLD_STATE to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD_STATE = TypedKey<RenderWorld>("worldState")
+    private val WORLD_STATE = TypedKey<World>("world")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -36,7 +37,7 @@ class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         .filterValues { it.position!!.y <= sliceHeight }
         .map { (_, item) ->
           val block = props[WORLD_STATE].blocks[item.position!!]
-          itemMesh(item.itemType, block.skyLight, block.blockLight) to item.position!!}
+          itemMesh(item.itemType, block[SkyLight::class]!!.value, block[BlockLight::class]!!.value) to item.position!!}
         .groupBy( {it.component1()}, {it.component2()} )
         .forEach { mesh, positions ->
           glBindVertexArray(mesh.vao)
@@ -47,7 +48,7 @@ class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         }
   }
 
-  var cache = mutableMapOf<ItemType, MutableMap<Pair<Int, Int>, Mesh>>()
+  private var cache = mutableMapOf<ItemType, MutableMap<Pair<Int, Int>, Mesh>>()
   private fun itemMesh(itemType: ItemType, skyLight: Int, blockLight: Int): Mesh {
     return cache
         .computeIfAbsent(itemType, { mutableMapOf() })

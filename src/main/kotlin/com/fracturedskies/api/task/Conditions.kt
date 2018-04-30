@@ -1,6 +1,7 @@
-package com.fracturedskies.task.api
+package com.fracturedskies.api.task
 
-import com.fracturedskies.*
+import com.fracturedskies.api.*
+import com.fracturedskies.api.entity.Colonist
 import com.fracturedskies.engine.Id
 
 

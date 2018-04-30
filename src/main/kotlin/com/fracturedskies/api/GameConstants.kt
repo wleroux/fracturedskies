@@ -7,3 +7,6 @@ const val CHUNK_X_SIZE = 16
 const val CHUNK_Y_SIZE = 16
 const val CHUNK_Z_SIZE = 16
 val CHUNK_DIMENSION = Dimension(CHUNK_X_SIZE, CHUNK_Y_SIZE, CHUNK_Z_SIZE)
+
+const val MAX_WATER_LEVEL = 3.toByte()
+const val MAX_LIGHT_LEVEL = 15

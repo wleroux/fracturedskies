@@ -1,6 +1,6 @@
 package com.fracturedskies.engine.math
 
-import com.fracturedskies.Block
+import com.fracturedskies.api.block.Block
 import com.fracturedskies.engine.collections.ObjectSpace
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_X
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_NEG_Y

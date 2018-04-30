@@ -1,14 +1,14 @@
 package com.fracturedskies.render.world.controller
 
-import com.fracturedskies.World
 import com.fracturedskies.api.*
+import com.fracturedskies.api.block.*
+import com.fracturedskies.api.block.data.WaterLevel
+import com.fracturedskies.api.task.*
+import com.fracturedskies.api.task.TaskPriority.AVERAGE
 import com.fracturedskies.engine.Id
+import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.math.Vector3i.Companion.area
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.task.api.TaskPriority
-import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import org.lwjgl.glfw.GLFW.*
 import java.lang.Integer.*
 
@@ -37,7 +37,7 @@ object SpawnColonistActionController : WorldActionController {
       if (raycastHit != null) {
         val pos = raycastHit.position + raycastHit.faces.first()
         if (world.has(pos) && world.blocks[pos].type == BlockAir)
-          send(ColonistSpawned(Id(), pos, Cause.of(this)))
+          world.spawnColonist(Id(), pos, Cause.of(this))
       }
     }
   }
@@ -59,7 +59,7 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
         area(xRange, yRange, zRange)
             .filter { world.blocks.has(it) && world.blocks[it].type == BlockAir }
             .forEach {
-              send(TaskCreated(Id(), TaskPlaceBlock(it, blockType), TaskPriority.AVERAGE, Cause.of(this)))
+              world.createTask(Id(), TaskPlaceBlock(it, blockType), AVERAGE, Cause.of(this))
             }
       }
       firstBlock = null
@@ -107,7 +107,7 @@ object RemoveBlockBlockActionController: WorldActionController {
         area(xRange, yRange, zRange)
             .filter { world.blocks.has(it) && world.blocks[it].type != BlockAir }
             .forEach {
-              send(TaskCreated(Id(), TaskRemoveBlock(it), TaskPriority.AVERAGE, Cause.of(this)))
+              world.createTask(Id(), TaskRemoveBlock(it), AVERAGE, Cause.of(this))
             }
       }
       firstBlock = null
@@ -162,8 +162,8 @@ object AddWaterBlockActionController: WorldActionController {
     if (isOn) {
       position?.let { position ->
         if (!world.blocks.has(position) || world.blocks[position].type != BlockAir) return
-        if (world.blocks[position].waterLevel >= MAX_WATER_LEVEL) return
-        send(BlockWaterLevelUpdated(mutableMapOf(position to MAX_WATER_LEVEL), Cause.of(this)))
+        if (world.blocks[position][WaterLevel::class]!!.value >= MAX_WATER_LEVEL) return
+        world.updateBlock(position, world.blocks[position].with(WaterLevel(MAX_WATER_LEVEL)), Cause.of(this))
       }
     }
   }
@@ -183,7 +183,7 @@ object AddWaterBlockActionController: WorldActionController {
 object AddZoneActionController: WorldActionController {
   private var firstBlock: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
-    val (_, _, _, action, _, _) = worldMouseClick
+    val (world, _, _, action, _, _) = worldMouseClick
     if (action == GLFW_PRESS) {
       firstBlock = position
     } else if (action == GLFW_RELEASE) {
@@ -192,7 +192,8 @@ object AddZoneActionController: WorldActionController {
         val xRange = min(firstBlock!!.x, secondBlock.x)..max(firstBlock!!.x, secondBlock.x)
         val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
         val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
-        send(ZoneCreated(Id(), area(xRange, yRange, zRange), Cause.of(this)))
+
+        world.createZone(Id(), area(xRange, yRange, zRange), Cause.of(this))
       }
       firstBlock = null
     }

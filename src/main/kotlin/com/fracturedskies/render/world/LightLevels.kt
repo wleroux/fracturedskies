@@ -1,7 +1,7 @@
 package com.fracturedskies.render.world
 
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
+import com.fracturedskies.api.MAX_LIGHT_LEVEL
 import org.lwjgl.BufferUtils
 import org.lwjgl.stb.STBImage
 import java.nio.*

@@ -1,67 +1,58 @@
 package com.fracturedskies.task
 
-import com.fracturedskies.*
-import com.fracturedskies.api.*
+import com.fracturedskies.api.World
+import com.fracturedskies.api.entity.Colonist
+import com.fracturedskies.api.task.*
 import com.fracturedskies.engine.api.Update
-import com.fracturedskies.engine.collections.Dimension
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.task.api.colonistPriorityComparator
-import kotlinx.coroutines.experimental.async
-import kotlin.coroutines.experimental.CoroutineContext
-
-class TaskManagement(dimension: Dimension): World(dimension)
+import javax.enterprise.event.*
+import javax.inject.Inject
 
 /**
  * This system is responsible for assigning the colonist to the desired task every tick
  */
-class TaskManagementSystem(context: CoroutineContext) {
-  lateinit var state: TaskManagement
-  var initialized = false
-  val channel = MessageChannel(context) { message ->
-    when (message) {
-      is NewGameRequested -> {
-        state = TaskManagement(message.dimension)
-        initialized = true
-      }
-      is Update -> {
-        if (!initialized) return@MessageChannel
+class TaskManagementSystem {
 
-        state.colonists.values
-            .map { colonist -> async(context) { colonist to getDesiredTask(state, colonist, state.tasks.values) } }.map { it.await() }
-            .groupBy({(_, desiredTask) -> desiredTask}, {(colonist, _) -> colonist})
-            .mapValues { entry ->
-              when {
-                entry.key != null && entry.value.size > 1 ->
-                  listOf(entry.value.minBy { colonist -> entry.key?.details?.behavior?.cost(state, colonist) ?: 0 }!!)
-                else -> entry.value
-              }
+  @Inject
+  lateinit var events: Event<Any>
+
+  @Inject
+  lateinit var world: World
+
+  fun onUpdate(@Observes message: Update) {
+    world.colonists.values
+        .map { colonist -> colonist to getDesiredTask(world, colonist, world.tasks.values) }
+        .groupBy({ (_, desiredTask) -> desiredTask }, { (colonist, _) -> colonist })
+        .mapValues { entry ->
+          when {
+            entry.key != null && entry.value.size > 1 ->
+              listOf(entry.value.minBy { colonist -> entry.key?.details?.behavior?.cost(world, colonist) ?: 0 }!!)
+            else -> entry.value
+          }
+        }
+        .forEach { task, colonists ->
+          colonists.forEach { colonist ->
+            if (colonist.assignedTask != task?.id) {
+              world.selectTask(colonist.id, task?.id, message.cause)
             }
-            .forEach { task, colonists -> colonists.forEach { colonist ->
-              if (colonist.assignedTask != task?.id) {
-                send(ColonistTaskSelected(colonist.id, task?.id, message.cause, message.context))
-              }
-            } }
-      }
-      else -> if (initialized) state.process(message)
-    }
+          }
+        }
   }
-}
 
-fun getDesiredTask(world: World, colonist: Colonist, tasks: Collection<Task>): Task? {
-  val comparator = colonistPriorityComparator(world)
+  private fun getDesiredTask(world: World, colonist: Colonist, tasks: Collection<Task>): Task? {
+    val comparator = colonistPriorityComparator(world)
 
-  var desiredTask: Task? = null
-  for (task in tasks) {
-    if (!task.details.condition.matches(world, colonist, task))
-      continue
+    var desiredTask: Task? = null
+    for (task in tasks) {
+      if (!task.details.condition.matches(world, colonist, task))
+        continue
 
-    if (desiredTask == null) {
-      desiredTask = task
-    } else {
-      if (comparator.compare(colonist, desiredTask, task) < 0)
+      if (desiredTask == null) {
         desiredTask = task
+      } else {
+        if (comparator.compare(colonist, desiredTask, task) < 0)
+          desiredTask = task
+      }
     }
+    return desiredTask
   }
-  return desiredTask
 }

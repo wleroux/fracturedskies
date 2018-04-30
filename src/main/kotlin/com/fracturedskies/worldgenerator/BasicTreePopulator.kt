@@ -1,8 +1,6 @@
 package com.fracturedskies.worldgenerator
 
-import com.fracturedskies.Block
-import com.fracturedskies.api.BlockType
-import com.fracturedskies.api.*
+import com.fracturedskies.api.block.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
@@ -50,7 +48,7 @@ class BasicTreePopulator(private val random: Random): Populator {
     // Try placing tree
     if (!blockPlacements.keys.map { pos + Vector3i.AXIS_Y + it }.all { blocks.has(it) && blocks[it].type == BlockAir }) return
     blockPlacements.forEach { deltaPos, blockType ->
-      blocks[pos + Vector3i.AXIS_Y + deltaPos].type = blockType
+      blocks[pos + Vector3i.AXIS_Y + deltaPos] = Block(blockType)
     }
   }
 

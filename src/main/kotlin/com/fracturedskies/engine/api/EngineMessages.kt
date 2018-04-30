@@ -1,10 +1,8 @@
 package com.fracturedskies.engine.api
 
 import com.fracturedskies.engine.collections.MultiTypeMap
-import com.fracturedskies.engine.messages.*
 
-data class Initialize(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
-data class Update(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
-data class Shutdown(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
-
-data class ShutdownRequested(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()): Message
+class Initialize(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message
+class Update(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message
+class Shutdown(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message
+class ShutdownRequested(override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message

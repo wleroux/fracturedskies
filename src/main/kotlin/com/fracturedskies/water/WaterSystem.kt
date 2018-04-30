@@ -1,86 +1,98 @@
 package com.fracturedskies.water
 
 import com.fracturedskies.api.*
-import com.fracturedskies.engine.api.Update
-import com.fracturedskies.engine.collections.MultiTypeMap
+import com.fracturedskies.api.block.data.WaterLevel
+import com.fracturedskies.engine.api.*
+import com.fracturedskies.engine.collections.forEach
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.engine.math.Vector3i.Companion.AXIS_Y
 import com.fracturedskies.engine.math.Vector3i.Companion.xZSpiral
-import com.fracturedskies.engine.messages.*
-import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.water.WaterMap.Companion.MAX_WATER_RANGE
-import com.fracturedskies.water.api.MAX_WATER_LEVEL
 import java.lang.Integer.min
 import java.util.*
 import java.util.Comparator.comparingInt
 import java.util.function.ToIntFunction
-import kotlin.coroutines.experimental.CoroutineContext
+import javax.enterprise.event.Observes
+import javax.inject.*
 
-class WaterSystem(coroutineContext: CoroutineContext) {
+@Singleton
+class WaterSystem {
+
+  @Inject
+  lateinit var world: World
+
   private var initialized = false
   private lateinit var water: WaterMap
   private lateinit var pathFinder: PathFinder
-  val channel = MessageChannel(coroutineContext) { message ->
-    when (message) {
-      is NewGameRequested -> {
-        water = WaterMap(message.dimension)
-        pathFinder = PathFinder({_, toPos -> water.has(toPos) && water.maxFlowOut[toPos] != 0.toByte()})
-        initialized = true
-      }
-      is WorldGenerated -> {
-        if (!initialized) return@MessageChannel
-        val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
-        message.blocks.forEach { (blockIndex, block) ->
-          val pos = message.offset + message.blocks.vector3i(blockIndex)
-          water.setOpaque(pos, block.type.opaque)
-          if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
-            water.setLevel(pos, 0)
-            waterLevelUpdates[pos] = 0
-          }
-        }
-        message.blocks.forEach { (blockIndex, _) ->
-          val pos = water.vector3i(blockIndex)
-          water.nearestWaterDrop[pos] = calculateNearestWaterDrop(pos)
-        }
-        if (waterLevelUpdates.isNotEmpty()) {
-          send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
-        }
-      }
-      is BlockUpdated -> {
-        if (!initialized) return@MessageChannel
-        val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
-        message.updates.forEach { (pos, type) ->
-          water.setOpaque(pos, type.opaque)
-          if (type.opaque && water.getLevel(pos) != 0.toByte()) {
-            water.setLevel(pos, 0)
-            waterLevelUpdates[pos] = 0
-          }
-        }
-        message.updates.forEach { (pos, _) ->
-          updateNearestWater(pos)
-        }
-        if (waterLevelUpdates.isNotEmpty()) {
-          send(BlockWaterLevelUpdated(waterLevelUpdates, Cause.of(this), MultiTypeMap()))
-        }
-      }
-      is BlockWaterLevelUpdated -> {
-        if (!initialized) return@MessageChannel
-        if (message.cause.first() != this) {
-          message.updates.forEach { (pos, waterLevel) ->
-            water.setLevel(pos, waterLevel)
-          }
-        }
-      }
-      is Update -> {
-        if (!initialized) return@MessageChannel
-        val flow = flow()
-        val evaporation = evaporation()
 
-        val updates = flow + evaporation
-        if (updates.isNotEmpty()) {
-          send(BlockWaterLevelUpdated(updates, Cause.of(this), MultiTypeMap()))
-        }
+  fun onNewGameRequested(@Observes newGameRequested: NewGameRequested) {
+    if (!initialized) {
+      water = WaterMap(world.dimension)
+      pathFinder = PathFinder({ _, toPos -> water.has(toPos) && water.maxFlowOut[toPos] != 0.toByte() })
+      initialized = true
+    }
+  }
+
+  fun onWorldGenerated(@Observes worldGenerated: WorldGenerated) {
+    if (!initialized) {
+      water = WaterMap(world.dimension)
+      pathFinder = PathFinder({ _, toPos -> water.has(toPos) && water.maxFlowOut[toPos] != 0.toByte() })
+      initialized = true
+    }
+
+    val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
+    worldGenerated.blocks.forEach { pos, block ->
+      water.setOpaque(pos, block.type.opaque)
+      if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
+        water.setLevel(pos, 0)
+        waterLevelUpdates[pos] = 0
       }
+    }
+    worldGenerated.blocks.forEach { pos, _ ->
+      water.nearestWaterDrop[pos] = calculateNearestWaterDrop(pos)
+    }
+    if (waterLevelUpdates.isNotEmpty()) {
+      world.updateBlocks(waterLevelUpdates
+          .map { it.key to world.blocks[it.key].with(WaterLevel(it.value)) }
+          .toMap(), Cause.of(this))
+    }
+  }
+
+  fun onBlockUpdated(@Observes blocksUpdated: BlocksUpdated) {
+    if (!initialized) {
+      water = WaterMap(world.dimension)
+      pathFinder = PathFinder({ _, toPos -> water.has(toPos) && water.maxFlowOut[toPos] != 0.toByte() })
+      initialized = true
+    }
+
+    val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
+    blocksUpdated.blocks.forEach { (pos, block) ->
+      water.setOpaque(pos, block.type.opaque)
+      water.setLevel(pos, block[WaterLevel::class]!!.value)
+      if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
+        water.setLevel(pos, 0)
+        waterLevelUpdates[pos] = 0
+      }
+    }
+    blocksUpdated.blocks.forEach { (pos, _) ->
+      updateNearestWater(pos)
+    }
+    if (waterLevelUpdates.isNotEmpty()) {
+      world.updateBlocks(waterLevelUpdates
+          .map { it.key to world.blocks[it.key].with(WaterLevel(it.value)) }
+          .toMap(), Cause.of(this))
+    }
+  }
+
+  fun onUpdate(@Observes update: Update) {
+    val flow = flow()
+    val evaporation = evaporation()
+
+    val updates = flow + evaporation
+    if (updates.isNotEmpty()) {
+      world.updateBlocks(updates
+          .map { it.key to world.blocks[it.key].with(WaterLevel(it.value)) }
+          .toMap(), Cause.of(this))
     }
   }
 

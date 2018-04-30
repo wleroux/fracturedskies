@@ -4,7 +4,7 @@ import com.fracturedskies.api.*
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorld
+import com.fracturedskies.render.DirtyFlags
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -15,19 +15,21 @@ import kotlin.math.min
 
 
 class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
-  private val chunks = props[WORLD_STATE].dimension  / CHUNK_DIMENSION
+  private val chunks = props[WORLD].dimension  / CHUNK_DIMENSION
   private val chunksMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
   private val chunksSliceMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
 
   companion object {
-    fun Node.Builder<*>.blocks(worldState: RenderWorld, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.blocks(world: World, dirtyFlags: DirtyFlags, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::BlocksRenderer, MultiTypeMap(
-          WORLD_STATE to worldState,
+          WORLD to world,
+          DIRTY_FLAGS to dirtyFlags,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD_STATE = TypedKey<RenderWorld>("blocks")
+    private val WORLD = TypedKey<World>("world")
+    private val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -38,16 +40,16 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     super.glRender(bounds)
 
     glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4.IDENTITY)
-    val worldState = props[WORLD_STATE]
+    val world = props[WORLD]
     val sliceHeight = props[SLICE_HEIGHT]
-    val chunks = worldState.dimension / CHUNK_DIMENSION
+    val chunks = world.dimension / CHUNK_DIMENSION
     chunks.forEach { chunkIndex ->
       val chunkPos = chunks.vector3i(chunkIndex)
       val shouldChunkUpdate = shouldChunkUpdate(chunkPos)
       val mesh = if (shouldChunkUpdate) {
         val prevMesh = chunksMesh[chunkIndex]
         prevMesh?.close()
-        val newMesh = generateWorldMesh(worldState.blocks, false,
+        val newMesh = generateWorldMesh(world.blocks, false,
             chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
             chunkPos.y * CHUNK_Y_SIZE until min((chunkPos.y + 1) * CHUNK_Y_SIZE, sliceHeight),
             chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
@@ -66,7 +68,7 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         val prevSliceMesh = chunksSliceMesh[chunkIndex]
         prevSliceMesh?.close()
         val nextSliceMesh = if (sliceHeight in (chunkPos.y * CHUNK_Y_SIZE until (chunkPos.y + 1) * CHUNK_Y_SIZE)) {
-          generateWorldMesh(worldState.blocks, true,
+          generateWorldMesh(world.blocks, true,
               chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
               sliceHeight - 1 until sliceHeight,
               chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
@@ -89,7 +91,7 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   }
 
   private fun shouldChunkUpdate(chunkPos: Vector3i): Boolean {
-    if (props[WORLD_STATE].blocksDirty[chunkPos]) return true
+    if (props[DIRTY_FLAGS].blocksDirty[chunkPos]) return true
 
     val sliceHeight = props[SLICE_HEIGHT]
     if (prevSliceHeight != sliceHeight) {

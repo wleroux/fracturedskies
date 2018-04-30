@@ -1,35 +1,25 @@
-package com.fracturedskies.api
+package com.fracturedskies.api.block
 
+import com.fracturedskies.api.MAX_LIGHT_LEVEL
+import com.fracturedskies.api.block.data.*
+import com.fracturedskies.api.entity.*
 import com.fracturedskies.engine.math.Color4
-
-open class ItemType {
-  open val blockType: BlockType? = null
-  open val color: Color4
-    get() = blockType?.color ?: Color4.WHITE
-}
-
-object ItemDirt: ItemType() {
-  override val blockType = BlockDirt
-}
-
-object ItemWood: ItemType() {
-  override val blockType: BlockType? = BlockWood
-}
-
-object ItemStone: ItemType() {
-  override val blockType: BlockType? = BlockStone
-}
-
-object ItemLight: ItemType() {
-  override val blockType: BlockType? = BlockLight
-}
-
+import kotlin.reflect.KClass
+import kotlin.reflect.full.safeCast
 
 open class BlockType {
   open val color: Color4 = Color4(255, 255, 255, 0)
   open val light: Int = 0
   open val opaque: Boolean = true
   open val itemDrop: ItemType? = null
+  open fun supportedProperties(): List<KClass<*>> = listOf(WaterLevel::class, SkyLight::class, BlockLight::class)
+  open fun <T: Any> defaultValue(property: KClass<T>): T? = property.safeCast(when (property) {
+    WaterLevel::class -> WaterLevel(0.toByte())
+    SkyLight::class -> SkyLight(0)
+    BlockLight::class -> BlockLight(0)
+    else ->
+      throw IllegalArgumentException("Unsupported property ${property.simpleName} for ${javaClass.simpleName}")
+  })
 }
 
 object BlockAir : BlockType() {
@@ -61,7 +51,8 @@ object BlockStone: BlockType() {
   override val itemDrop = ItemStone
 }
 
-object BlockLight: BlockType() {
+object BlockTypeLight: BlockType() {
   override val color = Color4.WHITE
+  override val light: Int = MAX_LIGHT_LEVEL + 1
   override val itemDrop = ItemLight
 }

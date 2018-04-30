@@ -3,7 +3,7 @@ package com.fracturedskies.render.world.components
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.light.api.MAX_LIGHT_LEVEL
+import com.fracturedskies.api.MAX_LIGHT_LEVEL
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11

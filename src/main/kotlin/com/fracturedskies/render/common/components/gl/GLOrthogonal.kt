@@ -24,7 +24,7 @@ class GLOrthogonal(props: MultiTypeMap) : Component<Unit>(props, Unit) {
   override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: Unit) {
     super.componentWillUpdate(nextProps, nextState)
 
-    // Reset projection
+    // Reset project
     this.bounds = Bounds(0, 0, 0, 0)
   }
 

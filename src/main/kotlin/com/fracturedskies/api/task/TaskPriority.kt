@@ -1,4 +1,4 @@
-package com.fracturedskies.task.api
+package com.fracturedskies.api.task
 
 
 enum class TaskPriority {

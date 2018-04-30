@@ -1,9 +1,10 @@
 package com.fracturedskies.render.world.components
 
+import com.fracturedskies.api.World
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.GameState.RenderWorld
+import com.fracturedskies.render.DirtyFlags
 import com.fracturedskies.render.common.components.gl.GLPerspective.Companion.perspective
 import com.fracturedskies.render.common.components.gl.GLShader.Companion.shader
 import com.fracturedskies.render.common.components.gl.GLUniform.Companion.uniform
@@ -23,9 +24,10 @@ import com.fracturedskies.render.world.components.ZonesRenderer.Companion.zones
 
 class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
   companion object {
-    fun Node.Builder<*>.world(worldState: RenderWorld, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.world(world: World, dirtyFlags: DirtyFlags, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(::WorldRenderer, MultiTypeMap(
-          WORLD_STATE to worldState,
+          WORLD to world,
+          DIRTY_FLAGS to dirtyFlags,
           VIEW to view,
           SELECTION to selection,
           AREA_COLOR to areaColor,
@@ -36,7 +38,8 @@ class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
     val AREA_COLOR = TypedKey<Color4>("areaColor")
     val SELECTION = TypedKey<Pair<Vector3i, Vector3i>?>("selection")
     val VIEW = TypedKey<Matrix4>("view")
-    val WORLD_STATE = TypedKey<RenderWorld>("worldState")
+    val WORLD = TypedKey<World>("world")
+    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
@@ -51,16 +54,16 @@ class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
       shader(shader) {
         perspective(PROJECTION_LOCATION, Math.PI.toFloat() / 4f, 0.03f, 1000f)
         uniform(VIEW_LOCATION, props[VIEW])
-        lightUniform(props[WORLD_STATE])
+        lightUniform(props[WORLD])
 
-        val worldState = props[WORLD_STATE]
+        val world = props[WORLD]
         val sliceHeight = props[SLICE_HEIGHT]
-        blocks(worldState, sliceHeight)
-        colonists(worldState, sliceHeight)
-        items(worldState, sliceHeight)
-        water(worldState, sliceHeight)
+        blocks(world, props[DIRTY_FLAGS], sliceHeight)
+        colonists(world, sliceHeight)
+        items(world, sliceHeight)
+        water(world, props[DIRTY_FLAGS], sliceHeight)
 
-        zones(worldState, sliceHeight)
+        zones(world, sliceHeight)
 
         selection(props[SELECTION], props[AREA_COLOR])
       }

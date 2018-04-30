@@ -1,14 +1,11 @@
 package com.fracturedskies.render.mainmenu
 
-import com.fracturedskies.GameSize
-import com.fracturedskies.GameSize.NORMAL
-import com.fracturedskies.api.NewGameRequested
-import com.fracturedskies.engine.api.ShutdownRequested
-import com.fracturedskies.engine.collections.MultiTypeMap
+import com.fracturedskies.api.*
+import com.fracturedskies.api.GameSize.NORMAL
+import com.fracturedskies.engine.api.Cause
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.Color4
-import com.fracturedskies.engine.messages.Cause
-import com.fracturedskies.engine.messages.MessageBus.send
 import com.fracturedskies.render.common.components.TextRenderer.Companion.text
 import com.fracturedskies.render.common.components.button.Button.Companion.button
 import com.fracturedskies.render.common.components.layout.*
@@ -25,9 +22,13 @@ import com.fracturedskies.render.mainmenu.MainMenuRenderer.Mode.*
 
 class MainMenuRenderer(props: MultiTypeMap) : Component<MenuState>(props, MenuState()) {
   companion object {
-    fun Node.Builder<*>.mainMenu(additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.() -> Unit = {}) {
-      nodes.add(Node(::MainMenuRenderer, additionalContext, block))
+    fun Node.Builder<*>.mainMenu(world: World, additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.() -> Unit = {}) {
+      nodes.add(Node(::MainMenuRenderer, additionalContext.with(
+          WORLD to world
+      ), block))
     }
+
+    val WORLD = TypedKey<World>("world")
   }
 
   data class MenuState(
@@ -48,11 +49,11 @@ class MainMenuRenderer(props: MultiTypeMap) : Component<MenuState>(props, MenuSt
   }
 
   private fun onQuit() {
-    send(ShutdownRequested(Cause.of(this)))
+    props[WORLD].requestShutdown(Cause.of(this))
   }
 
   private fun startGame() {
-    send(NewGameRequested(currentState.gameSize.dimension, 0, Cause.of(this)))
+    props[WORLD].startGame(currentState.gameSize, Cause.of(this))
   }
 
   override fun render() = nodes {

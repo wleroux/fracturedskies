@@ -1,40 +1,55 @@
 package com.fracturedskies.task
 
 import com.fracturedskies.api.*
+import com.fracturedskies.api.task.BehaviorStatus
+import com.fracturedskies.api.task.BehaviorStatus.*
+import com.fracturedskies.engine.Id
 import com.fracturedskies.engine.api.Update
-import com.fracturedskies.engine.messages.MessageBus.send
-import com.fracturedskies.engine.messages.MessageChannel
-import com.fracturedskies.task.behavior.BehaviorStatus.*
-import kotlinx.coroutines.experimental.async
-import kotlin.coroutines.experimental.CoroutineContext
+import javax.enterprise.event.*
+import javax.inject.*
 
 
-class TaskExecutionSystem(context: CoroutineContext) {
-  var initialized = false
-  lateinit var state: TaskExecution
-  val channel = MessageChannel(context) { message ->
-    when (message) {
-      is NewGameRequested -> {
-        state = TaskExecution(message.dimension)
-        initialized = true
-      }
-      is Update -> {
-        if (!initialized) return@MessageChannel
-        state.behavior.entries.map { (colonist, behavior) ->
-          async(context) {
-            if (behavior.hasNext()) {
-              val task = state.colonists[colonist]!!.assignedTask
-              val status = behavior.next()
-              when (status) {
-                SUCCESS -> if (task != null) send(TaskCompleted(task, message.cause, message.context))
-                FAILURE -> if (task != null) send(ColonistRejectedTask(colonist, task, message.cause, message.context))
-                RUNNING -> { }
-              }
+@Singleton
+class TaskExecutionSystem {
+
+  @Inject
+  lateinit var world: World
+
+  @Inject
+  lateinit var events: Event<Any>
+
+  private val behavior = mutableMapOf<Id, Iterator<BehaviorStatus>>()
+
+  fun onColonistSelectedTask(@Observes message: ColonistTaskSelected) {
+    val colonist = world.colonists[message.colonistId]!!
+    if (message.taskId == null) {
+      behavior.remove(message.colonistId)
+    } else {
+      val selectedTask = world.tasks[message.taskId]!!
+      behavior[colonist.id] = selectedTask.details.behavior.execute(world, colonist).iterator()
+    }
+  }
+
+  fun onUpdate(@Observes update: Update) {
+    behavior.entries.map { (colonistId, behavior) ->
+      if (behavior.hasNext()) {
+        val taskId = world.colonists[colonistId]!!.assignedTask
+        val status = behavior.next()
+        when (status) {
+          SUCCESS -> {
+            if (taskId != null) {
+              world.completeTask(colonistId, taskId, update.cause)
             }
           }
-        }.forEach { it.await() }
+          FAILURE -> {
+            if (taskId != null) {
+              world.rejectTask(colonistId, taskId, update.cause)
+            }
+          }
+          RUNNING -> {
+          }
+        }
       }
-      else -> if (initialized) state.process(message)
     }
   }
 }

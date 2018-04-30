@@ -1,6 +1,7 @@
 package com.fracturedskies.render.world
 
-import com.fracturedskies.Block
+import com.fracturedskies.api.block.Block
+import com.fracturedskies.api.block.data.*
 import com.fracturedskies.engine.collections.Space
 import com.fracturedskies.engine.math.Vector3i
 import java.util.*
@@ -25,11 +26,11 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
   }
   fun skyLight(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
     val target = offset(pos, u, v)
-    return if (world.has(target)) world[target].skyLight else 0
+    return if (world.has(target)) world[target][SkyLight::class]!!.value else 0
   }
   fun blockLight(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
     val target = offset(pos, u, v)
-    return if (world.has(target)) world[target].blockLight else 0
+    return if (world.has(target)) world[target][BlockLight::class]!!.value else 0
   }
 
   companion object {
