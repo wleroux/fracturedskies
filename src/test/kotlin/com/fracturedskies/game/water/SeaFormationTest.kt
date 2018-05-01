@@ -1,13 +1,15 @@
-package com.fracturedskies.water
+package com.fracturedskies.game.water
 
 import com.fracturedskies.engine.collections.Dimension
 import com.fracturedskies.engine.math.Vector3i
+import com.fracturedskies.water.WaterMap
+import com.fracturedskies.water.WaterMap.Sea
 import org.junit.Assert.*
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class SeaFormationTest {
+class  SeaFormationTest {
 
   private val xRange = (0 until 10)
   private val yRange = (0 until 10)
@@ -203,13 +205,13 @@ class SeaFormationTest {
   private fun unblock(x: Int, y: Int, z: Int) = water.setOpaque(Vector3i(x, y, z), false)
   private fun shore(x: Int, y: Int, z: Int): List<Vector3i> = water.shore(Vector3i(x, y, z))
   private fun seaAt(pos: Vector3i) = seaAt(pos.x, pos.y, pos.z)
-  private fun seaAt(x: Int, y: Int, z: Int): WaterMap.Sea? = water.sea[x, y, z]
+  private fun seaAt(x: Int, y: Int, z: Int): Sea? = water.sea[x, y, z]
   private fun disturbed(x: Int, y: Int, z: Int) = seaAt(x, y, z)!!.disturbed
   private fun undisturb(x: Int, y: Int, z: Int) { seaAt(x, y, z)!!.disturbed = false}
   private fun get(x: Int, y: Int, z: Int) = water.getLevel(Vector3i(x, y, z)).toInt()
   private fun set(x: Int, y: Int, z: Int, value: Int) = water.setLevel(Vector3i(x, y, z), value.toByte())
   private fun seas() = water.seas
-  private fun split(sea: WaterMap.Sea) = water.splitSea(sea)
+  private fun split(sea: Sea) = water.splitSea(sea)
 
   /* Helpers */
   private fun blocksWithSeas(): Int {

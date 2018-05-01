@@ -12,6 +12,7 @@ import com.fracturedskies.render.DirtyFlags
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.world.components.WorldRenderer.Companion.world
+import com.fracturedskies.vegetation.BlockTypeTomato1
 import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW.*
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -115,6 +116,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
       keyboard.isPressed(GLFW_KEY_C) -> worldActionController = SpawnColonistActionController
       keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(BlockDirt)
       keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(BlockTypeLight)
+      keyboard.isPressed(GLFW_KEY_T) -> worldActionController = AddBlockActionController(BlockTypeTomato1)
       keyboard.isPressed(GLFW_KEY_Z) -> worldActionController = RemoveBlockBlockActionController
       keyboard.isPressed(GLFW_KEY_V) -> worldActionController = AddWaterBlockActionController
       keyboard.isPressed(GLFW_KEY_N) -> worldActionController = AddZoneActionController
