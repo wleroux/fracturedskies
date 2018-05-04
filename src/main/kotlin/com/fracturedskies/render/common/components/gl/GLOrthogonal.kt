@@ -6,10 +6,10 @@ import com.fracturedskies.engine.math.Matrix4
 import com.fracturedskies.engine.math.Matrix4.Companion.orthogonal
 
 
-class GLOrthogonal(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class GLOrthogonal : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.orthogonal(location: Int, near: Float = 0.03f, far: Float = 1000f, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::GLOrthogonal, MultiTypeMap(
+      nodes.add(Node(GLOrthogonal::class, MultiTypeMap(
           LOCATION to location,
           NEAR to near,
           FAR to far

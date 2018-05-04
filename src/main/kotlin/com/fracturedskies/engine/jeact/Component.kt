@@ -4,16 +4,22 @@ import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.Node.Companion.NODES
 import com.fracturedskies.engine.jeact.Node.Companion.NODE_KEY
 import com.fracturedskies.engine.jeact.event.*
+import javax.enterprise.inject.spi.CDI
+import kotlin.reflect.KClass
 
-abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
+abstract class Component<T>(initialState: T) {
+  var props: MultiTypeMap = MultiTypeMap()
   companion object {
     fun unmount(component: Component<*>) {
       component.children.forEach { unmount(it) }
       component.componentWillUnmount()
+
+      val eventObserver = CDI.current().select(DependentEventObserver::class.java).get()
+      eventObserver -= component
     }
 
-    fun <S, C: Component<S>> mount(type: (MultiTypeMap) -> C, parent: Component<*>?, props: MultiTypeMap): C {
-      val component = type(props)
+    fun <S, T: Component<S>> mount(type: KClass<out T>, parent: Component<*>?, props: MultiTypeMap): T {
+      val component = CDI.current().beanManager.createInstance().select(type.java).get()
 
       component.componentWillMount()
       component.parent = parent
@@ -21,12 +27,15 @@ abstract class Component<T>(var props: MultiTypeMap, initialState: T) {
       component.state = component.nextState ?: component.state
       component.componentDidMount()
 
+      val eventObserver = CDI.current().select(DependentEventObserver::class.java).get()
+      eventObserver += component
+
       return component
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> toComponent(node: Node<T>, prev: Component<*>? = null, parent: Component<*>? = null): Component<T> {
-      val reuseComponent = if (prev != null) prev::class == node.typeClass else false
+      val reuseComponent = if (prev != null) prev::class == node.type else false
       val component: Component<T> = if (reuseComponent) {
         prev!! as Component<T>
       } else {

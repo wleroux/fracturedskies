@@ -11,10 +11,10 @@ import com.fracturedskies.render.world.LightLevels
 import kotlin.math.PI
 
 
-class LightUniform(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class LightUniform : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.lightUniform(world: World, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::LightUniform, MultiTypeMap(
+      nodes.add(Node(LightUniform::class, MultiTypeMap(
           WORLD_STATE to world
       ).with(additionalProps)))
     }

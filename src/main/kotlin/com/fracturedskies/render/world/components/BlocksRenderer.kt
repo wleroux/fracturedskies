@@ -14,14 +14,10 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 import kotlin.math.min
 
 
-class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
-  private val chunks = props[WORLD].dimension  / CHUNK_DIMENSION
-  private val chunksMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
-  private val chunksSliceMesh = ObjectMutableSpace<Mesh?>(chunks, { null })
-
+class BlocksRenderer : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.blocks(world: World, dirtyFlags: DirtyFlags, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::BlocksRenderer, MultiTypeMap(
+      nodes.add(Node(BlocksRenderer::class, MultiTypeMap(
           WORLD to world,
           DIRTY_FLAGS to dirtyFlags,
           SLICE_HEIGHT to sliceHeight
@@ -32,6 +28,16 @@ class BlocksRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
     private val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
+
+  override fun componentDidMount() {
+    chunks = props[WORLD].dimension / CHUNK_DIMENSION
+    chunksMesh = ObjectMutableSpace(chunks, { null })
+    chunksSliceMesh = ObjectMutableSpace(chunks, { null })
+  }
+
+  private lateinit var chunks : Dimension
+  private lateinit var chunksMesh : ObjectMutableSpace<Mesh?>
+  private lateinit var chunksSliceMesh : ObjectMutableSpace<Mesh?>
 
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean = false
 

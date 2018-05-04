@@ -27,11 +27,11 @@ data class WorldControllerState(
     val area: Pair<Vector3i, Vector3i>? = null,
     val areaColor: Color4 = Color4(255, 255, 255, 48)
 )
-class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(props, WorldControllerState()) {
+class WorldController : Component<WorldControllerState>(WorldControllerState()) {
 
   companion object {
     fun Node.Builder<*>.worldController(world: World, dirtyFlags: DirtyFlags, additionalContext: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::WorldController, additionalContext.with(
+      nodes.add(Node(WorldController::class, additionalContext.with(
           WORLD to world,
           DIRTY_FLAGS to dirtyFlags
       )))

@@ -20,10 +20,10 @@ import com.fracturedskies.render.mainmenu.MainMenuRenderer.MenuState
 import com.fracturedskies.render.mainmenu.MainMenuRenderer.Mode.*
 
 
-class MainMenuRenderer(props: MultiTypeMap) : Component<MenuState>(props, MenuState()) {
+class MainMenuRenderer : Component<MenuState>(MenuState()) {
   companion object {
     fun Node.Builder<*>.mainMenu(world: World, additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.() -> Unit = {}) {
-      nodes.add(Node(::MainMenuRenderer, additionalContext.with(
+      nodes.add(Node(MainMenuRenderer::class, additionalContext.with(
           WORLD to world
       ), block))
     }

@@ -13,10 +13,10 @@ import org.lwjgl.opengl.GL30.*
 import java.nio.IntBuffer
 
 
-class GLUniform(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class GLUniform : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.uniform(location: Int, value: Any, additionalProps: MultiTypeMap = MultiTypeMap(), block: Builder<Unit>.() -> Unit = {}) {
-      nodes.add(Node(::GLUniform, MultiTypeMap(LOCATION to location, VALUE to value).with(additionalProps), block))
+      nodes.add(Node(GLUniform::class, MultiTypeMap(LOCATION to location, VALUE to value).with(additionalProps), block))
     }
 
     val LOCATION = TypedKey<Int>("location")

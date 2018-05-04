@@ -6,10 +6,10 @@ import com.fracturedskies.engine.jeact.Node.Builder
 import com.fracturedskies.render.common.shaders.ShaderProgram
 
 
-class GLShader(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class GLShader : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.shader(shader: ShaderProgram, additionalProps: MultiTypeMap = MultiTypeMap(), block: Builder<Unit>.() -> Unit) {
-      nodes.add(Node(::GLShader, MultiTypeMap(SHADER to shader).with(additionalProps), block))
+      nodes.add(Node(GLShader::class, MultiTypeMap(SHADER to shader).with(additionalProps), block))
     }
 
     val SHADER = TypedKey<ShaderProgram>("shader")

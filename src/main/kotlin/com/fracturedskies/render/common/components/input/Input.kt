@@ -11,13 +11,12 @@ import com.fracturedskies.render.common.components.layout.Layout.Companion.layou
 import com.fracturedskies.render.common.events.*
 import org.lwjgl.glfw.GLFW
 
-class Input(props: MultiTypeMap) : Component<InputState>(props, InputState(props[INITIAL_VALUE]
-    ?: "")) {
+class Input : Component<InputState>(InputState()) {
   companion object {
     val INITIAL_VALUE = TypedKey<String?>("initialValue")
     val ON_TEXT_CHANGED = TypedKey<(String) -> Unit>("onTextChanged")
     fun Node.Builder<*>.input(initialValue: String = "", onTextChanged: (String) -> Unit = {}, additionalContext: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::Input, MultiTypeMap(
+      nodes.add(Node(Input::class, MultiTypeMap(
               INITIAL_VALUE to initialValue,
               ON_TEXT_CHANGED to onTextChanged
       ).with(additionalContext)))
@@ -40,7 +39,10 @@ class Input(props: MultiTypeMap) : Component<InputState>(props, InputState(props
     get() = requireNotNull(props[ON_TEXT_CHANGED])
 
   override fun componentDidMount() {
-    onTextChanged(text)
+    val initialValue = props[INITIAL_VALUE]
+    nextState = state.copy(text = initialValue ?: "")
+
+    onTextChanged(nextState!!.text)
   }
 
   override fun render() = nodes {

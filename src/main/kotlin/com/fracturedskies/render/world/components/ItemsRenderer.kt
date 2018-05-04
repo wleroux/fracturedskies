@@ -14,10 +14,10 @@ import org.lwjgl.opengl.GL11.glDrawElements
 import org.lwjgl.opengl.GL30.glBindVertexArray
 
 
-class ItemsRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class ItemsRenderer : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.items(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::ItemsRenderer, MultiTypeMap(
+      nodes.add(Node(ItemsRenderer::class, MultiTypeMap(
           WORLD_STATE to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))

@@ -80,7 +80,7 @@ class RenderGameSystem {
     glCullFace(GL_BACK)
     glFrontFace(GL_CCW)
 
-    scene = mount(::Scene, null, MultiTypeMap(
+    scene = mount(Scene::class, null, MultiTypeMap(
         Scene.WORLD to world,
         Scene.DIRTY_FLAGS to dirtyFlags
     ))

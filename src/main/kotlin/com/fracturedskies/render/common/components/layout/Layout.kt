@@ -9,7 +9,7 @@ import com.fracturedskies.render.common.components.layout.JustifyContent.LEFT
 /**
  * Layout takes the `bounds` provided and divides the space with to child components
  */
-class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class Layout : Component<Unit>(Unit) {
   companion object {
     // Flex Attributes
     val DIRECTION = TypedKey<Direction>("direction")
@@ -31,7 +31,7 @@ class Layout(props: MultiTypeMap) : Component<Unit>(props, Unit) {
         wrap: Wrap = Wrap.WRAP,
         block: Node.Builder<Unit>.() -> (Unit) = {}
     ) {
-      nodes.add(Node(::Layout, MultiTypeMap(
+      nodes.add(Node(Layout::class, MultiTypeMap(
               DIRECTION to direction,
               JUSTIFY_CONTENT to justifyContent,
               ALIGN_ITEMS to alignItems,

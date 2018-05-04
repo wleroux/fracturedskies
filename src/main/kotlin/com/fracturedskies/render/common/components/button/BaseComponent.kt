@@ -19,14 +19,14 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 import java.lang.Math.*
 
-class BaseComponent(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class BaseComponent : Component<Unit>(Unit) {
   companion object {
     private val COLOR = TypedKey<Color4>("color")
     private val PADDING = TypedKey<Padding>("padding")
     private val MARGIN = TypedKey<Margin>("margin")
     private val BORDER = TypedKey<Border>("border")
     fun Node.Builder<*>.base(color: Color4 = Color4.WHITE, padding: Padding = Padding(), margin: Margin = Margin(), border: Border = Border(), additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.()->Unit = {}) {
-      nodes.add(Node(::BaseComponent, MultiTypeMap(
+      nodes.add(Node(BaseComponent::class, MultiTypeMap(
           COLOR to color,
           PADDING to padding,
           MARGIN to margin,

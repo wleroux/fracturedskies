@@ -85,6 +85,8 @@ class WaterSystem {
   }
 
   fun onUpdate(@Observes update: Update) {
+    if (!world.started) return
+
     val flow = flow()
     val evaporation = evaporation()
 

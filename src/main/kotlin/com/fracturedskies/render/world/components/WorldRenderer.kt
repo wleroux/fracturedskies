@@ -22,10 +22,10 @@ import com.fracturedskies.render.world.components.WaterRenderer.Companion.water
 import com.fracturedskies.render.world.components.ZonesRenderer.Companion.zones
 
 
-class WorldRenderer(props: MultiTypeMap): Component<Unit>(props, Unit) {
+class WorldRenderer : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.world(world: World, dirtyFlags: DirtyFlags, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::WorldRenderer, MultiTypeMap(
+      nodes.add(Node(WorldRenderer::class, MultiTypeMap(
           WORLD to world,
           DIRTY_FLAGS to dirtyFlags,
           VIEW to view,

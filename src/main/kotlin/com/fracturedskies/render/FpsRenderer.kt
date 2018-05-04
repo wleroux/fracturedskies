@@ -1,17 +1,21 @@
 package com.fracturedskies.render
 
-import com.fracturedskies.engine.collections.MultiTypeMap
+import com.fracturedskies.engine.api.Update
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.FpsRenderer.FpsRendererState
 import com.fracturedskies.render.common.components.TextRenderer.Companion.text
 import java.util.concurrent.TimeUnit
 
-class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsRendererState()) {
+open class FpsRenderer : Component<FpsRendererState>(FpsRendererState()) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
-    fun Node.Builder<*>.fpsRenderer() {
-      nodes.add(Node(::FpsRenderer))
+    fun (Node.Builder<*>).fpsRenderer() {
+      nodes.add(Node(FpsRenderer::class))
     }
+  }
+
+  fun onUpdate(@DependentObserves update: Update) {
+    upsTicks ++
   }
 
   /* State */
@@ -23,19 +27,6 @@ class FpsRenderer(props: MultiTypeMap) : Component<FpsRendererState>(props, FpsR
     get() = (nextState ?: state).ups
     set(value) { nextState = (nextState ?: state).copy(ups = value) }
 
-//  private lateinit var fpsCounter: MessageChannel
-//  override fun componentWillMount() {
-//    super.componentWillMount()
-//    fpsCounter = register(MessageChannel { message ->
-//      if (message is Update) {
-//        upsTicks++
-//      }
-//    })
-//  }
-//  override fun componentWillUnmount() {
-//    super.componentWillUnmount()
-//    unregister(fpsCounter)
-//  }
   override fun glComponentFromPoint(point: Point): Component<*>? = null
   override fun render() = nodes {
     text("FPS: $fps, UPS: $ups")

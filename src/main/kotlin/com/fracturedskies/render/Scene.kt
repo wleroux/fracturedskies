@@ -11,7 +11,7 @@ import com.fracturedskies.render.mainmenu.MainMenuRenderer.Companion.mainMenu
 import com.fracturedskies.render.world.controller.WorldController.Companion.worldController
 import org.lwjgl.opengl.GL11.*
 
-class Scene(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class Scene : Component<Unit>(Unit) {
   companion object {
     val WORLD = TypedKey<World>("world")
     val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")

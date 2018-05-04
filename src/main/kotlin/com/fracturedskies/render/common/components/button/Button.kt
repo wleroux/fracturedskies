@@ -37,7 +37,7 @@ data class ButtonState(
     val focus: Boolean = false
 )
 
-class Button(props: MultiTypeMap) : Component<ButtonState>(props, ButtonState()) {
+class Button : Component<ButtonState>(ButtonState()) {
   companion object {
     private val COLOR = TypedKey<Color4>("color")
     private val PADDING = TypedKey<Padding>("padding")
@@ -55,7 +55,7 @@ class Button(props: MultiTypeMap) : Component<ButtonState>(props, ButtonState())
         additionalContext: MultiTypeMap = MultiTypeMap(),
         block: Node.Builder<*>.()->Unit = {}
     ) {
-      nodes.add(Node(::Button, MultiTypeMap(
+      nodes.add(Node(Button::class, MultiTypeMap(
           COLOR to color,
           PADDING to padding,
           MARGIN to margin,

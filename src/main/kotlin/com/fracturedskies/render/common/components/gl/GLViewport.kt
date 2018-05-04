@@ -6,10 +6,10 @@ import com.fracturedskies.render.common.style.Padding
 import org.lwjgl.opengl.GL11.*
 
 
-class GLViewport(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class GLViewport : Component<Unit>(Unit) {
   companion object {
-    fun Node.Builder<*>.viewport(padding: Padding = Padding(), additionalProps: MultiTypeMap = MultiTypeMap(), block: Node.Builder<Unit>.() -> (Unit) = {}) {
-      nodes.add(Node(::GLViewport, MultiTypeMap(
+    fun (Node.Builder<*>).viewport(padding: Padding = Padding(), additionalProps: MultiTypeMap = MultiTypeMap(), block: Node.Builder<Unit>.() -> (Unit) = {}) {
+      nodes.add(Node(GLViewport::class, MultiTypeMap(
           PADDING to padding
       ).with(additionalProps), block))
     }

@@ -19,12 +19,12 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.stb.STBEasyFont.stb_easy_font_width
 
 
-class TextRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class TextRenderer : Component<Unit>(Unit) {
   companion object {
     val TEXT = TypedKey<String>("text")
     val COLOR = TypedKey<Color4>("color")
-    fun Node.Builder<*>.text(text: String, color: Color4 = Color4.WHITE) {
-      nodes.add(Node(::TextRenderer, MultiTypeMap(
+    fun (Node.Builder<*>).text(text: String, color: Color4 = Color4.WHITE) {
+      nodes.add(Node(TextRenderer::class, MultiTypeMap(
               TEXT to text,
               COLOR to color
       )))

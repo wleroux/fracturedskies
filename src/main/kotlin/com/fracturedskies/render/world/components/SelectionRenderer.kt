@@ -1,9 +1,9 @@
 package com.fracturedskies.render.world.components
 
+import com.fracturedskies.api.MAX_LIGHT_LEVEL
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.api.MAX_LIGHT_LEVEL
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11
@@ -11,10 +11,10 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 
 
-class SelectionRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class SelectionRenderer : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.selection(selection: Pair<Vector3i, Vector3i>?, color: Color4 = Color4(255, 255, 255, 48), additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::SelectionRenderer, MultiTypeMap(
+      nodes.add(Node(SelectionRenderer::class, MultiTypeMap(
           SELECTION to selection,
           COLOR to color
       ).with(additionalProps)))

@@ -16,10 +16,10 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 import java.lang.Integer.*
 
 
-class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class ZonesRenderer : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.zones(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::ZonesRenderer, MultiTypeMap(
+      nodes.add(Node(ZonesRenderer::class, MultiTypeMap(
           WORLD to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))

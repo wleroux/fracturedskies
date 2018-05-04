@@ -8,10 +8,10 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL20.glUniformMatrix4fv
 
 
-class GLPerspective(props: MultiTypeMap) : Component<Unit>(props, Unit) {
+class GLPerspective : Component<Unit>(Unit) {
   companion object {
     fun Node.Builder<*>.perspective(location: Int, fov: Float = Math.PI.toFloat() / 4, near: Float = 0.03f, far: Float = 1000f, additionalProps: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(::GLPerspective, MultiTypeMap(
+      nodes.add(Node(GLPerspective::class, MultiTypeMap(
           LOCATION to location,
           FIELD_OF_VIEW to fov,
           NEAR to near,
