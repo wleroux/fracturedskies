@@ -17,7 +17,7 @@ class World: HasDimension {
   var started: Boolean = false
 
   override var dimension: Dimension = GameSize.MINI.dimension
-  var blocks = ObjectMutableSpace(dimension, { Block(BlockAir) })
+  var blocks = ObjectMutableSpace(dimension, { Block(BlockTypeAir) })
   var pathFinder = PathFinder(PathFinder.isNotOpaque(blocks))
   var gameSpeed: GameSpeed = NORMAL
 
@@ -142,6 +142,7 @@ class World: HasDimension {
 
     colonists[colonistId]!!.inventory += itemId
     items[itemId]!!.colonist = colonistId
+    items[itemId]!!.position = null
     events.fire(ColonistPickedItem(colonistId, itemId, cause))
   }
 
@@ -173,7 +174,7 @@ class World: HasDimension {
 
     started = true
     dimension = gameSize.dimension
-    blocks = ObjectMutableSpace(dimension, { Block(BlockAir) })
+    blocks = ObjectMutableSpace(dimension, { Block(BlockTypeAir) })
     pathFinder = PathFinder(PathFinder.isNotOpaque(blocks))
 
     events.fire(NewGameRequested(gameSize.dimension, 0, cause))

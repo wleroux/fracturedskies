@@ -28,23 +28,23 @@ class TreeFallSystem {
     val toTree = treeSpace[toPos]
     when {
       fromTree !== null && fromTree !== toTree -> false
-      fromBlockType == BlockLeaves && toBlockType == BlockLeaves -> true
-      fromBlockType == BlockLeaves && toBlockType == BlockWood -> true
-      fromBlockType == BlockWood && toBlockType == BlockWood -> true
-      fromBlockType == BlockWood && toBlockType == BlockDirt -> true
-      fromBlockType == BlockWood && toBlockType == BlockGrass -> true
+      fromBlockType == BlockTypeLeaves && toBlockType == BlockTypeLeaves -> true
+      fromBlockType == BlockTypeLeaves && toBlockType == BlockTypeWood -> true
+      fromBlockType == BlockTypeWood && toBlockType == BlockTypeWood -> true
+      fromBlockType == BlockTypeWood && toBlockType == BlockTypeDirt -> true
+      fromBlockType == BlockTypeWood && toBlockType == BlockTypeGrass -> true
       else -> false
     }
   })
   private fun isTreeRoot(): IsTarget = {pos: Vector3i ->
     val block = world.blocks[pos]
-    block.type == BlockDirt || block.type == BlockGrass
+    block.type == BlockTypeDirt || block.type == BlockTypeGrass
   }
   private fun treeCostHeuristic(): CostHeuristic = { cost: Int, pos: Vector3i ->
     cost + when (world.blocks[pos].type) {
-      BlockDirt -> pos.y
-      BlockGrass -> pos.y
-      BlockWood -> pos.y
+      BlockTypeDirt -> pos.y
+      BlockTypeGrass -> pos.y
+      BlockTypeWood -> pos.y
       else -> world.height
     }
   }
@@ -70,7 +70,7 @@ class TreeFallSystem {
   private fun checkTree(pos: Vector3i, blockType: BlockType) {
     val preExistingTree = treeSpace[pos]
     if (preExistingTree == null) {
-      if (blockType == BlockLeaves || blockType == BlockWood) {
+      if (blockType == BlockTypeLeaves || blockType == BlockTypeWood) {
         val treeRootPath = treePathFinder.find(pos, isTreeRoot(), treeCostHeuristic()).path
         if (treeRootPath.isNotEmpty()) {
           val treeRootPos = treeRootPath.last()
@@ -86,14 +86,14 @@ class TreeFallSystem {
       }
     } else {
       val isRoot = preExistingTree.rootPos == pos
-      if (isRoot && (blockType == BlockDirt || blockType == BlockGrass)) {
+      if (isRoot && (blockType == BlockTypeDirt || blockType == BlockTypeGrass)) {
         // Nothing to be concerned about.
-      } else if (blockType == BlockLeaves || blockType == BlockWood) {
+      } else if (blockType == BlockTypeLeaves || blockType == BlockTypeWood) {
         // Nothing to be concerned about.
       } else {
         val decayNodes = preExistingTree.nodes.filter { node ->
           val nodeBlockType = world.blocks[node].type
-          if (nodeBlockType == BlockWood || nodeBlockType == BlockLeaves) {
+          if (nodeBlockType == BlockTypeWood || nodeBlockType == BlockTypeLeaves) {
             val pathToRoot = treePathFinder.find(node, target(preExistingTree.rootPos), treeCostHeuristic()).path
             pathToRoot.isEmpty()
           } else {
@@ -105,7 +105,7 @@ class TreeFallSystem {
           val itemDrop = world.blocks[it].type.itemDrop
           if (itemDrop != null) listOf(it to itemDrop) else emptyList()
         }.toMap()
-        val blockUpdates = decayNodes.map { it to Block(BlockAir) }.toMap()
+        val blockUpdates = decayNodes.map { it to Block(BlockTypeAir) }.toMap()
 
         world.updateBlocks(blockUpdates, Cause.of(this))
         drops.forEach { dropPos, itemType ->
@@ -119,7 +119,7 @@ class TreeFallSystem {
     val blockType = world.blocks[pos].type
     val itemDrop = blockType.itemDrop
 
-    world.updateBlock(pos, Block(BlockAir), Cause.of(this))
+    world.updateBlock(pos, Block(BlockTypeAir), Cause.of(this))
     if (itemDrop != null)
       world.spawnItem(Id(), itemDrop, pos, Cause.of(this))
   }

@@ -34,7 +34,7 @@ class TaskRemoveBlock(pos: Vector3i): TaskType() {
   override val category: TaskCategory = MINE
   override val behavior = BehaviorInOrder(
       BehaviorMoveToPosition({ _, _ -> Vector3i.NEIGHBOURS.map { pos + it } }),
-      BehaviorPutBlock(pos, BlockAir)
+      BehaviorPutBlock(pos, BlockTypeAir)
   )
   override val condition: Condition = SingleAssigneeCondition
 }
@@ -95,8 +95,8 @@ class TaskDepositItem(colonistId: Id, itemId: Id): TaskType() {
       BehaviorMoveToPosition({ world, _ ->
         world.zones.values
             .flatMap { it.positions }
-            .filter { world.blocks[it].type == BlockAir }
-            .filter { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockAir }
+            .filter { world.blocks[it].type == BlockTypeAir }
+            .filter { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockTypeAir }
       }),
       BehaviorDropItem(itemId)
   )
@@ -106,8 +106,8 @@ object DepositZoneExistsCondition: Condition {
   override fun matches(world: World, colonist: Colonist, task: Task): Boolean {
     return world.zones.values.firstOrNull {
       it.positions
-          .filter { world.blocks[it].type == BlockAir }
-          .firstOrNull { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockAir } != null
+          .filter { world.blocks[it].type == BlockTypeAir }
+          .firstOrNull { world.has(it + AXIS_NEG_Y) && world.blocks[it + AXIS_NEG_Y].type != BlockTypeAir } != null
     } != null
   }
 }

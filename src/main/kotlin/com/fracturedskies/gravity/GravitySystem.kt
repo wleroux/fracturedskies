@@ -19,10 +19,10 @@ class GravitySystem {
     world.items
         .filterValues { it.position != null }
         .forEach { id, item ->
-      val belowPos = item.position!! - Vector3i.AXIS_Y
-      if (world.has(belowPos) && !world.blocks[belowPos].type.opaque) {
-        world.moveItem(id, belowPos, Cause.of(this))
-      }
-    }
+          val belowPos = item.position!! - Vector3i.AXIS_Y
+          if (world.has(belowPos) && !world.blocks[belowPos].type.opaque) {
+            world.moveItem(id, belowPos, Cause.of(this))
+          }
+        }
   }
 }

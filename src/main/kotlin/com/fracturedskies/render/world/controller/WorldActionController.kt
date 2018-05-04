@@ -32,11 +32,11 @@ object SpawnColonistActionController : WorldActionController {
     if (action == GLFW_RELEASE) {
       val raycastHit = raycast(world.blocks, worldPos, worldDir)
           .filter { it.position.y < sliceHeight }
-          .filter { it.obj.type != BlockAir }
+          .filter { it.obj.type != BlockTypeAir }
           .firstOrNull()
       if (raycastHit != null) {
         val pos = raycastHit.position + raycastHit.faces.first()
-        if (world.has(pos) && world.blocks[pos].type == BlockAir)
+        if (world.has(pos) && world.blocks[pos].type == BlockTypeAir)
           world.spawnColonist(Id(), pos, Cause.of(this))
       }
     }
@@ -57,7 +57,7 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
         val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
         val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
         area(xRange, yRange, zRange)
-            .filter { world.blocks.has(it) && world.blocks[it].type == BlockAir }
+            .filter { world.blocks.has(it) && world.blocks[it].type == BlockTypeAir }
             .forEach {
               world.createTask(Id(), TaskPlaceBlock(it, blockType), AVERAGE, Cause.of(this))
             }
@@ -71,7 +71,7 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
     val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
-        .filter { it.obj.type != BlockAir }
+        .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
@@ -105,7 +105,7 @@ object RemoveBlockBlockActionController: WorldActionController {
         val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
         val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
         area(xRange, yRange, zRange)
-            .filter { world.blocks.has(it) && world.blocks[it].type != BlockAir }
+            .filter { world.blocks.has(it) && world.blocks[it].type != BlockTypeAir }
             .forEach {
               world.createTask(Id(), TaskRemoveBlock(it), AVERAGE, Cause.of(this))
             }
@@ -119,7 +119,7 @@ object RemoveBlockBlockActionController: WorldActionController {
     val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
-        .filter { it.obj.type != BlockAir }
+        .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
     position = raycastHit?.let { raycastHit.position }
   }
@@ -153,7 +153,7 @@ object AddWaterBlockActionController: WorldActionController {
     val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
-        .filter { it.obj.type != BlockAir }
+        .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
@@ -161,7 +161,7 @@ object AddWaterBlockActionController: WorldActionController {
   override fun onUpdate(world: World, dt: Float) {
     if (isOn) {
       position?.let { position ->
-        if (!world.blocks.has(position) || world.blocks[position].type != BlockAir) return
+        if (!world.blocks.has(position) || world.blocks[position].type != BlockTypeAir) return
         if (world.blocks[position][WaterLevel::class]!!.value >= MAX_WATER_LEVEL) return
         world.updateBlock(position, world.blocks[position].with(WaterLevel(MAX_WATER_LEVEL)), Cause.of(this))
       }
@@ -204,7 +204,7 @@ object AddZoneActionController: WorldActionController {
     val (world, worldPos, worldDir) = worldMouseMove
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
-        .filter { it.obj.type != BlockAir }
+        .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
     position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }

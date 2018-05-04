@@ -60,7 +60,7 @@ class ZonesRenderer(props: MultiTypeMap) : Component<Unit>(props, Unit) {
             return if (zone.positions.contains(pos)) {
               Block(ZoneBlockType).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             } else {
-              Block(BlockAir).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
+              Block(BlockTypeAir).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             }
           }
         }, false, (minX - 1 .. maxX + 1), (minY - 1 .. maxY + 1), (minZ - 1 .. maxZ + 2)).invoke()

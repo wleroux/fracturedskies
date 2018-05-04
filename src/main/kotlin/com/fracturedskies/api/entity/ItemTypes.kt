@@ -11,15 +11,15 @@ open class ItemType {
 }
 
 object ItemDirt: ItemType() {
-  override val blockType = BlockDirt
+  override val blockType = BlockTypeDirt
 }
 
 object ItemWood: ItemType() {
-  override val blockType: BlockType? = BlockWood
+  override val blockType: BlockType? = BlockTypeWood
 }
 
 object ItemStone: ItemType() {
-  override val blockType: BlockType? = BlockStone
+  override val blockType: BlockType? = BlockTypeStone
 }
 
 object ItemLight: ItemType() {

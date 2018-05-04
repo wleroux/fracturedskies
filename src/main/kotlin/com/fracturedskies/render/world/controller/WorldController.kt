@@ -61,7 +61,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
       val clampedZ = clamp(z, 0 until world.dimension.depth)
       return yRange
           .reversed()
-          .firstOrNull { world[clampedX, it, clampedZ].type != BlockAir }
+          .firstOrNull { world[clampedX, it, clampedZ].type != BlockTypeAir }
           ?: 0
     }
   }
@@ -114,7 +114,7 @@ class WorldController(props: MultiTypeMap) : Component<WorldControllerState>(pro
 
       // World Action Controller
       keyboard.isPressed(GLFW_KEY_C) -> worldActionController = SpawnColonistActionController
-      keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(BlockDirt)
+      keyboard.isPressed(GLFW_KEY_X) -> worldActionController = AddBlockActionController(BlockTypeDirt)
       keyboard.isPressed(GLFW_KEY_B) -> worldActionController = AddBlockActionController(BlockTypeLight)
       keyboard.isPressed(GLFW_KEY_T) -> worldActionController = AddBlockActionController(BlockTypeTomato1)
       keyboard.isPressed(GLFW_KEY_Z) -> worldActionController = RemoveBlockBlockActionController

@@ -22,31 +22,31 @@ open class BlockType {
   })
 }
 
-object BlockAir : BlockType() {
+object BlockTypeAir : BlockType() {
   override val color = Color4(255, 255, 255, 0)
   override val opaque = false
 }
 
-object BlockDirt: BlockType() {
+object BlockTypeDirt: BlockType() {
   override val color = Color4(178, 161, 130, 255)
   override val itemDrop = ItemDirt
 }
 
-object BlockGrass: BlockType() {
+object BlockTypeGrass: BlockType() {
   override val color = Color4.GREEN
   override val itemDrop = ItemDirt
 }
 
-object BlockWood: BlockType() {
+object BlockTypeWood: BlockType() {
   override val color = Color4.DARK_BROWN
   override val itemDrop = ItemWood
 }
 
-object BlockLeaves: BlockType() {
+object BlockTypeLeaves: BlockType() {
   override val color = Color4.DARK_GREEN
 }
 
-object BlockStone: BlockType() {
+object BlockTypeStone: BlockType() {
   override val color = Color4.GRAY
   override val itemDrop = ItemStone
 }

@@ -22,7 +22,7 @@ fun generateWaterMesh(
       for (z in zRange) {
         val pos = Vector3i(x, y, z)
         val block = world[pos]
-        if (block.type !== BlockAir) {
+        if (block.type !== BlockTypeAir) {
           continue
         }
 
@@ -241,5 +241,5 @@ private fun waterHeight(waterLevel: Byte): Float {
 }
 
 private fun isEmpty(world: Space<Block>, pos: Vector3i): Boolean {
-  return if (!world.has(pos)) true else world[pos].type === BlockAir
+  return if (!world.has(pos)) true else world[pos].type === BlockTypeAir
 }

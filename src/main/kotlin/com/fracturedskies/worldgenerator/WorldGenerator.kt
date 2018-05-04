@@ -11,7 +11,7 @@ class WorldGenerator(
 ) {
   fun generate(dimension: Dimension): ObjectMutableSpace<Block> {
     val biomes = biomeGenerator.generateBiomes(dimension.width, dimension.depth)
-    val blocks = ObjectMutableSpace(dimension, { Block(BlockAir) })
+    val blocks = ObjectMutableSpace(dimension, { Block(BlockTypeAir) })
     generationPopulator.populate(blocks, biomes)
     populators.forEach { populator ->
       populator.populate(blocks, biomes)
