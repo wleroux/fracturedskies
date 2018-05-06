@@ -242,6 +242,7 @@ class WorldController : Component<WorldControllerState>(WorldControllerState()) 
     } else if (event.action == GLFW_RELEASE){
       keyboard = keyboard.release(event.key)
     }
+    event.stopPropogation = true
   }
 
   @Suppress("UNUSED_PARAMETER")

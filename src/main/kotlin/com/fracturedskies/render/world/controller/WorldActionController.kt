@@ -47,8 +47,9 @@ object SpawnColonistActionController : WorldActionController {
 class AddBlockActionController(private val blockType: BlockType): WorldActionController {
   private var firstBlock: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
-    val (world, _, _, action, _, _) = worldMouseClick
+    val (world, worldPos, worldDir, action, _, _) = worldMouseClick
     if (action == GLFW_PRESS) {
+      position = positionAt(world, worldPos, worldDir, sliceHeight)
       firstBlock = position
     } else if (action == GLFW_RELEASE) {
       if (firstBlock != null && position != null) {
@@ -69,11 +70,15 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
   private var position: Vector3i? = null
   override fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) {
     val (world, worldPos, worldDir) = worldMouseMove
+    position = positionAt(world, worldPos, worldDir, sliceHeight)
+  }
+
+  private fun positionAt(world: World, worldPos: Vector3, worldDir: Vector3, sliceHeight: Int): Vector3i? {
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
         .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
-    position = raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
+    return raycastHit?.let { raycastHit.position + raycastHit.faces.first() }
   }
 
   override fun area(world: World): Pair<Vector3i, Vector3i>? {
@@ -95,8 +100,9 @@ class AddBlockActionController(private val blockType: BlockType): WorldActionCon
 object RemoveBlockBlockActionController: WorldActionController {
   private var firstBlock: Vector3i? = null
   override fun onClick(worldMouseClick: WorldMouseClick, sliceHeight: Int) {
-    val (world, _, _, action, _, _) = worldMouseClick
+    val (world, worldPos, worldDir, action, _, _) = worldMouseClick
     if (action == GLFW_PRESS) {
+      position = positionAt(world, worldPos, worldDir, sliceHeight)
       firstBlock = position
     } else if (action == GLFW_RELEASE) {
       if (firstBlock != null && position != null) {
@@ -117,11 +123,15 @@ object RemoveBlockBlockActionController: WorldActionController {
   private var position: Vector3i? = null
   override fun onMove(worldMouseMove: WorldMouseMove, sliceHeight: Int) {
     val (world, worldPos, worldDir) = worldMouseMove
+    position = positionAt(world, worldPos, worldDir, sliceHeight)
+  }
+
+  private fun positionAt(world: World, worldPos: Vector3, worldDir: Vector3, sliceHeight: Int): Vector3i? {
     val raycastHit = raycast(world.blocks, worldPos, worldDir)
         .filter { it.position.y < sliceHeight }
         .filter { it.obj.type != BlockTypeAir }
         .firstOrNull()
-    position = raycastHit?.let { raycastHit.position }
+    return raycastHit?.let { raycastHit.position }
   }
 
   override fun area(world: World): Pair<Vector3i, Vector3i>? {

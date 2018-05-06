@@ -65,7 +65,13 @@ class BehaviorMoveToPosition(private val positions: (World, Colonist) -> List<Ve
   override fun execute(world: World, colonist: Colonist): Sequence<BehaviorStatus> = buildSequence {
     val colonistPos = colonist.position
 
-    val path = world.pathFinder.find(colonistPos, targets(positions(world, colonist)), targetsDistanceHeuristic(positions(world, colonist))).path
+    val targetPositions = positions(world, colonist).filter(world::has).filter { !world.blocks[it].type.opaque }
+    if (targetPositions.isEmpty()) {
+      yield(FAILURE)
+      return@buildSequence
+    }
+
+    val path = world.pathFinder.find(colonistPos, targets(positions(world, colonist)), targetsDistanceHeuristic(targetPositions)).path
     if (path.isEmpty()) {
       // If there are no possible paths, fail
       yield(FAILURE)
@@ -93,7 +99,10 @@ class BehaviorMoveToPosition(private val positions: (World, Colonist) -> List<Ve
   override fun cost(world: World, colonist: Colonist): Int {
     val colonistPos = colonist.position
     var min = Int.MAX_VALUE
-    for (pos in positions(world, colonist)) {
+    val targetPositions = positions(world, colonist)
+        .filter(world::has)
+        .filter { !world.blocks[it].type.opaque }
+    for (pos in targetPositions) {
       val dist = pos distanceTo colonistPos
       if (dist < min)
         min = dist

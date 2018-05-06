@@ -178,7 +178,8 @@ class World: HasDimension {
 
     started = true
     dimension = gameSize.dimension
-    blocks = ObjectMutableSpace(dimension, { Block(BlockTypeAir) })
+    val blockAir = Block(BlockTypeAir)
+    blocks = ObjectMutableSpace(dimension, {blockAir})
     pathFinder = PathFinder(PathFinder.isNotOpaque(blocks))
 
     events.fire(NewGameRequested(gameSize.dimension, 0, cause))

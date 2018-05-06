@@ -43,7 +43,7 @@ interface HasDimension {
   fun has(index: Int) = dimension.has(index)
 
   // Helper Functions
-  fun neighbors(position: Vector3i) = NEIGHBOURS.map { position + it }.filter { has(it) }
+  fun neighbors(position: Vector3i) = NEIGHBOURS.asSequence().map(position::plus).filter(this::has)
   fun top(position: Vector3i) = offset(position, AXIS_Y)
   fun bottom(position: Vector3i) = offset(position, AXIS_NEG_Y)
   private fun offset(position: Vector3i, delta: Vector3i): Vector3i? {

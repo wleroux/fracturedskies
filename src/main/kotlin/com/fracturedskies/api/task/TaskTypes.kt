@@ -76,7 +76,6 @@ class BehaviorPickItem(private val itemId: Id): Behavior {
         item.position!! distanceTo colonist.position == 0 -> {
           world.pickItem(colonist.id, itemId, Cause.of(this))
           world.createTask(Id(), TaskDepositItem(colonist.id, itemId), AVERAGE, Cause.of(this))
-          yield(RUNNING)
           yield(SUCCESS)
         }
         else -> yield(FAILURE)
@@ -114,11 +113,10 @@ object DepositZoneExistsCondition: Condition {
 
 class BehaviorDropItem(private val itemId: Id): Behavior {
   override fun cost(world: World, colonist: Colonist) = 1
-  override fun isPossible(world: World, colonist: Colonist) = colonist.inventory.isNotEmpty()
+  override fun isPossible(world: World, colonist: Colonist) = true
   override fun execute(world: World, colonist: Colonist) = buildSequence {
     if (colonist.inventory.contains(itemId)) {
       world.dropItem(colonist.id, itemId, Cause.of(this))
-      yield(RUNNING)
       yield(SUCCESS)
     } else {
       yield(FAILURE)

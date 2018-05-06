@@ -4,7 +4,7 @@ import com.fracturedskies.engine.math.Vector3i
 import org.lwjgl.BufferUtils
 import java.util.*
 import java.util.AbstractMap.SimpleEntry
-import kotlin.collections.ArrayList
+import kotlin.coroutines.experimental.buildSequence
 
 interface Space<out K>: HasDimension {
   operator fun get(index: Int): K
@@ -23,21 +23,16 @@ inline fun <K> (Space<K>).forEach(action: (Vector3i, K) -> Unit) {
   }
 }
 
-inline fun <K, R> (Space<K>).flatMap(crossinline action: (Map.Entry<Vector3i, K>) -> Iterable<R>): List<R> {
-  val result = ArrayList<R>()
+inline fun <K, R> (Space<K>).flatMap(crossinline action: (Map.Entry<Vector3i, K>) -> Sequence<R>): Sequence<R> = buildSequence {
   forEach { key, value ->
-    action(SimpleEntry(key, value))
-        .toCollection(result)
+    yieldAll(action(SimpleEntry(key, value)))
   }
-  return result
 }
 
-inline fun <K, R> (Space<K>).map(crossinline action: (Vector3i, K) -> R): List<R> {
-  val result = ArrayList<R>(this@map.dimension.size)
+inline fun <K, R> (Space<K>).map(crossinline action: (Vector3i, K) -> R): Sequence<R> = buildSequence {
   forEach { key, value ->
-    result.add(action(key, value))
+    yield(action(key, value))
   }
-  return result
 }
 
 fun <K, R> (Space<K>).project(mapper: (K) -> R): Space<R> {

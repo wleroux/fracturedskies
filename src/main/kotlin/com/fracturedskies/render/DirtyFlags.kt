@@ -14,9 +14,10 @@ class DirtyFlags{
     private set
 
   private fun chunks(pos: Vector3i) = (Vector3i.NEIGHBOURS + Vector3i.ADDITIVE_UNIT)
+      .asSequence()
       .map(pos::plus)
       .map(this::chunkPos)
-      .toSet()
+      .distinct()
       .filter(blocksDirty::has)
 
   private fun chunkPos(pos: Vector3i) = (pos / CHUNK_DIMENSION)
@@ -32,15 +33,15 @@ class DirtyFlags{
   }
 
   fun onWorldGenerated(@Observes worldGenerated: WorldGenerated) {
-    val blocks = worldGenerated.blocks
-    blocks
-        .flatMap { chunks(it.key) }
+    worldGenerated.blocks
+        .flatMap { (position, _) -> chunks(position) }
         .forEach { blocksDirty[it] = true }
   }
 
   fun onBlocksUpdated(@Observes blocksUpdated: BlocksUpdated) {
     blocksUpdated.blocks
-        .flatMap { chunks(it.position) }
+        .asSequence()
+        .flatMap { (position, _, _) -> chunks(position) }
         .forEach { blocksDirty[it] = true }
   }
 

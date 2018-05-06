@@ -33,7 +33,6 @@ class BehaviorPutBlock(private val pos: Vector3i, private val blockType: BlockTy
       if (itemDrop != null) {
         world.spawnItem(Id(), itemDrop, colonist.position, Cause.of(this))
       }
-      yield(RUNNING)
       yield(SUCCESS)
     }
   }

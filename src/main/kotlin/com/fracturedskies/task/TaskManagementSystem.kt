@@ -42,16 +42,11 @@ class TaskManagementSystem {
     val comparator = colonistPriorityComparator(world)
 
     var desiredTask: Task? = null
-    for (task in tasks) {
-      if (!task.details.condition.matches(world, colonist, task))
-        continue
-
-      if (desiredTask == null) {
-        desiredTask = task
-      } else {
-        if (comparator.compare(colonist, desiredTask, task) < 0)
-          desiredTask = task
-      }
+    for (task in tasks.shuffled()) {
+      if (!task.details.condition.matches(world, colonist, task)) continue
+      if (desiredTask != null && comparator.compare(colonist, desiredTask, task) >= 0) continue
+      if (!task.details.behavior.isPossible(world, colonist)) continue
+      desiredTask = task
     }
     return desiredTask
   }

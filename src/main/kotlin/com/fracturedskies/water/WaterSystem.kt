@@ -145,13 +145,13 @@ class WaterSystem {
     val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
     val disturbedSeas = water.seas.filter { it.disturbed }
     disturbedSeas.forEach { it.disturbed = false }
-    val providences = disturbedSeas.map {it.providence.toList()}
+    val providences = disturbedSeas.map {it.providence.toMutableList()}
     for (providence in providences) {
       // Get all potential flow candidates
       for (adjacent in providence)
         water.maxFlowOut[adjacent] = water.getLevel(adjacent)
 
-      Collections.shuffle(providence)
+      providence.shuffle()
       val candidates = PriorityQueue<Vector3i>(waterPotentialComparator)
       candidates.addAll(providence)
 

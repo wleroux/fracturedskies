@@ -56,6 +56,7 @@ class BlockLightSystem {
     val darkenedCells = darken(positions.filter { opaque[it] })
 
     darkenedCells
+        .asSequence()
         .flatMap(light::neighbors)
         .toCollection(lightSources)
     darkenedCells
@@ -78,7 +79,9 @@ class BlockLightSystem {
   private fun darken(initialPositions: List<Vector3i>): List<Vector3i> {
     val darkenedCells = LinkedList<Vector3i>()
     val unvisitedCells = LinkedList<Vector3i>()
-    initialPositions.flatMap(light::neighbors)
+    initialPositions
+        .asSequence()
+        .flatMap(light::neighbors)
         .toCollection(unvisitedCells)
     while (unvisitedCells.isNotEmpty()) {
       val pos = unvisitedCells.remove()
