@@ -14,21 +14,19 @@ abstract class Component<T>(initialState: T) {
       component.children.forEach { unmount(it) }
       component.componentWillUnmount()
 
-      val eventObserver = CDI.current().select(DependentEventObserver::class.java).get()
-      eventObserver -= component
+      val instance = CDI.current().beanManager.createInstance()
+      instance.destroy(component)
     }
 
     fun <S, T: Component<S>> mount(type: KClass<out T>, parent: Component<*>?, props: MultiTypeMap): T {
-      val component = CDI.current().beanManager.createInstance().select(type.java).get()
+      val instance = CDI.current().beanManager.createInstance()
+      val component = instance.select(type.java).get()
 
       component.componentWillMount()
       component.parent = parent
       component.props = props
       component.state = component.nextState ?: component.state
       component.componentDidMount()
-
-      val eventObserver = CDI.current().select(DependentEventObserver::class.java).get()
-      eventObserver += component
 
       return component
     }

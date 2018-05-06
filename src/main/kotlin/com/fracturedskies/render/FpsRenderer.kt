@@ -5,8 +5,9 @@ import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.FpsRenderer.FpsRendererState
 import com.fracturedskies.render.common.components.TextRenderer.Companion.text
 import java.util.concurrent.TimeUnit
+import javax.enterprise.event.Observes
 
-open class FpsRenderer : Component<FpsRendererState>(FpsRendererState()) {
+class FpsRenderer : Component<FpsRendererState>(FpsRendererState()) {
   companion object {
     private val ONE_SECOND_IN_NANOSECONDS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS)
     fun (Node.Builder<*>).fpsRenderer() {
@@ -14,7 +15,7 @@ open class FpsRenderer : Component<FpsRendererState>(FpsRendererState()) {
     }
   }
 
-  fun onUpdate(@DependentObserves update: Update) {
+  fun onUpdate(@Observes update: Update) {
     upsTicks ++
   }
 
