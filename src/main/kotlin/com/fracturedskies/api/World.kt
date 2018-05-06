@@ -58,10 +58,14 @@ class World: HasDimension {
   }
 
   fun updateBlocks(blocks: Map<Vector3i, Block>, cause: Cause) {
-    blocks.forEach { position, block ->
-      this.blocks[position] = block
+    val updates = blocks.map { (position, block) ->
+      BlockUpdate(position, this.blocks[position], block)
+    }.toList()
+
+    updates.forEach { update ->
+      this.blocks[update.position] = update.target
     }
-    events.fire(BlocksUpdated(blocks, cause))
+    events.fire(BlocksUpdated(updates, cause))
   }
 
   // Item Actions
@@ -149,7 +153,7 @@ class World: HasDimension {
   fun dropItem(colonistId: Id, itemId: Id, cause: Cause) {
     val colonist = colonists[colonistId]!!
     if (!colonist.inventory.contains(itemId))
-      throw IllegalArgumentException("Cannot drop item '${itemId}': colonist '$colonistId' does not have it.")
+      throw IllegalArgumentException("Cannot drop item '$itemId': colonist '$colonistId' does not have it.")
 
     colonist.inventory -= itemId
     items[itemId]!!.colonist = null

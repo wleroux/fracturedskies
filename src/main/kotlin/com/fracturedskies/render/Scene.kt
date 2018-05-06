@@ -1,7 +1,7 @@
 package com.fracturedskies.render
 
 import com.fracturedskies.api.World
-import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.render.FpsRenderer.Companion.fpsRenderer
 import com.fracturedskies.render.common.components.layout.*
@@ -10,34 +10,34 @@ import com.fracturedskies.render.common.components.layout.Layout.Companion.layou
 import com.fracturedskies.render.mainmenu.MainMenuRenderer.Companion.mainMenu
 import com.fracturedskies.render.world.controller.WorldController.Companion.worldController
 import org.lwjgl.opengl.GL11.*
+import javax.inject.Inject
 
 class Scene : Component<Unit>(Unit) {
-  companion object {
-    val WORLD = TypedKey<World>("world")
-    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
-  }
-
   private var prevGameStarted = false
+
+  @Inject
+  private lateinit var world: World
+
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean {
     if (super.shouldComponentUpdate(nextProps, nextState)) {
       return true
     } else {
-      if (prevGameStarted != props[WORLD].started) return true
+      if (prevGameStarted != world.started) return true
       return false
     }
   }
 
   override fun componentWillUpdate(nextProps: MultiTypeMap, nextState: Unit) {
     super.componentWillUpdate(nextProps, nextState)
-    prevGameStarted = nextProps[WORLD].started
+    prevGameStarted = world.started
   }
 
   override fun render() = nodes {
-    if (!props[WORLD].started) {
-      mainMenu(props[WORLD])
+    if (!world.started) {
+      mainMenu()
     } else {
       layout(alignContent = ContentAlign.STRETCH, alignItems = ItemAlign.STRETCH) {
-        worldController(props[WORLD], props[DIRTY_FLAGS], MultiTypeMap(
+        worldController(MultiTypeMap(
             GROW to 1.0
         ))
       }

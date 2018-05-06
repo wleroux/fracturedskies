@@ -22,26 +22,30 @@ class BlockLightSystem {
   private lateinit var opaque: BooleanMutableSpace
 
   fun onWorldGenerated(@Observes message: WorldGenerated) {
-    message.blocks.forEach(this::updateLocalCache)
+    message.blocks.forEach { position, target -> updateLocalCache(position, target) }
   }
 
   fun onBlocksUpdated(@Observes message: BlocksUpdated) {
-    message.blocks.forEach(this::updateLocalCache)
-    refresh(message.blocks.keys)
+    message.blocks.forEach { update -> updateLocalCache(update.position, update.target) }
+    refresh(message.blocks
+        .filter { it.original.type.opaque != it.target.type.opaque }
+        .map(BlockUpdate::position))
   }
 
-  private fun updateLocalCache(update: Map.Entry<Vector3i, Block>) {
+  private fun updateLocalCache(position: Vector3i, target: Block) {
     if (!initialized) {
       light = IntMutableSpace(world.dimension, {0})
       opaque = BooleanMutableSpace(world.dimension, {false})
       initialized = true
     }
 
-    light[update.key] = update.value[BlockLight::class]!!.value
-    opaque[update.key] = update.value.type.opaque
+    light[position] = target[BlockLight::class]!!.value
+    opaque[position] = target.type.opaque
   }
 
   private fun refresh(positions: Collection<Vector3i>) {
+    if (positions.isEmpty()) return
+
     val lightSources = mutableListOf<Vector3i>()
 
     // If not opaque, propagate the light!
@@ -106,7 +110,7 @@ class BlockLightSystem {
       light[pos] = targetLight
       world.neighbors(pos)
           .filter { !opaque[it] }
-          .filter { light[pos] > light[it] }
+          .filter { light[pos] > light[it] + 1 }
           .toCollection(unvisitedCells)
 
       lightenedCells.add(pos)

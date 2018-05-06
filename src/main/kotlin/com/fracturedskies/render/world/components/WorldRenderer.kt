@@ -20,14 +20,13 @@ import com.fracturedskies.render.world.components.LightUniform.Companion.lightUn
 import com.fracturedskies.render.world.components.SelectionRenderer.Companion.selection
 import com.fracturedskies.render.world.components.WaterRenderer.Companion.water
 import com.fracturedskies.render.world.components.ZonesRenderer.Companion.zones
+import javax.inject.Inject
 
 
 class WorldRenderer : Component<Unit>(Unit) {
   companion object {
-    fun Node.Builder<*>.world(world: World, dirtyFlags: DirtyFlags, view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.world(view: Matrix4, selection: Pair<Vector3i, Vector3i>?, areaColor: Color4, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(WorldRenderer::class, MultiTypeMap(
-          WORLD to world,
-          DIRTY_FLAGS to dirtyFlags,
           VIEW to view,
           SELECTION to selection,
           AREA_COLOR to areaColor,
@@ -38,10 +37,14 @@ class WorldRenderer : Component<Unit>(Unit) {
     val AREA_COLOR = TypedKey<Color4>("areaColor")
     val SELECTION = TypedKey<Pair<Vector3i, Vector3i>?>("selection")
     val VIEW = TypedKey<Matrix4>("view")
-    val WORLD = TypedKey<World>("world")
-    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
+
+  @Inject
+  private lateinit var world: World
+
+  @Inject
+  private lateinit var dirtyFlags: DirtyFlags
 
   private lateinit var shader: ShaderProgram
   override fun componentWillMount() {
@@ -54,16 +57,15 @@ class WorldRenderer : Component<Unit>(Unit) {
       shader(shader) {
         perspective(PROJECTION_LOCATION, Math.PI.toFloat() / 4f, 0.03f, 1000f)
         uniform(VIEW_LOCATION, props[VIEW])
-        lightUniform(props[WORLD])
+        lightUniform()
 
-        val world = props[WORLD]
         val sliceHeight = props[SLICE_HEIGHT]
-        blocks(world, props[DIRTY_FLAGS], sliceHeight)
-        colonists(world, sliceHeight)
-        items(world, sliceHeight)
-        water(world, props[DIRTY_FLAGS], sliceHeight)
+        blocks(sliceHeight)
+        colonists(sliceHeight)
+        items(sliceHeight)
+        water(sliceHeight)
 
-        zones(world, sliceHeight)
+        zones(sliceHeight)
 
         selection(props[SELECTION], props[AREA_COLOR])
       }

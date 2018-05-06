@@ -7,11 +7,11 @@ import com.fracturedskies.engine.math.Color4
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
 
-open class BlockType {
-  open val color: Color4 = Color4(255, 255, 255, 0)
-  open val light: Int = 0
-  open val opaque: Boolean = true
-  open val itemDrop: ItemType? = null
+abstract class BlockType {
+  open val color: Color4 get() = Color4(255, 255, 255, 0)
+  open val light: Int get() = 0
+  open val opaque: Boolean get() = true
+  open val itemDrop: ItemType? get() = null
   open fun supportedProperties(): List<KClass<*>> = listOf(WaterLevel::class, SkyLight::class, BlockLight::class)
   open fun <T: Any> defaultValue(property: KClass<T>): T? = property.safeCast(when (property) {
     WaterLevel::class -> WaterLevel(0.toByte())

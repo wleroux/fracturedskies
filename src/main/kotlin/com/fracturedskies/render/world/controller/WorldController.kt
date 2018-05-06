@@ -8,7 +8,6 @@ import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.jeact.event.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.DirtyFlags
 import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.world.components.WorldRenderer.Companion.world
@@ -16,6 +15,7 @@ import com.fracturedskies.vegetation.BlockTypeTomato1
 import kotlinx.coroutines.experimental.*
 import org.lwjgl.glfw.GLFW.*
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 data class WorldControllerState(
@@ -30,15 +30,9 @@ data class WorldControllerState(
 class WorldController : Component<WorldControllerState>(WorldControllerState()) {
 
   companion object {
-    fun Node.Builder<*>.worldController(world: World, dirtyFlags: DirtyFlags, additionalContext: MultiTypeMap = MultiTypeMap()) {
-      nodes.add(Node(WorldController::class, additionalContext.with(
-          WORLD to world,
-          DIRTY_FLAGS to dirtyFlags
-      )))
+    fun Node.Builder<*>.worldController(additionalContext: MultiTypeMap = MultiTypeMap()) {
+      nodes.add(Node(WorldController::class, additionalContext))
     }
-
-    val WORLD = TypedKey<World>("world")
-    val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
 
     private const val ROTATE_LEFT = (Math.PI / 32f).toFloat()
     private const val ROTATE_RIGHT = (-Math.PI / 32f).toFloat()
@@ -66,7 +60,8 @@ class WorldController : Component<WorldControllerState>(WorldControllerState()) 
     }
   }
 
-  private val world get() = props[WORLD]
+  @Inject
+  private lateinit var world: World
 
   private var focused = false
   private val sliceHeight: Int
@@ -279,8 +274,6 @@ class WorldController : Component<WorldControllerState>(WorldControllerState()) 
 
   override fun render() = nodes {
     world(
-      world,
-      props[DIRTY_FLAGS],
       Matrix4(position = view, rotation = rotation).invert(),
       state.area,
       state.areaColor,

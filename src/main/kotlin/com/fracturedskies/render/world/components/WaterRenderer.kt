@@ -11,26 +11,29 @@ import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
+import javax.inject.Inject
 import kotlin.math.min
 
 
 class WaterRenderer : Component<Unit>(Unit) {
   companion object {
-    fun Node.Builder<*>.water(world: World, dirtyFlags: DirtyFlags, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.water(sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(WaterRenderer::class, MultiTypeMap(
-          WORLD to world,
-          DIRTY_FLAGS to dirtyFlags,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD = TypedKey<World>("world")
-    private val DIRTY_FLAGS = TypedKey<DirtyFlags>("dirtyFlags")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
 
+  @Inject
+  private lateinit var world: World
+
+  @Inject
+  private lateinit var dirtyFlags: DirtyFlags
+
   override fun componentDidMount() {
-    chunks = props[WORLD].dimension / CHUNK_DIMENSION
+    chunks = world.dimension / CHUNK_DIMENSION
     chunksMesh = ObjectMutableSpace(chunks, { null })
     chunksSliceMesh = ObjectMutableSpace(chunks, { null })
   }
@@ -46,7 +49,6 @@ class WaterRenderer : Component<Unit>(Unit) {
     super.glRender(bounds)
 
     glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4.IDENTITY)
-    val world = props[WORLD]
     val sliceHeight = props[SLICE_HEIGHT]
     val chunks = world.dimension / CHUNK_DIMENSION
     chunks.forEach { chunkIndex ->
@@ -97,7 +99,7 @@ class WaterRenderer : Component<Unit>(Unit) {
   }
 
   private fun shouldChunkUpdate(chunkPos: Vector3i): Boolean {
-    if (props[DIRTY_FLAGS].blocksDirty[chunkPos]) return true
+    if (dirtyFlags.blocksDirty[chunkPos]) return true
 
     val sliceHeight = props[SLICE_HEIGHT]
     if (prevSliceHeight != sliceHeight) {

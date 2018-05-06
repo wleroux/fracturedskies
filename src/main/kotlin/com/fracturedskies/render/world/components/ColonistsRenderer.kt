@@ -13,20 +13,22 @@ import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.glDrawElements
 import org.lwjgl.opengl.GL30.glBindVertexArray
+import javax.inject.Inject
 
 
 class ColonistsRenderer : Component<Unit>(Unit) {
   companion object {
-    fun Node.Builder<*>.colonists(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.colonists(sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(ColonistsRenderer::class, MultiTypeMap(
-          WORLD_STATE to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    val WORLD_STATE = TypedKey<World>("world")
     val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
+
+  @Inject
+  private lateinit var world: World
 
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean = false
 
@@ -34,7 +36,7 @@ class ColonistsRenderer : Component<Unit>(Unit) {
     super.glRender(bounds)
 
     val sliceHeight = props[SLICE_HEIGHT]
-    props[WORLD_STATE].colonists
+    world.colonists
         .filterValues { it.position.y <= sliceHeight }
         .forEach { _, colonist ->
           val mesh = colonistMesh(colonist)
@@ -48,7 +50,7 @@ class ColonistsRenderer : Component<Unit>(Unit) {
 
   var cache = mutableMapOf<Pair<Int, Int>, Mesh>()
   private fun colonistMesh(colonist: Colonist): Mesh {
-    val block = props[WORLD_STATE].blocks[colonist.position]
+    val block = world.blocks[colonist.position]
     val blockLight = block[BlockLight::class]!!.value
     val skyLight = block[SkyLight::class]!!.value
     return cache.computeIfAbsent(skyLight to blockLight, { _ ->

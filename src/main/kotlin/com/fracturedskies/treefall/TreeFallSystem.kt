@@ -64,7 +64,9 @@ class TreeFallSystem {
       initialized = true
     }
 
-    blocksUpdated.blocks.forEach { blockPos, block -> checkTree(blockPos, block.type) }
+    blocksUpdated.blocks
+        .filter { it.original.type != it.target.type }
+        .forEach { update -> checkTree(update.position, update.target.type) }
   }
 
   private fun checkTree(pos: Vector3i, blockType: BlockType) {

@@ -14,27 +14,28 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 import java.lang.Integer.*
+import javax.inject.Inject
 
 
 class ZonesRenderer : Component<Unit>(Unit) {
   companion object {
-    fun Node.Builder<*>.zones(world: World, sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
+    fun Node.Builder<*>.zones(sliceHeight: Int, additionalProps: MultiTypeMap = MultiTypeMap()) {
       nodes.add(Node(ZonesRenderer::class, MultiTypeMap(
-          WORLD to world,
           SLICE_HEIGHT to sliceHeight
       ).with(additionalProps)))
     }
 
-    private val WORLD = TypedKey<World>("world")
     private val SLICE_HEIGHT = TypedKey<Int>("sliceHeight")
   }
+
+  @Inject
+  private lateinit var world: World
 
   override fun shouldComponentUpdate(nextProps: MultiTypeMap, nextState: Unit): Boolean = false
 
   var cache = mutableMapOf<Id, Mesh>()
   override fun glRender(bounds: Bounds) {
     super.glRender(bounds)
-    val world = props[WORLD]
     world.zones.forEach { _, zone ->
       val mesh = cache.computeIfAbsent(zone.id, { _ ->
         var minX: Int = Int.MAX_VALUE

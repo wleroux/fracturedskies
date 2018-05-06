@@ -8,20 +8,24 @@ import java.lang.Integer.max
 
 class DefaultGenerationPopulator(private val seed: Int): GenerationPopulator {
   override fun populate(blocks: ObjectMutableSpace<Block>, biomes: ObjectArea<Biome>) {
+    val blockStone = Block(BlockTypeStone)
+    val blockAir = Block(BlockTypeAir)
+    val blockDirt = Block(BlockTypeDirt)
+    val blockGrass = Block(BlockTypeGrass)
     (0 until blocks.dimension.width).forEach { x ->
       (0 until blocks.dimension.depth).forEach {  z ->
         (0 until blocks.dimension.height).forEach { y ->
           val blockPos = Vector3i(x, y, z)
-          blocks[blockPos] = Block(if (isBlock(blocks.dimension, blockPos)) BlockTypeStone else BlockTypeAir)
+          blocks[blockPos] = if (isBlock(blocks.dimension, blockPos)) blockStone else blockAir
         }
 
         val pos = highestBlock(blocks, x, z)
         (max(0, pos.y - 6) until pos.y).forEach { newY ->
           if (blocks[pos.x, newY, pos.z].type != BlockTypeAir)
-            blocks[pos.x, newY, pos.z] = Block(BlockTypeDirt)
+            blocks[pos.x, newY, pos.z] = blockDirt
         }
         if (blocks[pos].type != BlockTypeAir)
-          blocks[pos] = Block(BlockTypeGrass)
+          blocks[pos] = blockGrass
       }
     }
   }

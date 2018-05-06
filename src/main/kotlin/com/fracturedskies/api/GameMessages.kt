@@ -17,7 +17,8 @@ data class GameSpeedUpdated(val gameSpeed: GameSpeed,
 
 data class WorldGenerated(val blocks: ObjectSpace<Block>,
                           override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message
-data class BlocksUpdated(val blocks: Map<Vector3i, Block>,
+data class BlockUpdate(val position: Vector3i, val original: Block, val target: Block)
+data class BlocksUpdated(val blocks: List<BlockUpdate>,
                          override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message
 data class TimeUpdated(val time: Float,
                        override val cause: Cause, override val context: MultiTypeMap = MultiTypeMap()) : Message

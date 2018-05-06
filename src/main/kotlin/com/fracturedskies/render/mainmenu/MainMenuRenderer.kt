@@ -3,7 +3,7 @@ package com.fracturedskies.render.mainmenu
 import com.fracturedskies.api.*
 import com.fracturedskies.api.GameSize.NORMAL
 import com.fracturedskies.engine.api.Cause
-import com.fracturedskies.engine.collections.*
+import com.fracturedskies.engine.collections.MultiTypeMap
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.Color4
 import com.fracturedskies.render.common.components.TextRenderer.Companion.text
@@ -18,18 +18,18 @@ import com.fracturedskies.render.common.style.*
 import com.fracturedskies.render.common.style.Border.*
 import com.fracturedskies.render.mainmenu.MainMenuRenderer.MenuState
 import com.fracturedskies.render.mainmenu.MainMenuRenderer.Mode.*
+import javax.inject.Inject
 
 
 class MainMenuRenderer : Component<MenuState>(MenuState()) {
   companion object {
-    fun Node.Builder<*>.mainMenu(world: World, additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.() -> Unit = {}) {
-      nodes.add(Node(MainMenuRenderer::class, additionalContext.with(
-          WORLD to world
-      ), block))
+    fun Node.Builder<*>.mainMenu(additionalContext: MultiTypeMap = MultiTypeMap(), block: Node.Builder<*>.() -> Unit = {}) {
+      nodes.add(Node(MainMenuRenderer::class, additionalContext, block))
     }
-
-    val WORLD = TypedKey<World>("world")
   }
+
+  @Inject
+  private lateinit var world: World
 
   data class MenuState(
       val mode: Mode = MAIN_MENU,
@@ -49,11 +49,11 @@ class MainMenuRenderer : Component<MenuState>(MenuState()) {
   }
 
   private fun onQuit() {
-    props[WORLD].requestShutdown(Cause.of(this))
+    world.requestShutdown(Cause.of(this))
   }
 
   private fun startGame() {
-    props[WORLD].startGame(currentState.gameSize, Cause.of(this))
+    world.startGame(currentState.gameSize, Cause.of(this))
   }
 
   override fun render() = nodes {

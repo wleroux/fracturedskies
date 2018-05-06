@@ -6,6 +6,7 @@ import com.fracturedskies.api.block.data.SkyLight
 import com.fracturedskies.engine.api.Cause
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.Vector3i
+import java.lang.Integer.max
 import java.util.*
 import javax.enterprise.event.Observes
 import javax.inject.*
@@ -33,22 +34,26 @@ class SkyLightSystem {
   }
 
   fun onBlocksUpdated(@Observes message: BlocksUpdated) {
-    message.blocks.forEach(this::updateLocalCache)
-    refresh(message.blocks.keys)
+    message.blocks.forEach { update -> updateLocalCache(update.position, update.target) }
+    refresh(message.blocks
+        .filter { it.original.type.opaque != it.target.type.opaque }
+        .map(BlockUpdate::position))
   }
 
-  private fun updateLocalCache(update: Map.Entry<Vector3i, Block>) {
+  private fun updateLocalCache(position: Vector3i, target: Block) {
     if (!initialized) {
       light = IntMutableSpace(world.dimension, {0})
       opaque = BooleanMutableSpace(world.dimension, {false})
       initialized = true
     }
 
-    light[update.key] = update.value[SkyLight::class]!!.value
-    opaque[update.key] = update.value.type.opaque
+    light[position] = target[SkyLight::class]!!.value
+    opaque[position] = target.type.opaque
   }
 
   private fun refresh(positions: Collection<Vector3i>) {
+    if (positions.isEmpty()) return
+
     val lightSources = mutableListOf<Vector3i>()
 
     // If not opaque, propagate the light!
@@ -91,7 +96,10 @@ class SkyLightSystem {
       if (light[pos] == 0) continue
 
       light.neighbors(pos)
-          .filter { light[pos] > light[it] }
+          .filter {
+            if (pos.y > it.y) light[pos] >= light[it]
+            else light[pos] > light[it]
+          }
           .toCollection(unvisitedCells)
 
       darkenedCells.add(pos)
@@ -112,18 +120,21 @@ class SkyLightSystem {
       val targetLight = when {
         topPos == null -> MAX_LIGHT_LEVEL
         light[topPos] == MAX_LIGHT_LEVEL -> MAX_LIGHT_LEVEL
-        else -> (light.neighbors(pos).map {light[it]}.max() ?: 0) - 1
+        else -> max(0, (light.neighbors(pos).map {light[it]}.max() ?: 0) - 1)
       }
 
-      if (light[pos] >= targetLight) continue
+      if (light[pos] != targetLight) {
+        light[pos] = targetLight
+        lightenedCells.add(pos)
+      }
 
-      light[pos] = targetLight
       world.neighbors(pos)
           .filter { !opaque[it] }
-          .filter { light[pos] > light[it] }
+          .filter {
+            if (pos.y > it.y) light[pos] > light[it]
+            else light[pos] > light[it] + 1
+          }
           .toCollection(unvisitedCells)
-
-      lightenedCells.add(pos)
     }
 
     return lightenedCells

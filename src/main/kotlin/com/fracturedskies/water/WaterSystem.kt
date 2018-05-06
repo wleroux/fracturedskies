@@ -66,17 +66,21 @@ class WaterSystem {
     }
 
     val waterLevelUpdates = mutableMapOf<Vector3i, Byte>()
-    blocksUpdated.blocks.forEach { (pos, block) ->
-      water.setOpaque(pos, block.type.opaque)
-      water.setLevel(pos, block[WaterLevel::class]!!.value)
-      if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
-        water.setLevel(pos, 0)
-        waterLevelUpdates[pos] = 0
-      }
-    }
-    blocksUpdated.blocks.forEach { (pos, _) ->
-      updateNearestWater(pos)
-    }
+    blocksUpdated.blocks
+        .filter { it.original.type.opaque != it.target.type.opaque || it.original[WaterLevel::class]!!.value != it.target[WaterLevel::class]!!.value }
+        .forEach { (pos, _, block) ->
+          water.setOpaque(pos, block.type.opaque)
+          water.setLevel(pos, block[WaterLevel::class]!!.value)
+          if (block.type.opaque && water.getLevel(pos) != 0.toByte()) {
+            water.setLevel(pos, 0)
+            waterLevelUpdates[pos] = 0
+          }
+        }
+    blocksUpdated.blocks
+        .filter { it.original.type.opaque != it.target.type.opaque || it.original[WaterLevel::class]!!.value != it.target[WaterLevel::class]!!.value }
+        .forEach { (pos, _) ->
+          updateNearestWater(pos)
+        }
     if (waterLevelUpdates.isNotEmpty()) {
       world.updateBlocks(waterLevelUpdates
           .map { it.key to world.blocks[it.key].with(WaterLevel(it.value)) }

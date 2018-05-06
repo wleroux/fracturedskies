@@ -80,14 +80,8 @@ class RenderGameSystem {
     glCullFace(GL_BACK)
     glFrontFace(GL_CCW)
 
-    scene = mount(Scene::class, null, MultiTypeMap(
-        Scene.WORLD to world,
-        Scene.DIRTY_FLAGS to dirtyFlags
-    ))
-    update(scene, MultiTypeMap(
-        Scene.WORLD to world,
-        Scene.DIRTY_FLAGS to dirtyFlags
-    ), true)
+    scene = mount(Scene::class, null, MultiTypeMap())
+    update(scene, MultiTypeMap(), true)
   }
 
   fun glUpdate() {
@@ -96,10 +90,7 @@ class RenderGameSystem {
 
   fun glRender() {
     glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
-    update(scene, MultiTypeMap(
-        Scene.WORLD to world,
-        Scene.DIRTY_FLAGS to dirtyFlags
-    ), false)
+    update(scene, MultiTypeMap(), false)
     scene.glRender(screenDimension)
     dirtyFlags.clear()
     glfwSwapBuffers(window)

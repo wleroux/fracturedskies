@@ -30,11 +30,11 @@ class VegetationSystem {
   }
 
   fun onBlocksUpdated(@Observes blocksUpdated: BlocksUpdated) {
-    blocksUpdated.blocks.forEach { pos, block ->
-      if (block.has(Growth::class)) {
-        vegetation += pos
-      } else {
-        vegetation -= pos
+    blocksUpdated.blocks.forEach { update ->
+      if (!update.original.has(Growth::class) && update.target.has(Growth::class)) {
+        vegetation += update.position
+      } else if (update.original.has(Growth::class) && !update.target.has(Growth::class)) {
+        vegetation -= update.position
       }
     }
   }
