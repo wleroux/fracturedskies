@@ -6,7 +6,7 @@ import com.fracturedskies.api.entity.Colonist
 import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.jeact.*
 import com.fracturedskies.engine.math.*
-import com.fracturedskies.render.colonist.ObjMeshParser
+import com.fracturedskies.render.MeshParser
 import com.fracturedskies.render.common.components.gl.glUniform
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.common.shaders.color.ColorShaderProgram
@@ -40,7 +40,7 @@ class ColonistsRenderer : Component<Unit>(Unit) {
         .filterValues { it.position.y <= sliceHeight }
         .forEach { _, colonist ->
           val mesh = colonistMesh(colonist)
-          val rotation = Quaternion4.fromToRotation(Vector3.AXIS_Z, colonist.direction.toVector3())
+          val rotation = Quaternion4.fromToRotation(Vector3.AXIS_NEG_Z, colonist.direction.toVector3())
           val modelPosition = colonist.position.toVector3() + Vector3(0.5f, 0f, 0.5f)
           glBindVertexArray(mesh.vao)
           glUniform(ColorShaderProgram.MODEL_LOCATION, Matrix4(position = modelPosition, rotation = rotation))
@@ -54,14 +54,14 @@ class ColonistsRenderer : Component<Unit>(Unit) {
     val blockLight = block[BlockLight::class]!!.value
     val skyLight = block[SkyLight::class]!!.value
     return cache.computeIfAbsent(skyLight to blockLight, { _ ->
-      ObjMeshParser.generateMesh("colonist.obj", 1f/16f, listOf(
-          Color4(216, 28, 31, 255), // shoes
-          Color4(79, 55, 39, 255), // brown
-          Color4(193, 138, 38, 255), // upper-beak
-          Color4(255, 177, 27, 255), // lower-beak
-          Color4(11, 16, 19, 255), // pupil
-          Color4(238, 238, 238, 255) // eyes
-      ), skyLight.toFloat(), blockLight.toFloat())
+      MeshParser.generateMesh("colonist.mesh", 1f/16f, skyLight, blockLight, mapOf(
+          "shoes" to Color4(216, 28, 31, 255), // shoes
+          "body" to Color4(79, 55, 39, 255), // brown
+          "beak_top" to Color4(193, 138, 38, 255), // upper-beak
+          "beak_normal" to Color4(255, 177, 27, 255), // lower-beak
+          "eyes_pupil" to Color4(11, 16, 19, 255), // pupil
+          "eyes_whites" to Color4(238, 238, 238, 255) // eyes
+      ))
     })
   }
 }

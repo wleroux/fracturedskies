@@ -20,9 +20,9 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
     val target = offset(pos, u, v)
     return world.has(target) && !world[target].type.opaque
   }
-  fun opaque(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
+  fun opaque(world: Space<Boolean>, pos: Vector3i, u: Vector3i, v: Vector3i): Boolean {
     val target = offset(pos, u, v)
-    return if (world.has(target)) world[target].type.opaque else false
+    return if (world.has(target)) world[target] else false
   }
   fun skyLight(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): Int {
     val target = offset(pos, u, v)
@@ -34,9 +34,9 @@ enum class Occlusion(private val offset: (Vector3i, Vector3i, Vector3i) -> Vecto
   }
 
   companion object {
-    fun of(world: Space<Block>, pos: Vector3i, u: Vector3i, v: Vector3i): EnumSet<Occlusion> {
+    fun of(space: Space<Boolean>, pos: Vector3i, u: Vector3i, v: Vector3i): EnumSet<Occlusion> {
       val occlusions = EnumSet.noneOf(Occlusion::class.java)
-      occlusions.addAll(Occlusion.values().filter({ it.opaque(world, pos, u, v) }))
+      occlusions.addAll(Occlusion.values().filter({ it.opaque(space, pos, u, v) }))
       return occlusions
     }
 

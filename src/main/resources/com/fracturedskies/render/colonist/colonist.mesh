@@ -1,0 +1,67 @@
+# Dimension
+dimension 16 16 16
+
+# Color
+color right_shoe   216  28  31
+color left_shoe    216  28  31
+color body          79  55  39
+color eye_whites   238 238 238
+color eye_pupil     11  16  19
+color beak_normal  255 177  27
+color beak_top     193 138  38
+
+# Right Shoe
+fill  4  0  4    5  0 11  right_shoe
+fill  3  0  5    6  0 10  right_shoe
+
+# Left Shoe
+fill 10  0  4   11  0 11  left_shoe
+fill  9  0  5   12  0 10  left_shoe
+
+# Main Body
+fill  3  1  6   12  8 11  body
+fill  4  1 12   11  8 12  body
+fill  3  2 12   12  7 12  body
+fill  4  1  5   11  1  5  body
+fill  3  2  5    4  2  5  body
+fill  3  7  5    4  7  5  body
+fill 11  2  5   12  2  5  body
+fill 11  7  5   12  7  5  body
+fill  3  3  5    3  6  5  body
+fill 12  3  5   12  6  5  body
+fill  4  8  5   11  8  5  body
+fill  7  7  5    8  7  5  body
+
+# Eyes
+fill  4  2  6   11  7  6  eye_whites
+fill  5  3  6    6  5  8  eye_pupil
+fill  9  3  6   10  5  8  eye_pupil
+
+# Beak
+fill  6  2  5    9  2  5  beak_top
+fill  7  3  5    8  3  5  beak_top
+fill  7  2  4    8  2  4  beak_top
+fill  7  1  4    8  1  4  beak_normal
+
+# Right Wing
+fill  1  2  6    1  2  9  body
+fill  1  3  7    1  3  7  body
+fill  1  3  8    1  5 10  body
+fill  2  2  7    2  5 11  body
+fill  2  6  8    2  6 11  body
+
+# Right Wing
+fill  1  2  6    1  2  9  body
+fill  1  3  7    1  3  7  body
+fill  1  3  8    1  5 10  body
+fill  2  2  7    2  5 11  body
+fill  2  6  8    2  6 11  body
+fill  2  1  8    2  1 10  body
+
+# Left Wing
+fill 14  2  6   14  2  9  body
+fill 14  3  7   14  3  7  body
+fill 14  3  8   14  5 10  body
+fill 13  2  7   13  5 11  body
+fill 13  6  8   13  6 11  body
+fill 13  1  8   13  1 10  body

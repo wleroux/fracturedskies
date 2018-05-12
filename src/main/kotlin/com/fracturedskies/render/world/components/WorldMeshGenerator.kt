@@ -1,7 +1,7 @@
 package com.fracturedskies.render.world.components
 
 import com.fracturedskies.api.block.Block
-import com.fracturedskies.engine.collections.Space
+import com.fracturedskies.engine.collections.*
 import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.world.*
@@ -145,13 +145,13 @@ private fun getData(world: Space<Block>, sliceMesh: Boolean, pos: Vector3i, d: V
       val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos + d, u, v) }
       val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos + d, u, v) }
 
-      Data(currentBlock!!.type.color, skyLightLevels, blockLightLevels, false, Occlusion.of(world, pos + d, u, v))
+      Data(currentBlock!!.type.color, skyLightLevels, blockLightLevels, false, Occlusion.of(world.project { it.type.opaque }, pos + d, u, v))
     }
     !sliceMesh && isOpaque(nextBlock) && !isOpaque(currentBlock) -> {
       val skyLightLevels = VertexCorner.values().associate { it to it.skyLightLevel(world, pos, u, v) }
       val blockLightLevels = VertexCorner.values().associate { it to it.blockLightLevel(world, pos, u, v) }
 
-      Data(nextBlock!!.type.color, skyLightLevels, blockLightLevels, true, Occlusion.of(world, pos, u, v))
+      Data(nextBlock!!.type.color, skyLightLevels, blockLightLevels, true, Occlusion.of(world.project { it.type.opaque }, pos, u, v))
     }
     sliceMesh && isOpaque(currentBlock) && isOpaque(nextBlock) && d == Vector3i.AXIS_Y -> {
       val skyLightLevels = VertexCorner.values().associate { it to 0f }

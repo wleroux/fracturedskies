@@ -203,7 +203,7 @@ object AddZoneActionController: WorldActionController {
         val yRange = min(firstBlock!!.y, secondBlock.y)..max(firstBlock!!.y, secondBlock.y)
         val zRange = min(firstBlock!!.z, secondBlock.z)..max(firstBlock!!.z, secondBlock.z)
 
-        world.createZone(Id(), area(xRange, yRange, zRange), Cause.of(this))
+        world.createZone(Id(), area(xRange, yRange, zRange).toList(), Cause.of(this))
       }
       firstBlock = null
     }

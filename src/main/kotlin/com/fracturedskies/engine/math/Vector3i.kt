@@ -1,6 +1,7 @@
 package com.fracturedskies.engine.math
 
 import com.fracturedskies.engine.collections.*
+import kotlin.coroutines.experimental.buildSequence
 import kotlin.math.*
 
 data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
@@ -21,11 +22,11 @@ data class Vector3i private constructor(val x: Int, val y: Int, val z: Int) {
     val XY_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Y_PLANE_NEIGHBORS
     val XZ_PLANE_NEIGHBORS = X_PLANE_NEIGHBORS + Z_PLANE_NEIGHBORS
 
-    fun area(xRange: IntRange, yRange: IntRange, zRange: IntRange): List<Vector3i> {
-      return xRange.flatMap { x ->
-        zRange.flatMap { z ->
-          yRange.map { y ->
-            Vector3i(x, y, z)
+    fun area(xRange: IntRange, yRange: IntRange, zRange: IntRange): Sequence<Vector3i> = buildSequence {
+      xRange.forEach { x ->
+        zRange.forEach { z ->
+          yRange.forEach { y ->
+            yield(Vector3i(x, y, z))
           }
         }
       }
