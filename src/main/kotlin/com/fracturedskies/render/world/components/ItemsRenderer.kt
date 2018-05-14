@@ -55,10 +55,7 @@ class ItemsRenderer : Component<Unit>(Unit) {
     return cache
         .computeIfAbsent(itemType, { mutableMapOf() })
         .computeIfAbsent(skyLight to blockLight, {
-          generateBlock(itemType.color, skyLight.toFloat(), blockLight.toFloat(),
-              Vector3(0.375f, 0.00f, 0.375f),
-              Vector3(0.25f, 0.25f, 0.25f)
-          ).invoke()
+          Mesh.generate(itemType.model.quads(skyLight, blockLight, Vector3(0.375f, 0f, 0.375f), 1f/4f).toList())
         })
   }
 }

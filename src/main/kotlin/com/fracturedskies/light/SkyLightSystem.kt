@@ -37,7 +37,7 @@ class SkyLightSystem {
   fun onBlocksUpdated(@Observes message: BlocksUpdated) {
     message.blocks.forEach { update -> updateLocalCache(update.position, update.target) }
     refresh(message.blocks
-        .filter { it.original.type.opaque != it.target.type.opaque }
+        .filter { it.original.type.opaque != it.target.type.opaque || it.original[SkyLight::class] != it.target[SkyLight::class] }
         .map(BlockUpdate::position))
   }
 

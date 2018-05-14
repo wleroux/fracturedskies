@@ -61,7 +61,7 @@ class BlocksRenderer : Component<Unit>(Unit) {
             chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
             chunkPos.y * CHUNK_Y_SIZE until min((chunkPos.y + 1) * CHUNK_Y_SIZE, sliceHeight),
             chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
-        ).invoke()
+        )
         chunksMesh[chunkIndex] = newMesh
         newMesh
       } else {
@@ -80,7 +80,7 @@ class BlocksRenderer : Component<Unit>(Unit) {
               chunkPos.x * CHUNK_X_SIZE until (chunkPos.x + 1) * CHUNK_X_SIZE,
               sliceHeight - 1 until sliceHeight,
               chunkPos.z * CHUNK_Z_SIZE until (chunkPos.z + 1) * CHUNK_Z_SIZE
-          ).invoke()
+          )
         } else {
           null
         }

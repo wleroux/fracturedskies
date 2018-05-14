@@ -28,7 +28,7 @@ class BlockLightSystem {
   fun onBlocksUpdated(@Observes message: BlocksUpdated) {
     message.blocks.forEach { update -> updateLocalCache(update.position, update.target) }
     refresh(message.blocks
-        .filter { it.original.type.opaque != it.target.type.opaque }
+        .filter { it.original.type.opaque != it.target.type.opaque  || it.original[BlockLight::class] != it.target[BlockLight::class] }
         .map(BlockUpdate::position))
   }
 

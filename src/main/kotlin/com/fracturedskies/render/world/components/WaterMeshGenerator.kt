@@ -8,21 +8,20 @@ import com.fracturedskies.engine.math.*
 import com.fracturedskies.render.common.shaders.Mesh
 import com.fracturedskies.render.world.*
 import com.fracturedskies.render.world.VertexCorner.*
-import org.lwjgl.BufferUtils.*
 
 
 fun generateWaterMesh(
     world: Space<Block>,
     sliceMesh: Boolean,
     xRange: IntRange, yRange: IntRange, zRange: IntRange
-): () -> Mesh {
+): Mesh {
   val quads = mutableListOf<Quad>()
   for (y in yRange) {
     for (x in xRange) {
       for (z in zRange) {
         val pos = Vector3i(x, y, z)
         val block = world[pos]
-        if (block.type !== BlockTypeAir) {
+        if (block.type.opaque) {
           continue
         }
 
@@ -210,26 +209,7 @@ fun generateWaterMesh(
     }
   }
 
-  val attributeSize = Quad.Attributes.fold(0, { acc, attr -> acc + attr.elements * attr.elementSize}) / java.lang.Float.BYTES
-  val verticesBuffer = createFloatBuffer(attributeSize * 4 * quads.size)
-  val indicesBuffer = createIntBuffer(6 * quads.size)
-
-  var vertexCount = 0
-  quads.forEach {quad ->
-    verticesBuffer.put(quad.vertices())
-    indicesBuffer.put(quad.indices(vertexCount))
-    vertexCount += 4
-  }
-
-  verticesBuffer.flip()
-  val vertices = FloatArray(verticesBuffer.remaining())
-  verticesBuffer.get(vertices)
-
-  indicesBuffer.flip()
-  val indices = IntArray(indicesBuffer.remaining())
-  indicesBuffer.get(indices)
-
-  return { Mesh(vertices, indices, Quad.Attributes) }
+  return Mesh.generate(quads)
 }
 
 private fun waterLevel(block: Block): Byte {

@@ -1,15 +1,15 @@
 package com.fracturedskies.vegetation
 
 import com.fracturedskies.api.block.*
-import com.fracturedskies.engine.math.Color4
+import com.fracturedskies.api.block.model.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
 
 data class Growth(val probability: Float, val block: () -> Block, val isProperSoil: (Block) -> Boolean)
 
 object BlockTypeTomato1 : BlockType() {
-  override val opaque: Boolean = true
-  override val color: Color4 = Color4(65, 76, 39, 255)
+  override val opaque: Boolean get() = false
+  override val model: BlockModel = FileBlockModel("tomato_1.mesh")
   override fun supportedProperties() = super.supportedProperties() + Growth::class
   override fun <T : Any> defaultValue(property: KClass<T>): T? = property.safeCast(when(property) {
     Growth::class -> Growth(0.1f, {Block(BlockTypeTomato2)}, { block -> setOf(BlockTypeDirt, BlockTypeGrass).contains(block.type) })
@@ -18,8 +18,8 @@ object BlockTypeTomato1 : BlockType() {
 }
 
 object BlockTypeTomato2 : BlockType() {
-  override val opaque: Boolean = true
-  override val color: Color4 = Color4(102, 108, 63, 255)
+  override val opaque: Boolean get() = false
+  override val model: BlockModel = FileBlockModel("tomato_2.mesh")
   override fun supportedProperties() = super.supportedProperties() + Growth::class
   override fun <T : Any> defaultValue(property: KClass<T>): T? = property.safeCast(when(property) {
     Growth::class -> Growth(0.1f, {Block(BlockTypeTomato3)}, { block -> setOf(BlockTypeDirt, BlockTypeGrass).contains(block.type) })
@@ -27,8 +27,8 @@ object BlockTypeTomato2 : BlockType() {
   })
 }
 object BlockTypeTomato3 : BlockType() {
-  override val opaque: Boolean = true
-  override val color: Color4 = Color4(162, 134, 74, 255)
+  override val opaque: Boolean get() = false
+  override val model: BlockModel = FileBlockModel("tomato_3.mesh")
   override fun supportedProperties() = super.supportedProperties() + Growth::class
   override fun <T : Any> defaultValue(property: KClass<T>): T? = property.safeCast(when(property) {
     Growth::class -> Growth(0.1f, {Block(BlockTypeTomato4)}, { block -> setOf(BlockTypeDirt, BlockTypeGrass).contains(block.type) })
@@ -36,8 +36,8 @@ object BlockTypeTomato3 : BlockType() {
   })
 }
 object BlockTypeTomato4 : BlockType() {
-  override val opaque: Boolean = true
-  override val color: Color4 = Color4(179, 83, 64, 255)
+  override val opaque: Boolean get() = false
+  override val model: BlockModel = FileBlockModel("tomato_4.mesh")
   override fun supportedProperties() = super.supportedProperties() + Growth::class
   override fun <T : Any> defaultValue(property: KClass<T>): T? = property.safeCast(when(property) {
     Growth::class -> Growth(0.1f, {Block(BlockTypeTomato5)}, { block -> setOf(BlockTypeDirt, BlockTypeGrass).contains(block.type) })
@@ -45,8 +45,8 @@ object BlockTypeTomato4 : BlockType() {
   })
 }
 object BlockTypeTomato5 : BlockType() {
-  override val opaque: Boolean = true
-  override val color: Color4 = Color4(223, 67, 55, 255)
+  override val opaque: Boolean get() = false
+  override val model: BlockModel = FileBlockModel("tomato_5.mesh")
   override val itemDrop = ItemTypeTomato
   override fun supportedProperties() = super.supportedProperties() + Growth::class
   override fun <T : Any> defaultValue(property: KClass<T>): T? = property.safeCast(when(property) {

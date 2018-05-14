@@ -59,12 +59,12 @@ class ZonesRenderer : Component<Unit>(Unit) {
           override fun get(index: Int): Block {
             val pos = vector3i(index)
             return if (zone.positions.contains(pos)) {
-              Block(ZoneBlockType).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
+              Block(ColorBlockType(Color4(255, 255, 255, 32))).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             } else {
               Block(BlockTypeAir).with(SkyLight(MAX_LIGHT_LEVEL)).with(BlockLight(MAX_LIGHT_LEVEL))
             }
           }
-        }, false, (minX - 1 .. maxX + 1), (minY - 1 .. maxY + 1), (minZ - 1 .. maxZ + 2)).invoke()
+        }, false, (minX - 1 .. maxX + 1), (minY - 1 .. maxY + 1), (minZ - 1 .. maxZ + 2))
       })
 
       glDisable(GL_DEPTH_TEST)
@@ -74,8 +74,4 @@ class ZonesRenderer : Component<Unit>(Unit) {
       glEnable(GL_DEPTH_TEST)
     }
   }
-}
-
-private object ZoneBlockType: BlockType() {
-  override val color: Color4 = Color4(255, 255, 255, 32)
 }

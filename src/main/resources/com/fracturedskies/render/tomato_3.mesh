@@ -1,0 +1,57 @@
+# Dimension
+dimension 16 16 16
+
+# Color
+color stick         79  55  39
+color plant         27 129  62
+color leaves       123 162  63
+color tomato       233 205  76
+
+# Stick
+fill  7  0  7    8 12  8  stick
+
+# Plant Strand 1
+fill  8  0  6    8  1  6  plant
+fill  9  1  6    9  1  7  plant
+fill  9  2  7    9  7  5  plant
+fill  9  5  8    9  6  8  plant
+fill  9  5  8    9  6  8  plant
+fill  6  6  9    9  6  9  plant
+fill  6  6  8    6  6  9  plant
+fill  6  7  8    6  8  8  plant
+fill  6  8  7    6  8  7  plant
+
+# Plant Strand 2
+fill  6  0  7    6  1  7  plant
+fill  6  1  8    6  3  8  plant
+fill  6  3  9    7  3  9  plant
+fill  7  4  9    7  5  9  plant
+fill  7  5 10    7  5 10  plant
+fill  8  6 10    8  7 10  plant
+fill  8  7  9    8  8  9  plant
+fill  9  8  6    9  8  9  plant
+fill  8  8  6    8 10  6  plant
+fill  7 10  6    7 11  6  plant
+fill  6 11  6    6 11  7  plant
+
+# Leaves
+fill  9  7  6             leaves
+fill  9  9  6             leaves
+fill 10  8  6             leaves
+fill  8  9  5             leaves
+fill  8  8  5    9  8  5  leaves
+fill  6  8  6    7  8  6  leaves
+fill  5  8  7    5  8  8  leaves
+fill  6  9  7    6  9  8  leaves
+fill  6  8  9             leaves
+fill  6 10  5    6 10  6  leaves
+fill  6 11  5    7 11  5  leaves
+fill  6 11  8             leaves
+fill  5 11  6    5 11  7  leaves
+fill  6 12  6    7 12  6  leaves
+fill  6 12  7             leaves
+
+# Tomatoes
+fill  6  7  7             tomato
+fill  8  7  6             tomato
+fill  6 10  7             tomato

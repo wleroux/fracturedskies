@@ -54,14 +54,7 @@ class ColonistsRenderer : Component<Unit>(Unit) {
     val blockLight = block[BlockLight::class]!!.value
     val skyLight = block[SkyLight::class]!!.value
     return cache.computeIfAbsent(skyLight to blockLight, { _ ->
-      MeshParser.generateMesh("colonist.mesh", 1f/16f, skyLight, blockLight, mapOf(
-          "shoes" to Color4(216, 28, 31, 255), // shoes
-          "body" to Color4(79, 55, 39, 255), // brown
-          "beak_top" to Color4(193, 138, 38, 255), // upper-beak
-          "beak_normal" to Color4(255, 177, 27, 255), // lower-beak
-          "eyes_pupil" to Color4(11, 16, 19, 255), // pupil
-          "eyes_whites" to Color4(238, 238, 238, 255) // eyes
-      ))
+      Mesh.generate(MeshParser.generateQuads("colonist.mesh", skyLight, blockLight, emptyMap(), Vector3(-0.5f, 0f, -0.5f), 1f/16f).toList())
     })
   }
 }
