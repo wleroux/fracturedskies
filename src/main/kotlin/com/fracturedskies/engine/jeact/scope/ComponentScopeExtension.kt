@@ -25,7 +25,7 @@ class ComponentScopeExtension : Extension {
 
   internal fun <T> configureComponents(@Observes processAnnotatedType: ProcessAnnotatedType<T>) {
     if (Component::class.java.isAssignableFrom(processAnnotatedType.annotatedType.javaClass)) {
-      processAnnotatedType.configureAnnotatedType().add(ComponentScope.Literal.INSTANCE)
+      processAnnotatedType.configureAnnotatedType().add(ComponentScope.Companion.Literal.INSTANCE)
     }
   }
 

@@ -12,9 +12,8 @@ import com.fracturedskies.render.common.controller.Keyboard
 import com.fracturedskies.render.common.events.*
 import com.fracturedskies.render.world.components.WorldRenderer.Companion.world
 import com.fracturedskies.vegetation.BlockTypeTomato1
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.lwjgl.glfw.GLFW.*
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -173,10 +172,10 @@ class WorldController : Component<WorldControllerState>(WorldControllerState()) 
   private lateinit var controllerUpdates: Job
   override fun componentWillMount() {
     super.componentWillMount()
-    controllerUpdates = launch {
+    controllerUpdates = GlobalScope.launch {
       while (isActive) {
         onUpdate(16f/1000f)
-        delay(16, MILLISECONDS)
+        delay(16)
       }
     }
   }
